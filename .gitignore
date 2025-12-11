@@ -1,0 +1,55 @@
+# Build output
+target/
+build/
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle
+.gradle/
+gradle/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Native image
+*.dll
+*.dylib
+*.so
+
+# Package files
+*.jar
+*.war
+*.ear
+
+# Test output
+test-output/
+surefire-reports/
+failsafe-reports/
+
+# JRebel
+rebel.xml
+
+# H2 Database files
+*.db
+
+# Env files
+.env
+.env.local
