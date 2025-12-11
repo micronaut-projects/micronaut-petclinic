@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navigation}"></nav>
+
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <h1><i class="fas fa-users me-3"></i><span th:text="#{owner.petOwners}">Pet Owners</span></h1>
+        <p th:text="#{owner.ownersFound(${#lists.size(owners)})}">X owners found</p>
+    </div>
+</div>
+
+<main class="container flex-grow-1 py-4">
+    <!-- Action Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a th:href="@{/owners/find}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i><span th:text="#{owner.backToSearch}">Back to Search</span>
+        </a>
+        <a th:href="@{/owners/new}" class="btn btn-success">
+            <i class="fas fa-plus me-2"></i><span th:text="#{search.addOwner}">Add Owner</span>
+        </a>
+    </div>
+
+    <!-- Empty State -->
+    <div th:if="${#lists.isEmpty(owners)}" class="empty-state">
+        <div class="empty-state-icon">
+            <i class="fas fa-users-slash"></i>
+        </div>
+        <h3 th:text="#{owner.noOwnersFound}">No Owners Found</h3>
+        <p th:text="#{owner.noOwnersMessage}">We couldn't find any owners matching your search criteria.</p>
+        <a th:href="@{/owners/new}" class="btn btn-success">
+            <i class="fas fa-plus me-2"></i><span th:text="#{owner.addNew}">Add New Owner</span>
+        </a>
+    </div>
+
+    <!-- Owners Grid -->
+    <div th:unless="${#lists.isEmpty(owners)}" class="row g-4">
+        <div th:each="owner, iterStat : ${owners}" class="col-md-6 col-lg-4">
+            <div class="owner-card animate-fade-in-up" th:style="'animation-delay: ' + ${iterStat.index * 0.1} + 's'">
+                <div class="d-flex align-items-start mb-3">
+                    <div class="owner-avatar me-3">
+                        <span th:text="${owner.firstName.substring(0,1) + owner.lastName.substring(0,1)}">JD</span>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="mb-1">
+                            <a th:href="@{/owners/{ownerId}(ownerId=${owner.id})}" class="text-decoration-none text-dark">
+                                <span th:text="${owner.firstName + ' ' + owner.lastName}">John Doe</span>
+                            </a>
+                        </h5>
+                        <p class="text-muted mb-0 small">
+                            <i class="fas fa-map-marker-alt me-1"></i>
+                            <span th:text="${owner.city}">City</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <p class="mb-1 small text-muted">
+                        <i class="fas fa-home me-2"></i>
+                        <span th:text="${owner.address}">123 Main St</span>
+                    </p>
+                    <p class="mb-0 small text-muted">
+                        <i class="fas fa-phone me-2"></i>
+                        <span th:text="${owner.telephone}">555-1234</span>
+                    </p>
+                </div>
+
+                <!-- Pets -->
+                <div th:if="${owner.pets != null and !owner.pets.isEmpty()}" class="mb-3">
+                    <div class="d-flex flex-wrap">
+                        <span th:each="pet : ${owner.pets}" class="pet-badge">
+                            <i class="fas fa-paw"></i>
+                            <span th:text="${pet.name}">Pet Name</span>
+                        </span>
+                    </div>
+                </div>
+                <div th:unless="${owner.pets != null and !owner.pets.isEmpty()}" class="mb-3">
+                    <span class="text-muted small"><i class="fas fa-info-circle me-1"></i><span th:text="#{owner.noPetsRegistered}">No pets registered</span></span>
+                </div>
+
+                <a th:href="@{/owners/{ownerId}(ownerId=${owner.id})}" class="btn btn-primary btn-sm w-100">
+                    <i class="fas fa-eye me-2"></i><span th:text="#{owner.viewDetails}">View Details</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+</body>
+</html>

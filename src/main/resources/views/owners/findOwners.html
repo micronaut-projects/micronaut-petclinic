@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navigation}"></nav>
+
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <h1><i class="fas fa-search me-3"></i><span th:text="#{owner.findOwners}">Find Owners</span></h1>
+        <p th:text="#{search.findOwner}">Search for pet owners by last name</p>
+    </div>
+</div>
+
+<main class="container flex-grow-1 py-4">
+    <!-- Search Box -->
+    <div class="search-box mb-4 animate-fade-in-up">
+        <form th:action="@{/owners/list}" method="get">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <label for="lastName" class="form-label">
+                        <i class="fas fa-user me-2"></i><span th:text="#{search.ownerLastName}">Owner Last Name</span>
+                    </label>
+                    <input type="text" class="form-control form-control-lg" id="lastName" name="lastName" 
+                           th:value="${owner != null ? owner.lastName : ''}" 
+                           th:placeholder="#{search.enterLastName}">
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary btn-lg w-100" type="submit">
+                        <i class="fas fa-search me-2"></i><span th:text="#{button.search}">Search</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Alert Messages -->
+    <div th:if="${notFound}" class="alert alert-warning animate-fade-in-up">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span th:text="#{search.tryDifferent}">No owners found with that last name. Try a different search or add a new owner.</span>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-4 mt-4">
+        <div class="col-md-6 animate-fade-in-up stagger-1">
+            <div class="card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="feature-icon gradient-4 me-4" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1" th:text="#{owner.addNew}">Add New Owner</h5>
+                        <p class="text-muted mb-2" th:text="#{getStarted.registerOwner.desc}">Register a new pet owner in the system</p>
+                        <a th:href="@{/owners/new}" class="btn btn-success">
+                            <i class="fas fa-plus me-2"></i><span th:text="#{search.addOwner}">Add Owner</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 animate-fade-in-up stagger-2">
+            <div class="card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="feature-icon gradient-1 me-4" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                        <i class="fas fa-list"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1" th:text="#{search.findOwners}">View All Owners</h5>
+                        <p class="text-muted mb-2" th:text="#{getStarted.findOwners.desc}">Browse the complete list of pet owners</p>
+                        <a th:href="@{/owners/list}" class="btn btn-primary">
+                            <i class="fas fa-eye me-2"></i><span th:text="#{button.search}">View All</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tips Section -->
+    <div class="card mt-5 animate-fade-in-up stagger-3">
+        <div class="card-body">
+            <h5 class="mb-3"><i class="fas fa-lightbulb text-warning me-2"></i><span th:text="#{search.tips}">Search Tips</span></h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <p class="mb-1"><strong>Partial Match</strong></p>
+                    <p class="text-muted small">Enter partial last name to find matches (e.g., "Dav" finds "Davis")</p>
+                </div>
+                <div class="col-md-4">
+                    <p class="mb-1"><strong>Empty Search</strong></p>
+                    <p class="text-muted small">Leave the field empty and click Search to see all owners</p>
+                </div>
+                <div class="col-md-4">
+                    <p class="mb-1"><strong>Case Insensitive</strong></p>
+                    <p class="text-muted small">Search is not case sensitive - "smith" finds "Smith"</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+</body>
+</html>

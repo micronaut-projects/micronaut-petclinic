@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}"></head>
+<body class="d-flex flex-column min-vh-100">
+
+<nav th:replace="~{fragments/layout :: navigation}"></nav>
+
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <h1>
+            <i th:class="${isNew} ? 'fas fa-plus-circle me-3' : 'fas fa-edit me-3'"></i>
+            <span th:text="${isNew} ? #{pet.new} : #{pet.edit}">Pet Form</span>
+        </h1>
+        <p th:if="${owner != null}">
+            <i class="fas fa-user me-2"></i><span th:text="#{pet.owner}">Owner</span>: <span th:text="${owner.firstName + ' ' + owner.lastName}">Owner Name</span>
+        </p>
+    </div>
+</div>
+
+<main class="container flex-grow-1 py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <!-- Back Button -->
+            <a th:href="@{/owners/{ownerId}(ownerId=${owner.id})}" class="btn btn-secondary mb-4">
+                <i class="fas fa-arrow-left me-2"></i><span th:text="#{pet.backToOwner}">Back to Owner</span>
+            </a>
+
+            <!-- Form Card -->
+            <div class="form-container animate-fade-in-up">
+                <div class="text-center mb-4">
+                    <div class="feature-icon gradient-2 mx-auto mb-3">
+                        <i class="fas fa-paw"></i>
+                    </div>
+                    <h4 th:text="${isNew} ? #{pet.registerNew} : #{pet.updateInfo}">Pet Form</h4>
+                </div>
+
+                <div th:if="${error}" class="alert alert-danger mb-4">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <span th:text="${error}">Error message</span>
+                </div>
+
+                <form th:action="${isNew} ? @{/owners/{ownerId}/pets/new(ownerId=${owner.id})} : @{/owners/{ownerId}/pets/{petId}/edit(ownerId=${owner.id}, petId=${pet.id})}" 
+                      method="post" class="needs-validation" novalidate>
+                    
+                    <div class="mb-4">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-tag me-2 text-primary"></i><span th:text="#{pet.name}">Pet Name</span>
+                        </label>
+                        <input type="text" class="form-control" id="name" name="name"
+                               th:value="${pet != null ? pet.name : ''}" 
+                               th:placeholder="#{placeholder.petName}" required>
+                        <div class="invalid-feedback" th:text="#{validation.petName.required}">Pet name is required.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="birthDate" class="form-label">
+                            <i class="fas fa-birthday-cake me-2 text-primary"></i><span th:text="#{pet.birthDate}">Birth Date</span>
+                        </label>
+                        <input type="date" class="form-control" id="birthDate" name="birthDate"
+                               th:value="${pet != null ? pet.birthDate : ''}" required>
+                        <div class="invalid-feedback" th:text="#{validation.birthDate.required}">Birth date is required.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="typeId" class="form-label">
+                            <i class="fas fa-paw me-2 text-primary"></i><span th:text="#{pet.type}">Pet Type</span>
+                        </label>
+                        <select class="form-select" id="typeId" name="typeId" required>
+                            <option value="" th:text="#{pet.selectType}">Select a type...</option>
+                            <option th:each="type : ${types}" 
+                                    th:value="${type.id}" 
+                                    th:text="${type.name}"
+                                    th:selected="${pet != null and pet.typeId != null and pet.typeId == type.id}">Type</option>
+                        </select>
+                        <div class="invalid-feedback" th:text="#{validation.petType.required}">Please select a pet type.</div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-primary btn-lg flex-grow-1">
+                            <i th:class="${isNew} ? 'fas fa-plus me-2' : 'fas fa-save me-2'"></i>
+                            <span th:text="${isNew} ? #{button.addPet} : #{button.update}">Submit</span>
+                        </button>
+                        <a th:href="@{/owners/{ownerId}(ownerId=${owner.id})}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-times me-2"></i><span th:text="#{button.cancel}">Cancel</span>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script>
+    (function () {
+        'use strict';
+        var forms = document.querySelectorAll('.needs-validation');
+        Array.prototype.slice.call(forms).forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+</script>
+
+</body>
+</html>

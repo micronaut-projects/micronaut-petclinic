@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!-- Head Fragment -->
+<head th:fragment="head">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Clinic - Modern Pet Care Management</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" th:href="@{/resources/css/petclinic.css}">
+</head>
+
+<!-- Navigation Fragment -->
+<nav th:fragment="navigation" class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/}">
+            <i class="fas fa-paw"></i>
+            <span th:text="#{app.title}">PetClinic</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/}">
+                        <i class="fas fa-home"></i> <span th:text="#{nav.home}">Home</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/owners/find}">
+                        <i class="fas fa-search"></i> <span th:text="#{nav.findOwners}">Find Owners</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/vets}">
+                        <i class="fas fa-user-md"></i> <span th:text="#{nav.veterinarians}">Veterinarians</span>
+                    </a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-globe"></i> 
+                        <span th:if="${#locale.toString() == 'en'}" th:text="#{lang.en}">English</span>
+                        <span th:if="${#locale.toString() == 'es'}" th:text="#{lang.es}">Español</span>
+                        <span th:if="${#locale.toString() == 'de'}" th:text="#{lang.de}">Deutsch</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+                        <li><a class="dropdown-item" th:href="@{/locale(lang='en')}" th:text="#{lang.en}">English</a></li>
+                        <li><a class="dropdown-item" th:href="@{/locale(lang='es')}" th:text="#{lang.es}">Español</a></li>
+                        <li><a class="dropdown-item" th:href="@{/locale(lang='de')}" th:text="#{lang.de}">Deutsch</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Footer Fragment -->
+<footer th:fragment="footer" class="footer">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-4 mb-md-0">
+                <h5><i class="fas fa-paw me-2"></i><span th:text="#{footer.about}">PetClinic</span></h5>
+                <p class="mb-0" th:text="#{footer.description}">Modern pet care management system built with Micronaut Framework.</p>
+            </div>
+            <div class="col-md-4 mb-4 mb-md-0">
+                <h5 th:text="#{footer.quickLinks}">Quick Links</h5>
+                <ul class="list-unstyled mb-0">
+                    <li><a th:href="@{/}"><i class="fas fa-chevron-right me-2"></i><span th:text="#{nav.home}">Home</span></a></li>
+                    <li><a th:href="@{/owners/find}"><i class="fas fa-chevron-right me-2"></i><span th:text="#{nav.findOwners}">Find Owners</span></a></li>
+                    <li><a th:href="@{/vets}"><i class="fas fa-chevron-right me-2"></i><span th:text="#{nav.veterinarians}">Veterinarians</span></a></li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h5 th:text="#{footer.poweredBy}"></h5>
+                <p class="mb-2">
+                    <a href="https://micronaut.io" target="_blank">
+                        <i class="fas fa-bolt me-2"></i><span th:text="#{footer.micronautFramework}"></span>
+                    </a>
+                </p>
+                <p class="mb-0">
+                    <a href="https://github.com/micronaut-projects/micronaut-core" target="_blank">
+                        <i class="fab fa-github me-2"></i><span th:text="#{footer.viewOnGitHub}"></span>
+                    </a>
+                </p>
+            </div>
+        </div>
+        <div class="footer-bottom text-center">
+            <p class="mb-0" th:text="#{footer.copyright}"></p>
+        </div>
+    </div>
+</footer>
+
+<!-- Scripts Fragment -->
+<div th:fragment="scripts">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</div>
+
+</html>
