@@ -1,0 +1,16 @@
+# PostgreSQL Configuration Profile
+datasources:
+  default:
+    url: jdbc:postgresql://localhost:5432/petclinic
+    username: petclinic
+    password: petclinic
+    driver-class-name: org.postgresql.Driver
+    dialect: POSTGRES
+
+jpa:
+  default:
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: update
+        dialect: org.hibernate.dialect.PostgreSQLDialect

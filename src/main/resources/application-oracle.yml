@@ -1,0 +1,15 @@
+datasources:
+  default:
+    url: jdbc:oracle:thin:@localhost:1521:ORCL
+    username: petclinic
+    password: petclinic
+    driver-class-name: oracle.jdbc.OracleDriver
+    dialect: ORACLE
+
+jpa:
+  default:
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: update
+        dialect: org.hibernate.dialect.OracleDialect
