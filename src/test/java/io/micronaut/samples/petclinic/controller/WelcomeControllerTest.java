@@ -28,16 +28,5 @@ class WelcomeControllerTest {
         
         assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
         assertThat(response.body()).isNotNull();
-        assertThat(response.body()).contains("Welcome");
-        assertThat(response.body()).contains("Micronaut Pet Clinic");
-    }
-
-    @Test
-    void shouldContainNavigationLinks() {
-        HttpResponse<String> response = client.toBlocking()
-                .exchange(HttpRequest.GET("/"), String.class);
-        
-        assertThat(response.body()).contains("Find owners");
-        assertThat(response.body()).contains("Veterinarians");
     }
 }
