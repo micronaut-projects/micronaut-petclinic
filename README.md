@@ -60,6 +60,14 @@ docker-compose --profile mysql up
 docker-compose --profile postgres up
 ```
 
+### Oracle
+
+```bash
+docker-compose --profile oracle up
+```
+
+> **Note:** The default configuration uses an ARM64 image for Apple Silicon Macs. For x86/AMD64 machines, update the image in `docker-compose.yml` to `container-registry.oracle.com/database/free:latest`.
+
 ---
 
 ## Docker Compose
@@ -73,12 +81,16 @@ The `docker-compose.yml` file handles everything automatically:
 To stop:
 ```bash
 # Press Ctrl+C, then:
-docker-compose --profile mysql down
+docker-compose --profile mysql down    # for MySQL
+docker-compose --profile postgres down # for PostgreSQL
+docker-compose --profile oracle down   # for Oracle
 ```
 
 To remove data volumes:
 ```bash
 docker-compose --profile mysql down -v
+docker-compose --profile postgres down -v
+docker-compose --profile oracle down -v
 ```
 
 ---
@@ -103,7 +115,7 @@ If you have GraalVM installed:
 # Build native executable
 ./mvnw package -Pnative
 
-# Run (starts in ~50ms)
+# Run
 ./target/micronaut-petclinic
 ```
 
@@ -168,13 +180,16 @@ src/main/resources/
 
 ## Configuration Files
 
-- `application.yml` - Main configuration
+- `application.yml` - Main configuration (H2 default)
 - `application-mysql.yml` - MySQL settings
 - `application-postgres.yml` - PostgreSQL settings
+- `application-oracle.yml` - Oracle settings
 
 To use a specific database locally:
 ```bash
-export MICRONAUT_ENVIRONMENTS=mysql
+export MICRONAUT_ENVIRONMENTS=mysql    # for MySQL
+export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
+export MICRONAUT_ENVIRONMENTS=oracle   # for Oracle
 ./mvnw mn:run
 ```
 
@@ -223,18 +238,30 @@ See [MIGRATION.md](docs/MIGRATION.md) for detailed comparisons and examples.
 
 ## Troubleshooting
 
-### Application won't start with MySQL/PostgreSQL
+### Application won't start with MySQL/PostgreSQL/Oracle
 
 Make sure the database is running before starting the app. With docker-compose, this is handled automatically. If running manually:
 
 ```bash
 # Start database first
 docker-compose --profile mysql up -d mysql
+docker-compose --profile postgres up -d postgres
+docker-compose --profile oracle up -d oracle
 
-# Wait 10 seconds, then start app
-export MICRONAUT_ENVIRONMENTS=mysql
+# Wait for database to be ready (10s for MySQL/PostgreSQL, longer for Oracle)
+export MICRONAUT_ENVIRONMENTS=mysql  # or postgres, oracle
 ./mvnw mn:run
 ```
+
+### Oracle-specific issues
+
+**Image architecture mismatch:** The default Oracle image is for ARM64 (Apple Silicon). For x86/AMD64:
+```yaml
+# In docker-compose.yml, change:
+image: container-registry.oracle.com/database/free:latest
+```
+
+**Oracle takes long to start:** Oracle Free needs 2-3 minutes on first startup. The healthcheck waits for it automatically.
 
 ### Port 8080 already in use
 

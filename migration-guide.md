@@ -376,6 +376,7 @@ spring.jpa.hibernate.ddl-auto=update
 
 ### Micronaut (application.yml)
 
+**MySQL:**
 ```yaml
 datasources:
   default:
@@ -383,16 +384,53 @@ datasources:
     username: petclinic
     password: petclinic
     driver-class-name: com.mysql.cj.jdbc.Driver
-    
+
 jpa:
   default:
     properties:
       hibernate:
         hbm2ddl:
           auto: update
+        dialect: org.hibernate.dialect.MySQLDialect
 ```
 
-Different structure, but easy enough to convert.
+**PostgreSQL:**
+```yaml
+datasources:
+  default:
+    url: jdbc:postgresql://localhost:5432/petclinic
+    username: petclinic
+    password: petclinic
+    driver-class-name: org.postgresql.Driver
+
+jpa:
+  default:
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: update
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+```
+
+**Oracle:**
+```yaml
+datasources:
+  default:
+    url: jdbc:oracle:thin:@localhost:1521/FREEPDB1
+    username: petclinic
+    password: petclinic
+    driver-class-name: oracle.jdbc.OracleDriver
+
+jpa:
+  default:
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: update
+        dialect: org.hibernate.dialect.OracleDialect
+```
+
+Different structure, but easy enough to convert. Each database has its own profile file (`application-mysql.yml`, `application-postgres.yml`, `application-oracle.yml`).
 
 ---
 

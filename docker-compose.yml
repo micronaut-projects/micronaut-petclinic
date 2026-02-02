@@ -77,6 +77,41 @@ services:
         condition: service_healthy
     profiles:
       - postgres
+
+  oracle:
+    image: container-registry.oracle.com/database/free:23.26.0.0-lite-arm64
+    ports:
+      - "1521:1521"
+    environment:
+      ORACLE_PWD: petclinic
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+      - ./docker/oracle:/opt/oracle/scripts/startup
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'SELECT 1 FROM DUAL;' | sqlplus -s petclinic/petclinic@localhost:1521/FREEPDB1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 20
+      start_period: 300s
+    profiles:
+      - oracle
+
+  app-oracle:
+    build:
+      context: .
+      target: jvm
+    ports:
+      - "8080:8080"
+    environment:
+      - MICRONAUT_ENVIRONMENTS=oracle
+      - DATASOURCES_DEFAULT_URL=jdbc:oracle:thin:@oracle:1521/FREEPDB1
+    depends_on:
+      oracle:
+        condition: service_healthy
+    profiles:
+      - oracle
+
 volumes:
   mysql_data:
   postgres_data:
+  oracle_data:
