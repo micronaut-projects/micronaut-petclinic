@@ -29,7 +29,7 @@ A veterinary clinic management system where you can:
 
 ```bash
 # Clone and run with in-memory H2 database
-git clone https://github.com/ayoube-ait/micronaut-petclinic.git
+git clone https://github.com/micronaut-projects/micronaut-petclinic.git
 cd micronaut-petclinic
 ./mvnw mn:run
 ```
@@ -40,13 +40,13 @@ Open http://localhost:8080
 
 ## Running with Different Databases
 
-### H2 (In-Memory - Default)
-
-No setup needed. Data is lost when you stop the application.
+### Oracle
 
 ```bash
-./mvnw mn:run
+docker-compose --profile oracle up
 ```
+
+> **Note:** The default configuration uses an ARM64 image for Apple Silicon Macs. For x86/AMD64 machines, update the image in `docker-compose.yml` to `container-registry.oracle.com/database/free:latest`.
 
 ### MySQL
 
@@ -60,13 +60,13 @@ docker-compose --profile mysql up
 docker-compose --profile postgres up
 ```
 
-### Oracle
+### H2 (In-Memory - Default)
+
+No setup needed. Data is lost when you stop the application.
 
 ```bash
-docker-compose --profile oracle up
+./mvnw mn:run
 ```
-
-> **Note:** The default configuration uses an ARM64 image for Apple Silicon Macs. For x86/AMD64 machines, update the image in `docker-compose.yml` to `container-registry.oracle.com/database/free:latest`.
 
 ---
 
@@ -80,17 +80,16 @@ The `docker-compose.yml` file handles everything automatically:
 
 To stop:
 ```bash
-# Press Ctrl+C, then:
+docker-compose --profile oracle down   # for Oracle
 docker-compose --profile mysql down    # for MySQL
 docker-compose --profile postgres down # for PostgreSQL
-docker-compose --profile oracle down   # for Oracle
 ```
 
 To remove data volumes:
 ```bash
+docker-compose --profile oracle down -v
 docker-compose --profile mysql down -v
 docker-compose --profile postgres down -v
-docker-compose --profile oracle down -v
 ```
 
 ---
@@ -181,15 +180,15 @@ src/main/resources/
 ## Configuration Files
 
 - `application.yml` - Main configuration (H2 default)
+- `application-oracle.yml` - Oracle settings
 - `application-mysql.yml` - MySQL settings
 - `application-postgres.yml` - PostgreSQL settings
-- `application-oracle.yml` - Oracle settings
 
 To use a specific database locally:
 ```bash
+export MICRONAUT_ENVIRONMENTS=oracle   # for Oracle
 export MICRONAUT_ENVIRONMENTS=mysql    # for MySQL
 export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
-export MICRONAUT_ENVIRONMENTS=oracle   # for Oracle
 ./mvnw mn:run
 ```
 
@@ -232,24 +231,24 @@ Main differences you'll encounter:
 4. **Templates**: Use OGNL expressions instead of SpEL
 5. **Configuration**: Use YAML format, different property names
 
-See [MIGRATION.md](docs/MIGRATION.md) for detailed comparisons and examples.
+See [migration-guide.md](migration-guide.md) for detailed comparisons and examples.
 
 ---
 
 ## Troubleshooting
 
-### Application won't start with MySQL/PostgreSQL/Oracle
+### Application won't start with Oracle/MySQL/PostgreSQL
 
 Make sure the database is running before starting the app. With docker-compose, this is handled automatically. If running manually:
 
 ```bash
 # Start database first
+docker-compose --profile oracle up -d oracle
 docker-compose --profile mysql up -d mysql
 docker-compose --profile postgres up -d postgres
-docker-compose --profile oracle up -d oracle
 
-# Wait for database to be ready (10s for MySQL/PostgreSQL, longer for Oracle)
-export MICRONAUT_ENVIRONMENTS=mysql  # or postgres, oracle
+# Wait for database to be ready (longer for Oracle, 10s for MySQL/PostgreSQL)
+export MICRONAUT_ENVIRONMENTS=oracle  # or mysql, postgres
 ./mvnw mn:run
 ```
 
