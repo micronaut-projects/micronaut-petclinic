@@ -78,10 +78,13 @@ public class PetController {
 
         Pet pet = form.toPet();
 
-        // Set pet type
+        // Set pet type - validation ensures typeId is not null
         if (form.getTypeId() != null) {
             Optional<PetType> petType = clinicService.findPetTypeById(form.getTypeId());
-            petType.ifPresent(pet::setType);
+            if (petType.isEmpty()) {
+                return HttpResponse.badRequest("Invalid pet type");
+            }
+            pet.setType(petType.get());
         }
 
         owner.get().addPet(pet);
@@ -140,10 +143,13 @@ public class PetController {
 
         Pet pet = form.updatePet(existingPet.get());
 
-        // Set pet type
+        // Set pet type - validation ensures typeId is not null
         if (form.getTypeId() != null) {
             Optional<PetType> petType = clinicService.findPetTypeById(form.getTypeId());
-            petType.ifPresent(pet::setType);
+            if (petType.isEmpty()) {
+                return HttpResponse.badRequest("Invalid pet type");
+            }
+            pet.setType(petType.get());
         }
 
         clinicService.savePet(pet);
