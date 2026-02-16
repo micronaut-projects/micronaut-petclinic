@@ -42,7 +42,7 @@
             <div class="owner-card animate-fade-in-up" th:style="'animation-delay: ' + ${iterStat.index * 0.1} + 's'">
                 <div class="d-flex align-items-start mb-3">
                     <div class="owner-avatar me-3">
-                        <span th:text="${owner.firstName.substring(0,1) + owner.lastName.substring(0,1)}">JD</span>
+                        <span th:text="${(owner.firstName != null and owner.firstName.length() > 0 ? owner.firstName.substring(0,1) : '?') + (owner.lastName != null and owner.lastName.length() > 0 ? owner.lastName.substring(0,1) : '?')}">JD</span>
                     </div>
                     <div class="flex-grow-1">
                         <h5 class="mb-1">

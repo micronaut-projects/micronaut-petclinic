@@ -41,12 +41,17 @@ public class LocaleController {
         Cookie localeCookie = Cookie.of(LOCALE_COOKIE_NAME, validLang)
                 .maxAge(COOKIE_MAX_AGE)
                 .path("/")
-                .httpOnly(false);
+                .httpOnly(true);
 
         // Get referer from HTTP header, default to home page
         Optional<String> referer = request.getHeaders().get("Referer").describeConstable();
         String redirectUrl = referer.orElse("/");
-        
+
+        // Only allow internal redirects (same origin or relative paths)
+        if (!isInternalUrl(redirectUrl)) {
+            redirectUrl = "/";
+        }
+
         // If referer is the locale endpoint itself, redirect to home
         if (redirectUrl.contains("/locale")) {
             redirectUrl = "/";
@@ -54,5 +59,27 @@ public class LocaleController {
 
         return HttpResponse.redirect(URI.create(redirectUrl))
                 .cookie(localeCookie);
+    }
+
+    /**
+     * Check if a URL is internal (safe for redirect).
+     * Only allows relative paths or URLs without a host component.
+     *
+     * @param url the URL to check
+     * @return true if the URL is safe for internal redirect
+     */
+    private boolean isInternalUrl(String url) {
+        if (url == null || url.isBlank()) {
+            return false;
+        }
+        // Relative paths are safe
+        if (url.startsWith("/") && !url.startsWith("//")) {
+            return true;
+        }
+        // Reject anything that looks like an absolute URL
+        if (url.contains("://") || url.startsWith("//")) {
+            return false;
+        }
+        return false;
     }
 }

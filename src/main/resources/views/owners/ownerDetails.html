@@ -10,7 +10,7 @@
     <div class="container">
         <div class="d-flex align-items-center">
             <div class="detail-avatar me-4">
-                <span th:text="${owner.firstName.substring(0,1) + owner.lastName.substring(0,1)}">JD</span>
+                <span th:text="${(owner.firstName != null and owner.firstName.length() > 0 ? owner.firstName.substring(0,1) : '?') + (owner.lastName != null and owner.lastName.length() > 0 ? owner.lastName.substring(0,1) : '?')}">JD</span>
             </div>
             <div>
                 <h1 th:text="${owner.firstName + ' ' + owner.lastName}">Owner Name</h1>

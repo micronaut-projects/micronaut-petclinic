@@ -102,6 +102,9 @@ public class Owner extends Person {
      * @return the pet, or null if not found
      */
     public Pet getPet(String name, boolean ignoreNew) {
+        if (name == null || name.isBlank()) {
+            return null;
+        }
         String lowerCaseName = name.toLowerCase();
         for (Pet pet : this.pets) {
             if (!ignoreNew || !pet.isNew()) {
