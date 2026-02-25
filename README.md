@@ -20,7 +20,7 @@ A veterinary clinic management system where you can:
 ## Requirements
 
 - Java 21 or higher
-- Maven 3.8+ (or use the included wrapper)
+- Gradle 8+ (or use the included wrapper)
 - Docker (optional, for databases)
 
 ---
@@ -31,7 +31,7 @@ A veterinary clinic management system where you can:
 # Clone and run with in-memory H2 database
 git clone https://github.com/micronaut-projects/micronaut-petclinic.git
 cd micronaut-petclinic
-./mvnw mn:run
+./gradlew run
 ```
 
 Open http://localhost:8080
@@ -65,7 +65,7 @@ docker-compose --profile postgres up
 No setup needed. Data is lost when you stop the application.
 
 ```bash
-./mvnw mn:run
+./gradlew run
 ```
 
 ---
@@ -98,10 +98,10 @@ docker-compose --profile postgres down -v
 
 ```bash
 # Build
-./mvnw package
+./gradlew build
 
 # Run
-java -jar target/micronaut-petclinic-*.jar
+java -jar build/libs/micronaut-petclinic-*.jar
 ```
 
 ---
@@ -112,10 +112,10 @@ If you have GraalVM installed:
 
 ```bash
 # Build native executable
-./mvnw package -Pnative
+./gradlew nativeCompile
 
 # Run
-./target/micronaut-petclinic
+./build/native/nativeCompile/micronaut-petclinic
 ```
 
 ---
@@ -189,7 +189,7 @@ To use a specific database locally:
 export MICRONAUT_ENVIRONMENTS=oracle   # for Oracle
 export MICRONAUT_ENVIRONMENTS=mysql    # for MySQL
 export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
-./mvnw mn:run
+./gradlew run
 ```
 
 ---
@@ -210,13 +210,13 @@ export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
 
 ```bash
 # Run all tests
-./mvnw test
+./gradlew test
 
 # Run tests with coverage
-./mvnw test jacoco:report
+./gradlew test jacocoTestReport
 
 # Run integration tests
-./mvnw verify
+./gradlew check
 ```
 
 ---
@@ -249,7 +249,7 @@ docker-compose --profile postgres up -d postgres
 
 # Wait for database to be ready (longer for Oracle, 10s for MySQL/PostgreSQL)
 export MICRONAUT_ENVIRONMENTS=oracle  # or mysql, postgres
-./mvnw mn:run
+./gradlew run
 ```
 
 ### Oracle-specific issues
@@ -270,7 +270,7 @@ lsof -i :8080
 
 # Kill it or use a different port
 export MICRONAUT_SERVER_PORT=8081
-./mvnw mn:run
+./gradlew run
 ```
 
 ### Database connection errors

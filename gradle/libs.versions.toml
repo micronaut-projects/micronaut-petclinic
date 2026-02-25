@@ -1,0 +1,45 @@
+[versions]
+micronaut-platform = "4.10.2"
+ojdbc = "23.9.0.25.07"
+mysql = "9.3.0"
+postgresql = "42.7.7"
+logback = "1.5.21"
+graalvm-native = "0.11.3"
+
+[libraries]
+micronaut-platform-parent = { module = "io.micronaut.platform:micronaut-parent", version.ref = "micronaut-platform" }
+
+micronaut-http-server-netty = { module = "io.micronaut:micronaut-http-server-netty" }
+micronaut-http-client = { module = "io.micronaut:micronaut-http-client" }
+micronaut-serde-jackson = { module = "io.micronaut.serde:micronaut-serde-jackson" }
+micronaut-views-thymeleaf = { module = "io.micronaut.views:micronaut-views-thymeleaf" }
+micronaut-data-hibernate-jpa = { module = "io.micronaut.data:micronaut-data-hibernate-jpa" }
+micronaut-jdbc-hikari = { module = "io.micronaut.sql:micronaut-jdbc-hikari" }
+micronaut-validation = { module = "io.micronaut.validation:micronaut-validation" }
+micronaut-cache-caffeine = { module = "io.micronaut.cache:micronaut-cache-caffeine" }
+micronaut-inject-java = { module = "io.micronaut:micronaut-inject-java" }
+micronaut-data-processor = { module = "io.micronaut.data:micronaut-data-processor" }
+micronaut-validation-processor = { module = "io.micronaut.validation:micronaut-validation-processor" }
+micronaut-serde-processor = { module = "io.micronaut.serde:micronaut-serde-processor" }
+micronaut-test-junit5 = { module = "io.micronaut.test:micronaut-test-junit5" }
+
+jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api" }
+h2 = { module = "com.h2database:h2" }
+ojdbc11 = { module = "com.oracle.database.jdbc:ojdbc11", version.ref = "ojdbc" }
+mysql-connector-j = { module = "com.mysql:mysql-connector-j", version.ref = "mysql" }
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+snakeyaml = { module = "org.yaml:snakeyaml" }
+
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api" }
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+mockito-core = { module = "org.mockito:mockito-core" }
+assertj-core = { module = "org.assertj:assertj-core" }
+testcontainers = { module = "org.testcontainers:testcontainers" }
+testcontainers-mysql = { module = "org.testcontainers:mysql" }
+testcontainers-postgresql = { module = "org.testcontainers:postgresql" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter" }
+
+[plugins]
+graalvm-native = { id = "org.graalvm.buildtools.native", version.ref = "graalvm-native" }
