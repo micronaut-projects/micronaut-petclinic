@@ -1,6 +1,7 @@
 # Build output
 target/
 build/
+bin/
 
 # IDE files
 .idea/
@@ -9,6 +10,7 @@ build/
 *.iws
 .project
 .classpath
+.factorypath
 .settings/
 .vscode/
 *.swp

@@ -34,12 +34,7 @@ snakeyaml = { module = "org.yaml:snakeyaml" }
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
-mockito-core = { module = "org.mockito:mockito-core" }
 assertj-core = { module = "org.assertj:assertj-core" }
-testcontainers = { module = "org.testcontainers:testcontainers" }
-testcontainers-mysql = { module = "org.testcontainers:mysql" }
-testcontainers-postgresql = { module = "org.testcontainers:postgresql" }
-testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter" }
 
 [plugins]
 graalvm-native = { id = "org.graalvm.buildtools.native", version.ref = "graalvm-native" }
