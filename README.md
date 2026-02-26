@@ -46,7 +46,8 @@ Open http://localhost:8080
 docker-compose --profile oracle up
 ```
 
-> **Note:** The default configuration uses an ARM64 image for Apple Silicon Macs. For x86/AMD64 machines, update the image in `docker-compose.yml` to `container-registry.oracle.com/database/free:latest`.
+> **Note:** The default configuration uses `ghcr.io/gvenzl/oracle-free:slim-faststart`, which works well across common local environments.
+> The Oracle container auto-creates the `petclinic` app user via `APP_USER` and `APP_USER_PASSWORD`.
 
 ### MySQL
 
@@ -254,10 +255,9 @@ export MICRONAUT_ENVIRONMENTS=oracle  # or mysql, postgres
 
 ### Oracle-specific issues
 
-**Image architecture mismatch:** The default Oracle image is for ARM64 (Apple Silicon). For x86/AMD64:
+**Use the default image in this repo:**
 ```yaml
-# In docker-compose.yml, change:
-image: container-registry.oracle.com/database/free:latest
+image: ghcr.io/gvenzl/oracle-free:slim-faststart
 ```
 
 **Oracle takes long to start:** Oracle Free needs 2-3 minutes on first startup. The healthcheck waits for it automatically.

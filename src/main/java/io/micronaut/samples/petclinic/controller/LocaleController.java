@@ -43,19 +43,8 @@ public class LocaleController {
                 .path("/")
                 .httpOnly(true);
 
-        // Get referer from HTTP header, default to home page
-        Optional<String> referer = request.getHeaders().get("Referer").describeConstable();
-        String redirectUrl = referer.orElse("/");
-
-        // Only allow internal redirects (same origin or relative paths)
-        if (!isInternalUrl(redirectUrl)) {
-            redirectUrl = "/";
-        }
-
-        // If referer is the locale endpoint itself, redirect to home
-        if (redirectUrl.contains("/locale")) {
-            redirectUrl = "/";
-        }
+        Optional<String> referer = Optional.ofNullable(request.getHeaders().get("Referer"));
+        String redirectUrl = resolveRedirectUrl(referer.orElse(null));
 
         return HttpResponse.redirect(URI.create(redirectUrl))
                 .cookie(localeCookie);
@@ -68,18 +57,35 @@ public class LocaleController {
      * @param url the URL to check
      * @return true if the URL is safe for internal redirect
      */
-    private boolean isInternalUrl(String url) {
-        if (url == null || url.isBlank()) {
-            return false;
+    private String resolveRedirectUrl(String referer) {
+        if (referer == null || referer.isBlank()) {
+            return "/";
         }
-        // Relative paths are safe
-        if (url.startsWith("/") && !url.startsWith("//")) {
-            return true;
+
+        if (referer.startsWith("/") && !referer.startsWith("//")) {
+            return referer.startsWith("/locale") ? "/" : referer;
         }
-        // Reject anything that looks like an absolute URL
-        if (url.contains("://") || url.startsWith("//")) {
-            return false;
+
+        try {
+            URI uri = URI.create(referer);
+            String path = uri.getRawPath();
+            if (path == null || path.isBlank() || !path.startsWith("/")) {
+                return "/";
+            }
+            if (path.startsWith("/locale")) {
+                return "/";
+            }
+
+            StringBuilder redirect = new StringBuilder(path);
+            if (uri.getRawQuery() != null && !uri.getRawQuery().isBlank()) {
+                redirect.append('?').append(uri.getRawQuery());
+            }
+            if (uri.getRawFragment() != null && !uri.getRawFragment().isBlank()) {
+                redirect.append('#').append(uri.getRawFragment());
+            }
+            return redirect.toString();
+        } catch (IllegalArgumentException e) {
+            return "/";
         }
-        return false;
     }
 }
