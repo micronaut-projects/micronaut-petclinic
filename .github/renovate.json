@@ -20,7 +20,6 @@
       "automerge": true
     },
     {
-      "matchManagers": ["gradle"],
       "matchPackageNames": ["io.micronaut.platform:micronaut-parent"],
       "groupName": "micronaut platform"
     }

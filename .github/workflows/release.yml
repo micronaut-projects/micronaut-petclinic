@@ -7,6 +7,7 @@ on:
       - "[0-9]*.[0-9]*.x"
     paths:
       - gradle/libs.versions.toml
+      - pom.xml
 
 permissions:
   contents: write
@@ -23,38 +24,67 @@ jobs:
       - name: Fetch tags
         run: git fetch --tags --force
 
-      - name: Read Micronaut version
+      - name: Read and validate Micronaut version
         id: version
         env:
           GITHUB_EVENT_BEFORE: ${{ github.event.before }}
         run: |
-          python - <<'PY' > /tmp/version.txt
+          python3 - <<'PY' > /tmp/version.txt
           import os
           import subprocess
-          from pathlib import Path
           import tomllib
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
 
 
-          def read_micronaut_version(path):
+          def read_gradle_version(path):
               data = tomllib.loads(path.read_text())
               return data.get('versions', {}).get('micronaut-platform', '')
 
 
-          def read_micronaut_version_from_text(text):
+          def read_gradle_version_from_text(text):
               data = tomllib.loads(text)
               return data.get('versions', {}).get('micronaut-platform', '')
 
 
-          current_version = read_micronaut_version(Path('gradle/libs.versions.toml'))
-          if not current_version:
-              raise SystemExit('versions.micronaut-platform not found in gradle/libs.versions.toml')
+          def read_maven_versions(path):
+              root = ET.parse(path).getroot()
+              ns = {'m': root.tag.split('}')[0].strip('{')}
+              parent = root.findtext('m:parent/m:version', namespaces=ns)
+              prop = root.findtext('m:properties/m:micronaut.version', namespaces=ns)
+              return parent, prop
 
+
+          # Read current versions
+          gradle_version = read_gradle_version(Path('gradle/libs.versions.toml'))
+          maven_parent, maven_prop = read_maven_versions(Path('pom.xml'))
+
+          if not gradle_version:
+              raise SystemExit('micronaut-platform not found in gradle/libs.versions.toml')
+          if not maven_parent:
+              raise SystemExit('parent version not found in pom.xml')
+          if not maven_prop:
+              raise SystemExit('micronaut.version not found in pom.xml')
+
+          # Validate all three match
+          versions = {gradle_version, maven_parent, maven_prop}
+          if len(versions) != 1:
+              raise SystemExit(
+                  f'Version mismatch: gradle={gradle_version}, '
+                  f'maven parent={maven_parent}, maven property={maven_prop}'
+              )
+
+          current_version = gradle_version
+
+          # Check if version actually changed
           before = os.environ.get('GITHUB_EVENT_BEFORE', '')
           previous_version = ''
-          if before and before != '0000000000000000000000000000000000000000':
+          if before and before != '0' * 40:
               try:
-                  old_toml = subprocess.check_output(['git', 'show', f'{before}:gradle/libs.versions.toml'], text=True)
-                  previous_version = read_micronaut_version_from_text(old_toml)
+                  old_toml = subprocess.check_output(
+                      ['git', 'show', f'{before}:gradle/libs.versions.toml'], text=True
+                  )
+                  previous_version = read_gradle_version_from_text(old_toml)
               except Exception:
                   pass
 
@@ -62,7 +92,6 @@ jobs:
 
           print(f'version={current_version}')
           print(f'tag=v{current_version}')
-          print(f'current_version={current_version}')
           print(f'previous_version={previous_version}')
           print(f'version_changed={version_changed}')
           PY
