@@ -1,0 +1,27 @@
+{
+  "extends": ["config:recommended"],
+  "addLabels": ["type: dependency-upgrade"],
+  "timezone": "Europe/Prague",
+  "schedule": ["after 10pm every day"],
+  "prHourlyLimit": 1,
+  "prConcurrentLimit": 20,
+  "dependencyDashboard": true,
+  "packageRules": [
+    {
+      "matchPackageNames": ["/actions.*/"],
+      "dependencyDashboardApproval": true,
+      "matchUpdateTypes": ["patch"],
+      "matchCurrentVersion": "!/^0/",
+      "automerge": true
+    },
+    {
+      "matchUpdateTypes": ["patch"],
+      "matchCurrentVersion": "!/^0/",
+      "automerge": true
+    },
+    {
+      "matchPackageNames": ["io.micronaut.platform:micronaut-parent"],
+      "groupName": "micronaut platform"
+    }
+  ]
+}

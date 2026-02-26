@@ -1,0 +1,125 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - master
+      - "[0-9]*.[0-9]*.x"
+    paths:
+      - gradle/libs.versions.toml
+      - pom.xml
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch tags
+        run: git fetch --tags --force
+
+      - name: Read and validate Micronaut version
+        id: version
+        env:
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+        run: |
+          python3 - <<'PY' > /tmp/version.txt
+          import os
+          import subprocess
+          import tomllib
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+
+          def read_gradle_version(path):
+              data = tomllib.loads(path.read_text())
+              return data.get('versions', {}).get('micronaut-platform', '')
+
+
+          def read_gradle_version_from_text(text):
+              data = tomllib.loads(text)
+              return data.get('versions', {}).get('micronaut-platform', '')
+
+
+          def read_maven_versions(path):
+              root = ET.parse(path).getroot()
+              ns = {'m': root.tag.split('}')[0].strip('{')}
+              parent = root.findtext('m:parent/m:version', namespaces=ns)
+              prop = root.findtext('m:properties/m:micronaut.version', namespaces=ns)
+              return parent, prop
+
+
+          # Read current versions
+          gradle_version = read_gradle_version(Path('gradle/libs.versions.toml'))
+          maven_parent, maven_prop = read_maven_versions(Path('pom.xml'))
+
+          if not gradle_version:
+              raise SystemExit('micronaut-platform not found in gradle/libs.versions.toml')
+          if not maven_parent:
+              raise SystemExit('parent version not found in pom.xml')
+          if not maven_prop:
+              raise SystemExit('micronaut.version not found in pom.xml')
+
+          # Validate all three match
+          versions = {gradle_version, maven_parent, maven_prop}
+          if len(versions) != 1:
+              raise SystemExit(
+                  f'Version mismatch: gradle={gradle_version}, '
+                  f'maven parent={maven_parent}, maven property={maven_prop}'
+              )
+
+          current_version = gradle_version
+
+          # Check if version actually changed
+          before = os.environ.get('GITHUB_EVENT_BEFORE', '')
+          previous_version = ''
+          if before and before != '0' * 40:
+              try:
+                  old_toml = subprocess.check_output(
+                      ['git', 'show', f'{before}:gradle/libs.versions.toml'], text=True
+                  )
+                  previous_version = read_gradle_version_from_text(old_toml)
+              except Exception:
+                  pass
+
+          version_changed = str(previous_version != current_version).lower()
+
+          print(f'version={current_version}')
+          print(f'tag=v{current_version}')
+          print(f'previous_version={previous_version}')
+          print(f'version_changed={version_changed}')
+          PY
+          echo "version=$(grep '^version=' /tmp/version.txt | cut -d= -f2)" >> "$GITHUB_OUTPUT"
+          echo "tag=$(grep '^tag=' /tmp/version.txt | cut -d= -f2)" >> "$GITHUB_OUTPUT"
+          echo "version_changed=$(grep '^version_changed=' /tmp/version.txt | cut -d= -f2)" >> "$GITHUB_OUTPUT"
+
+      - name: Check if tag already exists
+        id: check
+        if: steps.version.outputs.version_changed == 'true'
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          if git rev-parse "refs/tags/${TAG}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create tag
+        if: steps.version.outputs.version_changed == 'true' && steps.check.outputs.exists != 'true'
+        run: |
+          git tag "${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+
+      - name: Create GitHub Release
+        if: steps.version.outputs.version_changed == 'true' && steps.check.outputs.exists != 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          generate_release_notes: true
