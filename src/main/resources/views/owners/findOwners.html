@@ -83,16 +83,16 @@
             <h5 class="mb-3"><i class="fas fa-lightbulb text-warning me-2"></i><span th:text="#{search.tips}">Search Tips</span></h5>
             <div class="row">
                 <div class="col-md-4">
-                    <p class="mb-1"><strong>Partial Match</strong></p>
-                    <p class="text-muted small">Enter partial last name to find matches (e.g., "Dav" finds "Davis")</p>
+                    <p class="mb-1"><strong th:text="#{search.tip.partial.title}">Partial Match</strong></p>
+                    <p class="text-muted small" th:text="#{search.tip.partial.desc}">Enter partial last name to find matches (e.g., "Dav" finds "Davis")</p>
                 </div>
                 <div class="col-md-4">
-                    <p class="mb-1"><strong>Empty Search</strong></p>
-                    <p class="text-muted small">Leave the field empty and click Search to see all owners</p>
+                    <p class="mb-1"><strong th:text="#{search.tip.empty.title}">Empty Search</strong></p>
+                    <p class="text-muted small" th:text="#{search.tip.empty.desc}">Leave the field empty and click Search to see all owners</p>
                 </div>
                 <div class="col-md-4">
-                    <p class="mb-1"><strong>Case Insensitive</strong></p>
-                    <p class="text-muted small">Search is not case sensitive - "smith" finds "Smith"</p>
+                    <p class="mb-1"><strong th:text="#{search.tip.case.title}">Case Insensitive</strong></p>
+                    <p class="text-muted small" th:text="#{search.tip.case.desc}">Search is not case sensitive - "smith" finds "Smith"</p>
                 </div>
             </div>
         </div>
