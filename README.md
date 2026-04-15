@@ -1,12 +1,16 @@
 # Micronaut Pet Clinic
 
-A Micronaut implementation of the Spring Pet Clinic sample application.
+Micronaut PetClinic sample application built with Micronaut 4.
+
+A modern **Micronaut PetClinic example** and implementation of the classic Spring PetClinic, demonstrating how to build fast, cloud-native Java applications using the Micronaut framework.
 
 ---
 
-## What This Is
+## What is Micronaut PetClinic?
 
-A veterinary clinic management system where you can:
+Micronaut PetClinic is a **reference Micronaut application** that showcases how to build a real-world veterinary clinic system using Java and Micronaut.
+
+This Micronaut PetClinic app allows you to:
 
 - Manage pet owners (create, update, search)
 - Register pets for owners
