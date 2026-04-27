@@ -1,7 +1,8 @@
 package io.micronaut.samples.petclinic.model;
 
 import io.micronaut.serde.annotation.Serdeable;
-import jakarta.persistence.*;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
@@ -14,26 +15,23 @@ import java.util.List;
  * Entity representing a pet.
  * A pet belongs to an owner and has a type.
  */
-@Entity
-@Table(name = "pets")
+@MappedEntity("pets")
 @Serdeable
 public class Pet extends NamedEntity {
 
-    @Column(name = "birth_date")
+    @MappedProperty("birth_date")
     @NotNull
     private LocalDate birthDate;
 
-    @ManyToOne
-    @JoinColumn(name = "type_id")
+    @MappedProperty("type_id")
     @NotNull
+    private Integer typeId;
+
+    @MappedProperty("owner_id")
+    private Integer ownerId;
+
     private PetType type;
-
-    @ManyToOne
-    @JoinColumn(name = "owner_id")
     private Owner owner;
-
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "pet", fetch = FetchType.EAGER, orphanRemoval = true)
-    @OrderBy("date ASC")
     private List<Visit> visits = new ArrayList<>();
 
     public LocalDate getBirthDate() {
@@ -44,6 +42,7 @@ public class Pet extends NamedEntity {
         this.birthDate = birthDate;
     }
 
+    @io.micronaut.data.annotation.Transient
     public PetType getType() {
         return this.type;
     }
@@ -52,6 +51,16 @@ public class Pet extends NamedEntity {
         this.type = type;
     }
 
+
+    public Integer getTypeId() {
+        return typeId;
+    }
+
+    public void setTypeId(Integer typeId) {
+        this.typeId = typeId;
+    }
+
+    @io.micronaut.data.annotation.Transient
     public Owner getOwner() {
         return this.owner;
     }
@@ -60,15 +69,27 @@ public class Pet extends NamedEntity {
         this.owner = owner;
     }
 
+
+    public Integer getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(Integer ownerId) {
+        this.ownerId = ownerId;
+    }
+
     /**
      * Get the visits for this pet, sorted by date.
      * @return unmodifiable list of visits
      */
+    @io.micronaut.data.annotation.Transient
     public List<Visit> getVisits() {
         List<Visit> sortedVisits = new ArrayList<>(this.visits);
         sortedVisits.sort(Comparator.comparing(Visit::getDate));
         return Collections.unmodifiableList(sortedVisits);
     }
+
+
 
     /**
      * Add a visit to this pet.
@@ -77,6 +98,11 @@ public class Pet extends NamedEntity {
     public void addVisit(Visit visit) {
         this.visits.add(visit);
         visit.setPet(this);
+    }
+
+    @io.micronaut.data.annotation.Transient
+    public void setVisits(List<Visit> visits) {
+        this.visits = visits != null ? visits : new ArrayList<>();
     }
 
     @Override

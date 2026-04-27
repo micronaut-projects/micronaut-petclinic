@@ -1,23 +1,23 @@
 package io.micronaut.samples.petclinic.model;
 
 import io.micronaut.serde.annotation.Serdeable;
-import jakarta.persistence.Column;
-import jakarta.persistence.MappedSuperclass;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 import jakarta.validation.constraints.NotBlank;
 
 /**
  * Base entity class representing a person.
  * Provides first name and last name properties.
  */
-@MappedSuperclass
+@MappedEntity
 @Serdeable
 public abstract class Person extends BaseEntity {
 
-    @Column(name = "first_name")
+    @MappedProperty("first_name")
     @NotBlank
     private String firstName;
 
-    @Column(name = "last_name")
+    @MappedProperty("last_name")
     @NotBlank
     private String lastName;
 
@@ -41,6 +41,7 @@ public abstract class Person extends BaseEntity {
      * Get the full name (first name + last name).
      * @return the person's full name
      */
+    @io.micronaut.data.annotation.Transient
     public String getFullName() {
         return this.firstName + " " + this.lastName;
     }

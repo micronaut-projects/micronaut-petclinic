@@ -1,7 +1,8 @@
 package io.micronaut.samples.petclinic.model;
 
 import io.micronaut.serde.annotation.Serdeable;
-import jakarta.persistence.*;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
@@ -10,21 +11,21 @@ import java.time.LocalDate;
  * Entity representing a visit to the pet clinic.
  * A visit is associated with a pet and has a date and description.
  */
-@Entity
-@Table(name = "visits")
+@MappedEntity("visits")
 @Serdeable
 public class Visit extends BaseEntity {
 
-    @Column(name = "visit_date")
+    @MappedProperty("visit_date")
     @NotNull
     private LocalDate date;
 
-    @Column(name = "description")
+    @MappedProperty("description")
     @NotBlank
     private String description;
 
-    @ManyToOne
-    @JoinColumn(name = "pet_id")
+    @MappedProperty("pet_id")
+    private Integer petId;
+
     private Pet pet;
 
     public Visit() {
@@ -47,12 +48,14 @@ public class Visit extends BaseEntity {
         this.description = description;
     }
 
+    @io.micronaut.data.annotation.Transient
     public Pet getPet() {
         return this.pet;
     }
 
     public void setPet(Pet pet) {
         this.pet = pet;
+        this.petId = pet != null ? pet.getId() : null;
     }
 
     /**
@@ -60,7 +63,11 @@ public class Visit extends BaseEntity {
      * @return the pet ID, or null if no pet is associated
      */
     public Integer getPetId() {
-        return this.pet != null ? this.pet.getId() : null;
+        return this.petId;
+    }
+
+    public void setPetId(Integer petId) {
+        this.petId = petId;
     }
 
     @Override

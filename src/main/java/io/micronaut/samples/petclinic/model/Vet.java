@@ -1,39 +1,41 @@
 package io.micronaut.samples.petclinic.model;
 
 import io.micronaut.serde.annotation.Serdeable;
-import jakarta.persistence.*;
+import io.micronaut.data.annotation.MappedEntity;
 import java.util.*;
 
 /**
  * Entity representing a veterinarian.
  * A vet can have multiple specialties.
  */
-@Entity
-@Table(name = "vets")
+@MappedEntity("vets")
 @Serdeable
 public class Vet extends Person {
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "vet_specialties",
-            joinColumns = @JoinColumn(name = "vet_id"),
-            inverseJoinColumns = @JoinColumn(name = "specialty_id"))
-    @OrderBy("name ASC")
+    // Loaded explicitly via repository queries.
     private Set<Specialty> specialties = new LinkedHashSet<>();
 
     /**
      * Get the vet's specialties, sorted by name.
      * @return unmodifiable list of specialties
      */
+    @io.micronaut.data.annotation.Transient
     public List<Specialty> getSpecialties() {
         List<Specialty> sortedSpecialties = new ArrayList<>(this.specialties);
         sortedSpecialties.sort(Comparator.comparing(Specialty::getName));
         return Collections.unmodifiableList(sortedSpecialties);
     }
 
+    @io.micronaut.data.annotation.Transient
+    public Set<Specialty> getSpecialtiesInternal() {
+        return this.specialties;
+    }
+
     /**
      * Get the number of specialties for this vet.
      * @return the number of specialties
      */
+    @io.micronaut.data.annotation.Transient
     public int getNrOfSpecialties() {
         return this.specialties.size();
     }
@@ -58,6 +60,7 @@ public class Vet extends Person {
      * Get a comma-separated list of specialty names.
      * @return specialty names, or "none" if no specialties
      */
+    @io.micronaut.data.annotation.Transient
     public String getSpecialtiesAsString() {
         if (this.specialties.isEmpty()) {
             return "none";

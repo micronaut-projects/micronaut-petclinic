@@ -1,23 +1,29 @@
 package io.micronaut.samples.petclinic.model;
 
 import io.micronaut.serde.annotation.Serdeable;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Transient;
 import java.util.Objects;
 
 /**
  * Base entity class providing common id property and behavior.
  * All Pet Clinic domain entities extend this class.
  */
-@MappedSuperclass
+@MappedEntity
 @Serdeable
 public abstract class BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     private Integer id;
+
+    // Avoid schema generation trying to persist derived boolean property.
+    @Transient
+    public boolean isNew() {
+        return this.id == null;
+    }
 
     public Integer getId() {
         return id;
@@ -31,9 +37,6 @@ public abstract class BaseEntity {
      * Check if this entity is new (not yet persisted).
      * @return true if the entity has not been persisted yet
      */
-    public boolean isNew() {
-        return this.id == null;
-    }
 
     @Override
     public boolean equals(Object o) {

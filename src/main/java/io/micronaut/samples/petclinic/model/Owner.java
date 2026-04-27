@@ -1,7 +1,8 @@
 package io.micronaut.samples.petclinic.model;
 
 import io.micronaut.serde.annotation.Serdeable;
-import jakarta.persistence.*;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import java.util.*;
@@ -10,27 +11,25 @@ import java.util.*;
  * Entity representing a pet owner.
  * An owner can have multiple pets.
  */
-@Entity
-@Table(name = "owners")
+@MappedEntity("owners")
 @Serdeable
 public class Owner extends Person {
 
-    @Column(name = "address")
+    @MappedProperty("address")
     @NotBlank
     private String address;
 
-    @Column(name = "city")
+    @MappedProperty("city")
     @NotBlank
     private String city;
 
-    @Column(name = "telephone")
+    @MappedProperty("telephone")
     @NotBlank
     @Digits(fraction = 0, integer = 10)
     private String telephone;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "owner", fetch = FetchType.EAGER, orphanRemoval = true)
-    @OrderBy("name ASC")
-    private Set<Pet> pets = new LinkedHashSet<>();
+    // With JDBC we load children explicitly (see ClinicService); don't map a JPA graph.
+    private final Set<Pet> pets = new LinkedHashSet<>();
 
     public String getAddress() {
         return this.address;
@@ -60,11 +59,18 @@ public class Owner extends Person {
      * Get all pets belonging to this owner, sorted by name.
      * @return unmodifiable list of pets
      */
+    @io.micronaut.data.annotation.Transient
     public List<Pet> getPets() {
         List<Pet> sortedPets = new ArrayList<>(this.pets);
         sortedPets.sort(Comparator.comparing(Pet::getName));
         return Collections.unmodifiableList(sortedPets);
     }
+
+    @io.micronaut.data.annotation.Transient
+    public Set<Pet> getPetsInternal() {
+        return this.pets;
+    }
+
 
     /**
      * Add a pet to this owner.

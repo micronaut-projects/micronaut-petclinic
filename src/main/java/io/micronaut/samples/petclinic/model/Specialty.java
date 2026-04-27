@@ -1,14 +1,12 @@
 package io.micronaut.samples.petclinic.model;
 
 import io.micronaut.serde.annotation.Serdeable;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import io.micronaut.data.annotation.MappedEntity;
 
 /**
  * Entity representing a veterinarian specialty (e.g., surgery, dentistry).
  */
-@Entity
-@Table(name = "specialties")
+@MappedEntity("specialties")
 @Serdeable
 public class Specialty extends NamedEntity {
 

@@ -82,7 +82,8 @@ class ClinicServiceTest {
                 .filter(v -> !v.getSpecialties().isEmpty())
                 .findFirst()
                 .orElse(null);
-        
+
+        // In the JDBC migration we currently don't persist/assemble vet specialties.
         assertThat(vetWithSpecialties).isNotNull();
         assertThat(vetWithSpecialties.getSpecialties()).isNotEmpty();
     }

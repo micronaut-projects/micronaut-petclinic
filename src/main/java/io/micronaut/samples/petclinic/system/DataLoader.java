@@ -26,19 +26,22 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
     private final OwnerRepository ownerRepository;
     private final PetRepository petRepository;
     private final VisitRepository visitRepository;
+    private final VetSpecialtyRepository vetSpecialtyRepository;
 
     public DataLoader(VetRepository vetRepository,
                       SpecialtyRepository specialtyRepository,
                       PetTypeRepository petTypeRepository,
                       OwnerRepository ownerRepository,
                       PetRepository petRepository,
-                      VisitRepository visitRepository) {
+                      VisitRepository visitRepository,
+                      VetSpecialtyRepository vetSpecialtyRepository) {
         this.vetRepository = vetRepository;
         this.specialtyRepository = specialtyRepository;
         this.petTypeRepository = petTypeRepository;
         this.ownerRepository = ownerRepository;
         this.petRepository = petRepository;
         this.visitRepository = visitRepository;
+        this.vetSpecialtyRepository = vetSpecialtyRepository;
     }
 
     @Override
@@ -124,7 +127,14 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
         for (Specialty specialty : specialties) {
             vet.addSpecialty(specialty);
         }
-        return vetRepository.save(vet);
+        Vet saved = vetRepository.save(vet);
+        for (Specialty specialty : specialties) {
+            VetSpecialty vs = new VetSpecialty();
+            vs.setVetId(saved.getId());
+            vs.setSpecialtyId(specialty.getId());
+            vetSpecialtyRepository.save(vs);
+        }
+        return saved;
     }
 
     private PetType createPetType(String name) {
@@ -147,7 +157,9 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
         pet.setName(name);
         pet.setBirthDate(birthDate);
         pet.setType(type);
+        pet.setTypeId(type != null ? type.getId() : null);
         pet.setOwner(owner);
+        pet.setOwnerId(owner != null ? owner.getId() : null);
         return petRepository.save(pet);
     }
 
@@ -156,6 +168,7 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
         visit.setDate(date);
         visit.setDescription(description);
         visit.setPet(pet);
+        visit.setPetId(pet != null ? pet.getId() : null);
         return visitRepository.save(visit);
     }
 }
