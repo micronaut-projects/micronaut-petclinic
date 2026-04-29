@@ -1,5 +1,6 @@
 [versions]
 micronaut-platform = "4.10.2"
+micronaut-gradle-plugin = "4.6.2"
 ojdbc = "23.9.0.25.07"
 mysql = "9.3.0"
 postgresql = "42.7.7"
@@ -37,4 +38,5 @@ junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher
 assertj-core = { module = "org.assertj:assertj-core" }
 
 [plugins]
+micronaut-application = { id = "io.micronaut.application", version.ref = "micronaut-gradle-plugin" }
 graalvm-native = { id = "org.graalvm.buildtools.native", version.ref = "graalvm-native" }

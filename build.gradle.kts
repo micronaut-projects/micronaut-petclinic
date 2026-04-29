@@ -1,19 +1,23 @@
 plugins {
-    id 'java'
-    id 'application'
-    id 'jacoco'
+    alias(libs.plugins.micronaut.application)
+    jacoco
     alias(libs.plugins.graalvm.native)
 }
 
-group = providers.gradleProperty('projectGroup').orElse('io.micronaut.samples').get()
-version = providers.gradleProperty('projectVersion').orElse('1.0.0-SNAPSHOT').get()
+group = providers.gradleProperty("projectGroup").orElse("io.micronaut.samples").get()
+version = providers.gradleProperty("projectVersion").orElse("1.0.0-SNAPSHOT").get()
 
 repositories {
     mavenCentral()
 }
 
 application {
-    mainClass = 'io.micronaut.samples.petclinic.Application'
+    mainClass.set("io.micronaut.samples.petclinic.Application")
+}
+
+micronaut {
+    runtime("netty")
+    testRuntime("junit5")
 }
 
 dependencies {
@@ -55,16 +59,18 @@ dependencies {
     testImplementation(libs.assertj.core)
 }
 
-tasks.withType(JavaCompile).configureEach {
-    options.release = 21
-    options.compilerArgs += [
-        '-Amicronaut.processing.group=io.micronaut.samples',
-        '-Amicronaut.processing.module=micronaut-petclinic'
-    ]
+tasks.withType<JavaCompile>().configureEach {
+    options.release.set(21)
+    options.compilerArgs.addAll(
+        listOf(
+            "-Amicronaut.processing.group=io.micronaut.samples",
+            "-Amicronaut.processing.module=micronaut-petclinic"
+        )
+    )
 }
 
-tasks.withType(Test).configureEach {
+tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     maxParallelForks = 1
-    systemProperty 'micronaut.server.port', '-1'
+    systemProperty("micronaut.server.port", "-1")
 }
