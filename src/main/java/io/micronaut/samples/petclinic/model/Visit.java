@@ -1,7 +1,11 @@
 package io.micronaut.samples.petclinic.model;
 
 import io.micronaut.serde.annotation.Serdeable;
-import jakarta.persistence.*;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Transient;
+import static io.micronaut.data.annotation.Relation.Kind.MANY_TO_ONE;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
@@ -10,21 +14,20 @@ import java.time.LocalDate;
  * Entity representing a visit to the pet clinic.
  * A visit is associated with a pet and has a date and description.
  */
-@Entity
-@Table(name = "visits")
+@MappedEntity("visits")
 @Serdeable
 public class Visit extends BaseEntity {
 
-    @Column(name = "visit_date")
+    @MappedProperty("visit_date")
     @NotNull
     private LocalDate date;
 
-    @Column(name = "description")
+    @MappedProperty("description")
     @NotBlank
     private String description;
 
-    @ManyToOne
-    @JoinColumn(name = "pet_id")
+    @Relation(MANY_TO_ONE)
+    @MappedProperty("pet_id")
     private Pet pet;
 
     public Visit() {
@@ -59,9 +62,12 @@ public class Visit extends BaseEntity {
      * Get the pet's ID for this visit.
      * @return the pet ID, or null if no pet is associated
      */
+    @Transient
     public Integer getPetId() {
         return this.pet != null ? this.pet.getId() : null;
     }
+
+    // pet_id is managed via the Pet association
 
     @Override
     public String toString() {

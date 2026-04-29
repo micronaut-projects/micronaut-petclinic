@@ -7,10 +7,3 @@ datasources:
     driver-class-name: com.mysql.cj.jdbc.Driver
     dialect: MYSQL
 
-jpa:
-  default:
-    properties:
-      hibernate:
-        hbm2ddl:
-          auto: update
-        dialect: org.hibernate.dialect.MySQLDialect

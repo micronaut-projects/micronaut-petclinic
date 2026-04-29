@@ -10,10 +10,3 @@ datasources:
     maximum-pool-size: 10
     minimum-idle: 2
 
-jpa:
-  default:
-    properties:
-      hibernate:
-        hbm2ddl:
-          auto: update
-        dialect: org.hibernate.dialect.OracleDialect

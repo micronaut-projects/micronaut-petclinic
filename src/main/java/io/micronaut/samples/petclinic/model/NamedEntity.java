@@ -1,19 +1,19 @@
 package io.micronaut.samples.petclinic.model;
 
 import io.micronaut.serde.annotation.Serdeable;
-import jakarta.persistence.Column;
-import jakarta.persistence.MappedSuperclass;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 import jakarta.validation.constraints.NotBlank;
 
 /**
  * Base entity class for entities that have a name property.
  * Extends BaseEntity with a name column.
  */
-@MappedSuperclass
+@MappedEntity
 @Serdeable
 public abstract class NamedEntity extends BaseEntity {
 
-    @Column(name = "name")
+    @MappedProperty("name")
     @NotBlank
     private String name;
 

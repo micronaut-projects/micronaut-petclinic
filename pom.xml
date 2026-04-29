@@ -53,10 +53,10 @@
             <scope>compile</scope>
         </dependency>
         
-        <!-- Micronaut Data JPA with Hibernate -->
+        <!-- Micronaut Data JDBC -->
         <dependency>
             <groupId>io.micronaut.data</groupId>
-            <artifactId>micronaut-data-hibernate-jpa</artifactId>
+            <artifactId>micronaut-data-jdbc</artifactId>
             <scope>compile</scope>
         </dependency>
         <dependency>

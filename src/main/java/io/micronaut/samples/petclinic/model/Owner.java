@@ -1,7 +1,10 @@
 package io.micronaut.samples.petclinic.model;
 
 import io.micronaut.serde.annotation.Serdeable;
-import jakarta.persistence.*;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import static io.micronaut.data.annotation.Relation.Kind.ONE_TO_MANY;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import java.util.*;
@@ -10,27 +13,25 @@ import java.util.*;
  * Entity representing a pet owner.
  * An owner can have multiple pets.
  */
-@Entity
-@Table(name = "owners")
+@MappedEntity("owners")
 @Serdeable
 public class Owner extends Person {
 
-    @Column(name = "address")
+    @MappedProperty("address")
     @NotBlank
     private String address;
 
-    @Column(name = "city")
+    @MappedProperty("city")
     @NotBlank
     private String city;
 
-    @Column(name = "telephone")
+    @MappedProperty("telephone")
     @NotBlank
     @Digits(fraction = 0, integer = 10)
     private String telephone;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "owner", fetch = FetchType.EAGER, orphanRemoval = true)
-    @OrderBy("name ASC")
-    private Set<Pet> pets = new LinkedHashSet<>();
+    @Relation(value = ONE_TO_MANY, mappedBy = "owner", cascade = Relation.Cascade.ALL)
+    private List<Pet> pets = new ArrayList<>();
 
     public String getAddress() {
         return this.address;
@@ -57,10 +58,21 @@ public class Owner extends Person {
     }
 
     /**
-     * Get all pets belonging to this owner, sorted by name.
-     * @return unmodifiable list of pets
+     * Get all pets belonging to this owner.
+     *
+     * Note: This returns the live association list so Micronaut Data JDBC can
+     * populate it when using @Join fetches.
      */
     public List<Pet> getPets() {
+        return this.pets;
+    }
+
+    public void setPets(List<Pet> pets) {
+        this.pets = pets != null ? pets : new ArrayList<>();
+    }
+
+    @io.micronaut.data.annotation.Transient
+    public List<Pet> getPetsSorted() {
         List<Pet> sortedPets = new ArrayList<>(this.pets);
         sortedPets.sort(Comparator.comparing(Pet::getName));
         return Collections.unmodifiableList(sortedPets);

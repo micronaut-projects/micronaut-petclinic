@@ -1,8 +1,12 @@
 package io.micronaut.samples.petclinic.model;
 
 import io.micronaut.serde.annotation.Serdeable;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Transient;
+import static io.micronaut.data.annotation.Relation.Kind.MANY_TO_ONE;
+import static io.micronaut.data.annotation.Relation.Kind.ONE_TO_MANY;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -14,26 +18,24 @@ import java.util.List;
  * Entity representing a pet.
  * A pet belongs to an owner and has a type.
  */
-@Entity
-@Table(name = "pets")
+@MappedEntity("pets")
 @Serdeable
 public class Pet extends NamedEntity {
 
-    @Column(name = "birth_date")
+    @MappedProperty("birth_date")
     @NotNull
     private LocalDate birthDate;
 
-    @ManyToOne
-    @JoinColumn(name = "type_id")
+    @Relation(MANY_TO_ONE)
+    @MappedProperty("type_id")
     @NotNull
     private PetType type;
 
-    @ManyToOne
-    @JoinColumn(name = "owner_id")
+    @Relation(MANY_TO_ONE)
+    @MappedProperty("owner_id")
     private Owner owner;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "pet", fetch = FetchType.EAGER, orphanRemoval = true)
-    @OrderBy("date ASC")
+    @Relation(value = ONE_TO_MANY, mappedBy = "pet")
     private List<Visit> visits = new ArrayList<>();
 
     public LocalDate getBirthDate() {
@@ -52,12 +54,24 @@ public class Pet extends NamedEntity {
         this.type = type;
     }
 
+
+    @Transient
+    public Integer getTypeId() {
+        return this.type != null ? this.type.getId() : null;
+    }
+
     public Owner getOwner() {
         return this.owner;
     }
 
     public void setOwner(Owner owner) {
         this.owner = owner;
+    }
+
+
+    @Transient
+    public Integer getOwnerId() {
+        return this.owner != null ? this.owner.getId() : null;
     }
 
     /**
@@ -70,6 +84,8 @@ public class Pet extends NamedEntity {
         return Collections.unmodifiableList(sortedVisits);
     }
 
+
+
     /**
      * Add a visit to this pet.
      * @param visit the visit to add
@@ -77,6 +93,10 @@ public class Pet extends NamedEntity {
     public void addVisit(Visit visit) {
         this.visits.add(visit);
         visit.setPet(this);
+    }
+
+    public void setVisits(List<Visit> visits) {
+        this.visits = visits != null ? visits : new ArrayList<>();
     }
 
     @Override

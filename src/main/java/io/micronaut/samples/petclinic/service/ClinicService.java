@@ -8,6 +8,7 @@ import jakarta.transaction.Transactional;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import io.micronaut.data.model.Sort;
 
 /**
  * Service class providing business logic for the Pet Clinic application.
@@ -22,19 +23,22 @@ public class ClinicService {
     private final VisitRepository visitRepository;
     private final VetRepository vetRepository;
     private final SpecialtyRepository specialtyRepository;
+    private final VetSpecialtyRepository vetSpecialtyRepository;
 
     public ClinicService(OwnerRepository ownerRepository,
                          PetRepository petRepository,
-                         PetTypeRepository petTypeRepository,
-                         VisitRepository visitRepository,
-                         VetRepository vetRepository,
-                         SpecialtyRepository specialtyRepository) {
+                          PetTypeRepository petTypeRepository,
+                          VisitRepository visitRepository,
+                          VetRepository vetRepository,
+                          SpecialtyRepository specialtyRepository,
+                          VetSpecialtyRepository vetSpecialtyRepository) {
         this.ownerRepository = ownerRepository;
         this.petRepository = petRepository;
         this.petTypeRepository = petTypeRepository;
         this.visitRepository = visitRepository;
         this.vetRepository = vetRepository;
         this.specialtyRepository = specialtyRepository;
+        this.vetSpecialtyRepository = vetSpecialtyRepository;
     }
 
     // ========== Owner Operations ==========
@@ -45,7 +49,7 @@ public class ClinicService {
      * @return the owner, if found
      */
     public Optional<Owner> findOwnerById(Integer id) {
-        return ownerRepository.findByIdWithPets(id);
+        return ownerRepository.findById(id);
     }
 
     /**
@@ -54,7 +58,7 @@ public class ClinicService {
      * @return collection of matching owners
      */
     public Collection<Owner> findOwnerByLastName(String lastName) {
-        return ownerRepository.findByLastName(lastName);
+        return ownerRepository.findByLastNameContainingIgnoreCase(lastName, Sort.of(Sort.Order.asc("lastName")));
     }
 
     /**
@@ -62,7 +66,7 @@ public class ClinicService {
      * @return collection of all owners
      */
     public Collection<Owner> findAllOwners() {
-        return ownerRepository.findAllWithPets();
+        return ownerRepository.findAll(Sort.of(Sort.Order.asc("lastName")));
     }
 
     /**
@@ -95,7 +99,7 @@ public class ClinicService {
      * @return the pet, if found
      */
     public Optional<Pet> findPetById(Integer id) {
-        return petRepository.findByIdWithVisits(id);
+        return petRepository.findById(id);
     }
 
     /**
@@ -198,7 +202,12 @@ public class ClinicService {
      */
     @Cacheable("vets")
     public Collection<Vet> findAllVets() {
-        return vetRepository.findAllWithSpecialties();
+        var vets = vetRepository.findAllWithSpecialties();
+        for (var vet : vets) {
+            vet.getSpecialtiesInternal().clear();
+            vet.getSpecialtiesInternal().addAll(vetSpecialtyRepository.findSpecialtiesByVetId(vet.getId()));
+        }
+        return vets;
     }
 
     /**
