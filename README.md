@@ -20,7 +20,8 @@ A veterinary clinic management system where you can:
 ## Requirements
 
 - Java 21 or higher
-- Maven 3.8+ (or use the included wrapper)
+- Maven 3.9+ (or use the included wrapper)
+- Gradle 9+ (or use the included wrapper)
 - Docker (optional, for databases)
 
 ---
@@ -28,9 +29,12 @@ A veterinary clinic management system where you can:
 ## Quick Start
 
 ```bash
-# Clone and run with in-memory H2 database
+# Clone and run with in-memory H2 database (Gradle)
 git clone https://github.com/micronaut-projects/micronaut-petclinic.git
 cd micronaut-petclinic
+./gradlew run
+
+# Or with Maven
 ./mvnw mn:run
 ```
 
@@ -65,6 +69,10 @@ docker-compose --profile postgres up
 No setup needed. Data is lost when you stop the application.
 
 ```bash
+# Gradle
+./gradlew run
+
+# Maven
 ./mvnw mn:run
 ```
 
@@ -77,6 +85,8 @@ The `docker-compose.yml` file handles everything automatically:
 - Waits for it to be ready
 - Starts the application
 - Connects them together
+
+> **Note:** The repository supports both Maven and Gradle for local development, but the `Dockerfile` build currently uses the Gradle build path.
 
 To stop:
 ```bash
@@ -98,9 +108,13 @@ docker-compose --profile postgres down -v
 
 ```bash
 # Build
-./mvnw package
+./gradlew build
 
 # Run
+java -jar build/libs/micronaut-petclinic-*.jar
+
+# Maven alternative
+./mvnw package
 java -jar target/micronaut-petclinic-*.jar
 ```
 
@@ -111,10 +125,14 @@ java -jar target/micronaut-petclinic-*.jar
 If you have GraalVM installed:
 
 ```bash
-# Build native executable
-./mvnw package -Pnative
+# Build native executable (Gradle)
+./gradlew nativeCompile
 
 # Run
+./build/native/nativeCompile/micronaut-petclinic
+
+# Maven alternative
+./mvnw package -Pnative
 ./target/micronaut-petclinic
 ```
 
@@ -189,6 +207,9 @@ To use a specific database locally:
 export MICRONAUT_ENVIRONMENTS=oracle   # for Oracle
 export MICRONAUT_ENVIRONMENTS=mysql    # for MySQL
 export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
+./gradlew run
+
+# Maven alternative
 ./mvnw mn:run
 ```
 
@@ -209,13 +230,17 @@ export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
 ## Testing
 
 ```bash
-# Run all tests
+# Run all tests (Gradle)
+./gradlew test
+
+# Run tests with coverage (Gradle)
+./gradlew test jacocoTestReport
+
+# Run integration tests (Gradle)
+./gradlew check
+
+# Maven alternatives
 ./mvnw test
-
-# Run tests with coverage
-./mvnw test jacoco:report
-
-# Run integration tests
 ./mvnw verify
 ```
 
@@ -249,6 +274,9 @@ docker-compose --profile postgres up -d postgres
 
 # Wait for database to be ready (longer for Oracle, 10s for MySQL/PostgreSQL)
 export MICRONAUT_ENVIRONMENTS=oracle  # or mysql, postgres
+./gradlew run
+
+# Maven alternative
 ./mvnw mn:run
 ```
 
@@ -270,6 +298,9 @@ lsof -i :8080
 
 # Kill it or use a different port
 export MICRONAUT_SERVER_PORT=8081
+./gradlew run
+
+# Maven alternative
 ./mvnw mn:run
 ```
 

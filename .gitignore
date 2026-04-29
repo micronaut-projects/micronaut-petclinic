@@ -1,6 +1,7 @@
 # Build output
 target/
 build/
+bin/
 
 # IDE files
 .idea/
@@ -9,6 +10,7 @@ build/
 *.iws
 .project
 .classpath
+.factorypath
 .settings/
 .vscode/
 *.swp
@@ -20,7 +22,11 @@ build/
 
 # Gradle
 .gradle/
-gradle/
+gradle/*
+!gradle/wrapper/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+!gradle/libs.versions.toml
 
 # OS files
 .DS_Store
