@@ -1,6 +1,7 @@
 package io.micronaut.samples.petclinic.repository;
 
 import io.micronaut.samples.petclinic.model.Owner;
+import io.micronaut.data.model.Sort;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -20,19 +21,19 @@ class OwnerRepositoryTest {
 
     @Test
     void shouldFindOwnerByLastName() {
-        Collection<Owner> owners = ownerRepository.findByLastName("Davis");
+        Collection<Owner> owners = ownerRepository.findByLastNameContainingIgnoreCase("Davis", Sort.of(Sort.Order.asc("lastName")));
         assertThat(owners).hasSize(2);
     }
 
     @Test
     void shouldFindOwnerByLastNameCaseInsensitive() {
-        Collection<Owner> owners = ownerRepository.findByLastName("davis");
+        Collection<Owner> owners = ownerRepository.findByLastNameContainingIgnoreCase("davis", Sort.of(Sort.Order.asc("lastName")));
         assertThat(owners).hasSize(2);
     }
 
     @Test
     void shouldFindOwnerByLastNamePartialMatch() {
-        Collection<Owner> owners = ownerRepository.findByLastName("Dav");
+        Collection<Owner> owners = ownerRepository.findByLastNameContainingIgnoreCase("Dav", Sort.of(Sort.Order.asc("lastName")));
         assertThat(owners).hasSize(2);
     }
 
@@ -52,7 +53,7 @@ class OwnerRepositoryTest {
 
     @Test
     void shouldFindAllOwnersWithPets() {
-        Collection<Owner> owners = ownerRepository.findAllWithPets();
+        Collection<Owner> owners = ownerRepository.findAll(Sort.of(Sort.Order.asc("lastName")));
         assertThat(owners).isNotEmpty();
         assertThat(owners.size()).isGreaterThanOrEqualTo(10);
     }

@@ -5,7 +5,6 @@ import io.micronaut.samples.petclinic.model.*;
 import io.micronaut.samples.petclinic.repository.*;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -58,7 +57,7 @@ public class ClinicService {
      * @return collection of matching owners
      */
     public Collection<Owner> findOwnerByLastName(String lastName) {
-        return ownerRepository.findByLastName(lastName);
+        return ownerRepository.findByLastNameContainingIgnoreCase(lastName, io.micronaut.data.model.Sort.of(io.micronaut.data.model.Sort.Order.asc("lastName")));
     }
 
     /**
@@ -66,7 +65,7 @@ public class ClinicService {
      * @return collection of all owners
      */
     public Collection<Owner> findAllOwners() {
-        return ownerRepository.findAllWithPets();
+        return ownerRepository.findAll(io.micronaut.data.model.Sort.of(io.micronaut.data.model.Sort.Order.asc("lastName")));
     }
 
     /**

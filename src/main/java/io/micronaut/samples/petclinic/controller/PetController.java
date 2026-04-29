@@ -91,7 +91,8 @@ public class PetController {
         clinicService.savePet(pet);
 
         URI uri = UriBuilder.of("/owners/{ownerId}").expand(Map.of("ownerId", ownerId));
-        return HttpResponse.redirect(uri);
+        // 303 makes sure the browser follows up with GET.
+        return HttpResponse.seeOther(uri);
     }
 
     /**
@@ -155,6 +156,6 @@ public class PetController {
         clinicService.savePet(pet);
 
         URI uri = UriBuilder.of("/owners/{ownerId}").expand(Map.of("ownerId", ownerId));
-        return HttpResponse.redirect(uri);
+        return HttpResponse.seeOther(uri);
     }
 }

@@ -1,12 +1,14 @@
 package io.micronaut.samples.petclinic.repository;
 
-import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Join;
+import static io.micronaut.data.annotation.Join.Type.LEFT_FETCH;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.samples.petclinic.model.Owner;
+import io.micronaut.data.model.Sort;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -21,10 +23,13 @@ public interface OwnerRepository extends CrudRepository<Owner, Integer> {
      * @param lastName the last name to search for
      * @return collection of matching owners
      */
-    @Query("SELECT o.* FROM owners o WHERE LOWER(o.last_name) LIKE LOWER(CONCAT('%', :lastName, '%')) ORDER BY o.last_name")
-    @Join(value = "pets", type = Join.Type.FETCH)
-    @Join(value = "pets.type", type = Join.Type.FETCH)
-    Collection<Owner> findByLastName(String lastName);
+    @Join(value = "pets", type = LEFT_FETCH)
+    @Join(value = "pets.type", type = LEFT_FETCH)
+    Collection<Owner> findByLastNameIlike(String lastName, Sort sort);
+
+    @Join(value = "pets", type = LEFT_FETCH)
+    @Join(value = "pets.type", type = LEFT_FETCH)
+    Collection<Owner> findByLastNameContainingIgnoreCase(String lastName, Sort sort);
 
     /**
      * Find an owner by ID, eagerly fetching pets.
@@ -36,18 +41,12 @@ public interface OwnerRepository extends CrudRepository<Owner, Integer> {
         return findById(id);
     }
 
-    /**
-     * Find all owners, ordered by last name.
-     * @return collection of all owners
-     */
-    // Pets are loaded explicitly via PetRepository
-    @Query("SELECT o.* FROM owners o ORDER BY o.last_name")
-    @Join(value = "pets", type = Join.Type.FETCH)
-    @Join(value = "pets.type", type = Join.Type.FETCH)
-    Collection<Owner> findAllWithPets();
+    @Join(value = "pets", type = LEFT_FETCH)
+    @Join(value = "pets.type", type = LEFT_FETCH)
+    List<Owner> findAll(Sort sort);
 
-    @Join(value = "pets", type = Join.Type.LEFT_FETCH)
-    @Join(value = "pets.type", type = Join.Type.LEFT_FETCH)
-    @Join(value = "pets.visits", type = Join.Type.LEFT_FETCH)
+    @Join(value = "pets", type = LEFT_FETCH)
+    @Join(value = "pets.type", type = LEFT_FETCH)
+    @Join(value = "pets.visits", type = LEFT_FETCH)
     Optional<Owner> findById(Integer id);
 }

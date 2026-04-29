@@ -30,7 +30,7 @@ public class Owner extends Person {
     @Digits(fraction = 0, integer = 10)
     private String telephone;
 
-    @Relation(value = ONE_TO_MANY, mappedBy = "owner")
+    @Relation(value = ONE_TO_MANY, mappedBy = "owner", cascade = Relation.Cascade.ALL)
     private List<Pet> pets = new ArrayList<>();
 
     public String getAddress() {
@@ -58,10 +58,21 @@ public class Owner extends Person {
     }
 
     /**
-     * Get all pets belonging to this owner, sorted by name.
-     * @return unmodifiable list of pets
+     * Get all pets belonging to this owner.
+     *
+     * Note: This returns the live association list so Micronaut Data JDBC can
+     * populate it when using @Join fetches.
      */
     public List<Pet> getPets() {
+        return this.pets;
+    }
+
+    public void setPets(List<Pet> pets) {
+        this.pets = pets != null ? pets : new ArrayList<>();
+    }
+
+    @io.micronaut.data.annotation.Transient
+    public List<Pet> getPetsSorted() {
         List<Pet> sortedPets = new ArrayList<>(this.pets);
         sortedPets.sort(Comparator.comparing(Pet::getName));
         return Collections.unmodifiableList(sortedPets);
