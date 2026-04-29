@@ -8,6 +8,7 @@ import jakarta.transaction.Transactional;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import io.micronaut.data.model.Sort;
 
 /**
  * Service class providing business logic for the Pet Clinic application.
@@ -57,7 +58,7 @@ public class ClinicService {
      * @return collection of matching owners
      */
     public Collection<Owner> findOwnerByLastName(String lastName) {
-        return ownerRepository.findByLastNameContainingIgnoreCase(lastName, io.micronaut.data.model.Sort.of(io.micronaut.data.model.Sort.Order.asc("lastName")));
+        return ownerRepository.findByLastNameContainingIgnoreCase(lastName, Sort.of(Sort.Order.asc("lastName")));
     }
 
     /**
@@ -65,7 +66,7 @@ public class ClinicService {
      * @return collection of all owners
      */
     public Collection<Owner> findAllOwners() {
-        return ownerRepository.findAll(io.micronaut.data.model.Sort.of(io.micronaut.data.model.Sort.Order.asc("lastName")));
+        return ownerRepository.findAll(Sort.of(Sort.Order.asc("lastName")));
     }
 
     /**
@@ -236,6 +237,4 @@ public class ClinicService {
     public Optional<Specialty> findSpecialtyById(Integer id) {
         return specialtyRepository.findById(id);
     }
-
-    // Associations are retrieved via repository @Join fetches.
 }
