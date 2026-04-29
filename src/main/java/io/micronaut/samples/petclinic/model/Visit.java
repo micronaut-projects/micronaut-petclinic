@@ -2,7 +2,10 @@ package io.micronaut.samples.petclinic.model;
 
 import io.micronaut.serde.annotation.Serdeable;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Transient;
+import static io.micronaut.data.annotation.Relation.Kind.MANY_TO_ONE;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
@@ -23,9 +26,8 @@ public class Visit extends BaseEntity {
     @NotBlank
     private String description;
 
+    @Relation(MANY_TO_ONE)
     @MappedProperty("pet_id")
-    private Integer petId;
-
     private Pet pet;
 
     public Visit() {
@@ -48,27 +50,24 @@ public class Visit extends BaseEntity {
         this.description = description;
     }
 
-    @io.micronaut.data.annotation.Transient
     public Pet getPet() {
         return this.pet;
     }
 
     public void setPet(Pet pet) {
         this.pet = pet;
-        this.petId = pet != null ? pet.getId() : null;
     }
 
     /**
      * Get the pet's ID for this visit.
      * @return the pet ID, or null if no pet is associated
      */
+    @Transient
     public Integer getPetId() {
-        return this.petId;
+        return this.pet != null ? this.pet.getId() : null;
     }
 
-    public void setPetId(Integer petId) {
-        this.petId = petId;
-    }
+    // pet_id is managed via the Pet association
 
     @Override
     public String toString() {

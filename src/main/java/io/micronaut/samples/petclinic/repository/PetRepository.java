@@ -1,7 +1,7 @@
 package io.micronaut.samples.petclinic.repository;
 
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
@@ -25,6 +25,11 @@ public interface PetRepository extends CrudRepository<Pet, Integer> {
     default Optional<Pet> findByIdWithVisits(Integer id) {
         return findById(id);
     }
+
+    @Join(value = "owner", type = Join.Type.LEFT_FETCH)
+    @Join(value = "type", type = Join.Type.LEFT_FETCH)
+    @Join(value = "visits", type = Join.Type.LEFT_FETCH)
+    Optional<Pet> findById(Integer id);
 
     /**
      * Find all pets for a specific owner.

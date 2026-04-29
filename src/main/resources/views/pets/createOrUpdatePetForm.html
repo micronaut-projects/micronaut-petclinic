@@ -71,7 +71,7 @@
                             <option th:each="type : ${types}" 
                                     th:value="${type.id}" 
                                     th:text="${type.name}"
-                                    th:selected="${pet != null and pet.typeId != null and pet.typeId == type.id}">Type</option>
+                                    th:selected="${pet != null and pet.type != null and pet.type.id == type.id}">Type</option>
                         </select>
                         <div class="invalid-feedback" th:text="#{validation.petType.required}">Please select a pet type.</div>
                     </div>

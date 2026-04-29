@@ -49,9 +49,7 @@ public class ClinicService {
      * @return the owner, if found
      */
     public Optional<Owner> findOwnerById(Integer id) {
-        var ownerOpt = ownerRepository.findById(id);
-        ownerOpt.ifPresent(owner -> hydrateOwnerPets(owner, true));
-        return ownerOpt;
+        return ownerRepository.findById(id);
     }
 
     /**
@@ -60,11 +58,7 @@ public class ClinicService {
      * @return collection of matching owners
      */
     public Collection<Owner> findOwnerByLastName(String lastName) {
-        var owners = ownerRepository.findByLastName(lastName);
-        for (var owner : owners) {
-            hydrateOwnerPets(owner, false);
-        }
-        return owners;
+        return ownerRepository.findByLastName(lastName);
     }
 
     /**
@@ -72,11 +66,7 @@ public class ClinicService {
      * @return collection of all owners
      */
     public Collection<Owner> findAllOwners() {
-        var owners = ownerRepository.findAllWithPets();
-        for (var owner : owners) {
-            hydrateOwnerPets(owner, false);
-        }
-        return owners;
+        return ownerRepository.findAllWithPets();
     }
 
     /**
@@ -109,12 +99,7 @@ public class ClinicService {
      * @return the pet, if found
      */
     public Optional<Pet> findPetById(Integer id) {
-        var petOpt = petRepository.findById(id);
-        petOpt.ifPresent(pet -> {
-            hydratePetBasics(pet, null);
-            pet.setVisits(new ArrayList<>(visitRepository.findByPetId(pet.getId())));
-        });
-        return petOpt;
+        return petRepository.findById(id);
     }
 
     /**
@@ -131,13 +116,6 @@ public class ClinicService {
      */
     @Transactional
     public Pet savePet(Pet pet) {
-        // In JDBC we persist foreign keys, not object references.
-        if (pet.getTypeId() == null && pet.getType() != null) {
-            pet.setTypeId(pet.getType().getId());
-        }
-        if (pet.getOwnerId() == null && pet.getOwner() != null) {
-            pet.setOwnerId(pet.getOwner().getId());
-        }
         if (pet.isNew()) {
             return petRepository.save(pet);
         } else {
@@ -199,9 +177,6 @@ public class ClinicService {
      */
     @Transactional
     public Visit saveVisit(Visit visit) {
-        if (visit.getPetId() == null && visit.getPet() != null) {
-            visit.setPetId(visit.getPet().getId());
-        }
         if (visit.isNew()) {
             return visitRepository.save(visit);
         } else {
@@ -263,27 +238,5 @@ public class ClinicService {
         return specialtyRepository.findById(id);
     }
 
-    private void hydrateOwnerPets(Owner owner, boolean includeVisits) {
-        var pets = petRepository.findByOwnerId(owner.getId());
-        for (var pet : pets) {
-            hydratePetBasics(pet, owner);
-            if (includeVisits) {
-                pet.setVisits(new ArrayList<>(visitRepository.findByPetId(pet.getId())));
-            }
-        }
-        owner.getPetsInternal().clear();
-        owner.getPetsInternal().addAll(pets);
-    }
-
-    private void hydratePetBasics(Pet pet, Owner ownerOrNull) {
-        if (ownerOrNull != null) {
-            pet.setOwner(ownerOrNull);
-        } else if (pet.getOwnerId() != null) {
-            ownerRepository.findById(pet.getOwnerId()).ifPresent(pet::setOwner);
-        }
-
-        if (pet.getTypeId() != null) {
-            petTypeRepository.findById(pet.getTypeId()).ifPresent(pet::setType);
-        }
-    }
+    // Associations are retrieved via repository @Join fetches.
 }

@@ -157,9 +157,7 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
         pet.setName(name);
         pet.setBirthDate(birthDate);
         pet.setType(type);
-        pet.setTypeId(type != null ? type.getId() : null);
         pet.setOwner(owner);
-        pet.setOwnerId(owner != null ? owner.getId() : null);
         return petRepository.save(pet);
     }
 
@@ -168,7 +166,6 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
         visit.setDate(date);
         visit.setDescription(description);
         visit.setPet(pet);
-        visit.setPetId(pet != null ? pet.getId() : null);
         return visitRepository.save(visit);
     }
 }

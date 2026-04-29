@@ -1,7 +1,7 @@
 package io.micronaut.samples.petclinic.repository;
 
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
@@ -22,6 +22,8 @@ public interface OwnerRepository extends CrudRepository<Owner, Integer> {
      * @return collection of matching owners
      */
     @Query("SELECT o.* FROM owners o WHERE LOWER(o.last_name) LIKE LOWER(CONCAT('%', :lastName, '%')) ORDER BY o.last_name")
+    @Join(value = "pets", type = Join.Type.FETCH)
+    @Join(value = "pets.type", type = Join.Type.FETCH)
     Collection<Owner> findByLastName(String lastName);
 
     /**
@@ -40,5 +42,12 @@ public interface OwnerRepository extends CrudRepository<Owner, Integer> {
      */
     // Pets are loaded explicitly via PetRepository
     @Query("SELECT o.* FROM owners o ORDER BY o.last_name")
+    @Join(value = "pets", type = Join.Type.FETCH)
+    @Join(value = "pets.type", type = Join.Type.FETCH)
     Collection<Owner> findAllWithPets();
+
+    @Join(value = "pets", type = Join.Type.LEFT_FETCH)
+    @Join(value = "pets.type", type = Join.Type.LEFT_FETCH)
+    @Join(value = "pets.visits", type = Join.Type.LEFT_FETCH)
+    Optional<Owner> findById(Integer id);
 }

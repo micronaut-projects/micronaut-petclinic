@@ -3,6 +3,8 @@ package io.micronaut.samples.petclinic.model;
 import io.micronaut.serde.annotation.Serdeable;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import static io.micronaut.data.annotation.Relation.Kind.ONE_TO_MANY;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import java.util.*;
@@ -28,8 +30,8 @@ public class Owner extends Person {
     @Digits(fraction = 0, integer = 10)
     private String telephone;
 
-    // With JDBC we load children explicitly (see ClinicService); don't map a JPA graph.
-    private final Set<Pet> pets = new LinkedHashSet<>();
+    @Relation(value = ONE_TO_MANY, mappedBy = "owner")
+    private List<Pet> pets = new ArrayList<>();
 
     public String getAddress() {
         return this.address;
@@ -59,18 +61,11 @@ public class Owner extends Person {
      * Get all pets belonging to this owner, sorted by name.
      * @return unmodifiable list of pets
      */
-    @io.micronaut.data.annotation.Transient
     public List<Pet> getPets() {
         List<Pet> sortedPets = new ArrayList<>(this.pets);
         sortedPets.sort(Comparator.comparing(Pet::getName));
         return Collections.unmodifiableList(sortedPets);
     }
-
-    @io.micronaut.data.annotation.Transient
-    public Set<Pet> getPetsInternal() {
-        return this.pets;
-    }
-
 
     /**
      * Add a pet to this owner.
