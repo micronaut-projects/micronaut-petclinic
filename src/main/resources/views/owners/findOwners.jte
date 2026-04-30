@@ -74,5 +74,25 @@
                 </div>
             </div>
         </div>
+
+        <div class="card mt-5 animate-fade-in-up stagger-3">
+            <div class="card-body">
+                <h5 class="mb-3"><i class="fas fa-lightbulb text-warning me-2"></i>${msg.text("search.tips")}</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <p class="mb-1"><strong>${msg.text("search.partialMatch.title")}</strong></p>
+                        <p class="text-muted small">${msg.text("search.partialMatch.desc")}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="mb-1"><strong>${msg.text("search.emptySearch.title")}</strong></p>
+                        <p class="text-muted small">${msg.text("search.emptySearch.desc")}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="mb-1"><strong>${msg.text("search.caseInsensitive.title")}</strong></p>
+                        <p class="text-muted small">${msg.text("search.caseInsensitive.desc")}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 `, msg = msg, request = request)

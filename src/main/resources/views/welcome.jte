@@ -52,5 +52,102 @@
                 </div>
             </div>
         </section>
+
+        <section class="py-5">
+            <div class="container py-4">
+                <div class="text-center mb-5">
+                    <h2 class="mb-3">${msg.text("features.title")}</h2>
+                    <p class="text-muted">${msg.text("features.subtitle")}</p>
+                </div>
+                <div class="row g-4">
+                    <div class="col-md-6 col-lg-3">
+                        <div class="feature-card animate-fade-in-up stagger-1">
+                            <div class="feature-icon gradient-1">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <h3>${msg.text("features.fast.title")}</h3>
+                            <p>${msg.text("features.fast.desc")}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="feature-card animate-fade-in-up stagger-2">
+                            <div class="feature-icon gradient-2">
+                                <i class="fas fa-memory"></i>
+                            </div>
+                            <h3>${msg.text("features.memory.title")}</h3>
+                            <p>${msg.text("features.memory.desc")}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="feature-card animate-fade-in-up stagger-3">
+                            <div class="feature-icon gradient-3">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <h3>${msg.text("features.database.title")}</h3>
+                            <p>${msg.text("features.database.desc")}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="feature-card animate-fade-in-up stagger-4">
+                            <div class="feature-icon gradient-4">
+                                <i class="fas fa-cloud"></i>
+                            </div>
+                            <h3>${msg.text("features.cloud.title")}</h3>
+                            <p>${msg.text("features.cloud.desc")}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-5 bg-white">
+            <div class="container py-4">
+                <div class="text-center mb-5">
+                    <h2 class="mb-3">${msg.text("getStarted.title")}</h2>
+                    <p class="text-muted">${msg.text("getStarted.subtitle")}</p>
+                </div>
+                <div class="row g-4 justify-content-center">
+                    <div class="col-md-4">
+                        <a href="/owners/find" class="text-decoration-none">
+                            <div class="card h-100 text-center p-4">
+                                <div class="card-body">
+                                    <div class="feature-icon gradient-1 mx-auto mb-3">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <h4>${msg.text("getStarted.findOwners.title")}</h4>
+                                    <p class="text-muted">${msg.text("getStarted.findOwners.desc")}</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="/owners/new" class="text-decoration-none">
+                            <div class="card h-100 text-center p-4">
+                                <div class="card-body">
+                                    <div class="feature-icon gradient-4 mx-auto mb-3">
+                                        <i class="fas fa-user-plus"></i>
+                                    </div>
+                                    <h4>${msg.text("getStarted.registerOwner.title")}</h4>
+                                    <p class="text-muted">${msg.text("getStarted.registerOwner.desc")}</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="/vets" class="text-decoration-none">
+                            <div class="card h-100 text-center p-4">
+                                <div class="card-body">
+                                    <div class="feature-icon gradient-2 mx-auto mb-3">
+                                        <i class="fas fa-stethoscope"></i>
+                                    </div>
+                                    <h4>${msg.text("getStarted.ourVets.title")}</h4>
+                                    <p class="text-muted">${msg.text("getStarted.ourVets.desc")}</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
 `, msg = msg, request = request)
