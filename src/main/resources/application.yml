@@ -14,8 +14,6 @@ micronaut:
       expire-after-write: 60s
       maximum-size: 100
   views:
-    thymeleaf:
-      enabled: false
     jte:
       dynamic: true
       binary-static-content: true
