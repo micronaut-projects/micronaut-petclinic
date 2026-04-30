@@ -82,7 +82,7 @@
                                     </div>
                                 @else
                                     <div class="mt-3">
-                                        <span class="specialty-badge" style="background: rgba(100, 116, 139, 0.1); color: #64748b;">${msg.text("vet.generalPractice")}</span>
+                                        <span class="specialty-badge">${msg.text("vet.generalPractice")}</span>
                                     </div>
                                 @endif
 

@@ -37,9 +37,9 @@
                         </div>
                         <div class="detail-body">
                             <div class="text-center mb-4">
-                                <div class="pet-icon mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
-                                    <i class="fas fa-paw"></i>
-                                </div>
+                        <div class="pet-icon mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                            <i class="fas fa-paw"></i>
+                        </div>
                                 <h5>${pet.getName()}</h5>
                             </div>
                             <div class="info-row">
