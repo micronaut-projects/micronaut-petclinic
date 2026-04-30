@@ -1,6 +1,13 @@
 micronaut:
   application:
     name: micronaut-petclinic-test
+  server:
+    port: -1
+  views:
+    thymeleaf:
+      enabled: false
+    jte:
+      dynamic: true
 
 # Test datasource configuration (H2 in-memory)
 datasources:

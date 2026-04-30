@@ -15,7 +15,10 @@ micronaut:
       maximum-size: 100
   views:
     thymeleaf:
-      enabled: true
+      enabled: false
+    jte:
+      dynamic: true
+      binary-static-content: true
   messages:
     basename: i18n/messages
 

@@ -43,17 +43,19 @@ public class LocaleController {
                 .path("/")
                 .httpOnly(true);
 
-        // Get referer from HTTP header, default to home page
-        Optional<String> referer = request.getHeaders().get("Referer").describeConstable();
-        String redirectUrl = referer.orElse("/");
-
-        // Only allow internal redirects (same origin or relative paths)
-        if (!isInternalUrl(redirectUrl)) {
-            redirectUrl = "/";
+        // Get referer from HTTP header, default to home page.
+        // If a browser/referrer policy strips Referer, we can still support
+        // "stay on current page" by letting the client send a relative backUrl.
+        String redirectUrl = request.getParameters().get("backUrl", String.class).orElse(null);
+        if (redirectUrl == null || redirectUrl.isBlank()) {
+            redirectUrl = request.getHeaders().get("Referer");
+            if (redirectUrl == null || redirectUrl.isBlank()) {
+                redirectUrl = "/";
+            }
         }
 
-        // If referer is the locale endpoint itself, redirect to home
-        if (redirectUrl.contains("/locale")) {
+        // Only allow internal redirects (relative paths only).
+        if (!isInternalUrl(redirectUrl) || redirectUrl.contains("/locale")) {
             redirectUrl = "/";
         }
 

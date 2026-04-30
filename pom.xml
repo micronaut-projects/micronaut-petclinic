@@ -46,10 +46,10 @@
             <scope>compile</scope>
         </dependency>
         
-        <!-- Micronaut Views (Thymeleaf) -->
+        <!-- Micronaut Views (JTE) -->
         <dependency>
             <groupId>io.micronaut.views</groupId>
-            <artifactId>micronaut-views-thymeleaf</artifactId>
+            <artifactId>micronaut-views-jte</artifactId>
             <scope>compile</scope>
         </dependency>
         
