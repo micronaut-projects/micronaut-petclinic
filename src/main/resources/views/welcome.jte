@@ -1,0 +1,153 @@
+@param io.micronaut.samples.petclinic.system.I18nViewModelProcessor.Msg msg
+@param io.micronaut.http.HttpRequest<?> request
+
+@template.layout(content = @`
+    <div class="container-fluid px-0">
+        <section class="hero">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-6 hero-content">
+                        <h1 class="animate-fade-in-up">${msg.text("welcome.title")} <i class="fas fa-paw"></i></h1>
+                        <p class="animate-fade-in-up stagger-1">${msg.text("welcome.subtitle")}</p>
+                        <div class="d-flex gap-3 flex-wrap animate-fade-in-up stagger-2">
+                            <a href="/owners/find" class="btn btn-lg btn-light">
+                                <i class="fas fa-search"></i> ${msg.text("welcome.findOwners")}
+                            </a>
+                            <a href="/vets" class="btn btn-lg btn-outline-light">
+                                <i class="fas fa-user-md"></i> ${msg.text("welcome.viewVets")}
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 text-center mt-5 mt-lg-0">
+                        <div class="hero-image">
+                            <svg width="400" height="350" viewBox="0 0 400 350" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="200" cy="175" r="140" fill="rgba(255,255,255,0.1)"/>
+                                <circle cx="200" cy="175" r="100" fill="rgba(255,255,255,0.15)"/>
+                                <path d="M160 220 Q140 200 145 170 Q150 140 170 130 L180 110 Q185 100 190 110 L195 125 Q210 120 230 125 L235 110 Q240 100 245 110 L255 130 Q275 140 280 170 Q285 200 265 220 Q250 235 225 240 L220 260 Q215 270 200 270 Q185 270 180 260 L175 240 Q150 235 160 220" fill="rgba(255,255,255,0.9)"/>
+                                <circle cx="180" cy="165" r="8" fill="#667eea"/>
+                                <circle cx="220" cy="165" r="8" fill="#667eea"/>
+                                <ellipse cx="200" cy="185" rx="6" ry="4" fill="#f093fb"/>
+                                <line x1="145" y1="180" x2="170" y2="178" stroke="#667eea" stroke-width="2"/>
+                                <line x1="145" y1="190" x2="170" y2="188" stroke="#667eea" stroke-width="2"/>
+                                <line x1="230" y1="178" x2="255" y2="180" stroke="#667eea" stroke-width="2"/>
+                                <line x1="230" y1="188" x2="255" y2="190" stroke="#667eea" stroke-width="2"/>
+                                <path d="M280 250 Q260 235 265 210 Q270 185 290 180 Q295 160 310 165 L325 155 Q335 150 330 165 L325 175 Q345 180 350 200 Q355 220 345 240 Q335 255 310 260 L305 275 Q300 285 290 285 Q280 285 280 275 L280 260 Q265 258 280 250" fill="rgba(255,255,255,0.7)" transform="translate(-30, 10)"/>
+                                <g fill="rgba(255,255,255,0.3)">
+                                    <circle cx="100" cy="280" r="8"/>
+                                    <circle cx="90" cy="265" r="5"/>
+                                    <circle cx="110" cy="265" r="5"/>
+                                    <circle cx="85" cy="275" r="4"/>
+                                    <circle cx="115" cy="275" r="4"/>
+                                </g>
+                                <g fill="rgba(255,255,255,0.25)" transform="translate(180, 30)">
+                                    <circle cx="100" cy="280" r="8"/>
+                                    <circle cx="90" cy="265" r="5"/>
+                                    <circle cx="110" cy="265" r="5"/>
+                                    <circle cx="85" cy="275" r="4"/>
+                                    <circle cx="115" cy="275" r="4"/>
+                                </g>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-5">
+            <div class="container py-4">
+                <div class="text-center mb-5">
+                    <h2 class="mb-3">${msg.text("features.title")}</h2>
+                    <p class="text-muted">${msg.text("features.subtitle")}</p>
+                </div>
+                <div class="row g-4">
+                    <div class="col-md-6 col-lg-3">
+                        <div class="feature-card animate-fade-in-up stagger-1">
+                            <div class="feature-icon gradient-1">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <h3>${msg.text("features.fast.title")}</h3>
+                            <p>${msg.text("features.fast.desc")}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="feature-card animate-fade-in-up stagger-2">
+                            <div class="feature-icon gradient-2">
+                                <i class="fas fa-memory"></i>
+                            </div>
+                            <h3>${msg.text("features.memory.title")}</h3>
+                            <p>${msg.text("features.memory.desc")}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="feature-card animate-fade-in-up stagger-3">
+                            <div class="feature-icon gradient-3">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <h3>${msg.text("features.database.title")}</h3>
+                            <p>${msg.text("features.database.desc")}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="feature-card animate-fade-in-up stagger-4">
+                            <div class="feature-icon gradient-4">
+                                <i class="fas fa-cloud"></i>
+                            </div>
+                            <h3>${msg.text("features.cloud.title")}</h3>
+                            <p>${msg.text("features.cloud.desc")}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-5 bg-white">
+            <div class="container py-4">
+                <div class="text-center mb-5">
+                    <h2 class="mb-3">${msg.text("getStarted.title")}</h2>
+                    <p class="text-muted">${msg.text("getStarted.subtitle")}</p>
+                </div>
+                <div class="row g-4 justify-content-center">
+                    <div class="col-md-4">
+                        <a href="/owners/find" class="text-decoration-none">
+                            <div class="card h-100 text-center p-4">
+                                <div class="card-body">
+                                    <div class="feature-icon gradient-1 mx-auto mb-3">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <h4>${msg.text("getStarted.findOwners.title")}</h4>
+                                    <p class="text-muted">${msg.text("getStarted.findOwners.desc")}</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="/owners/new" class="text-decoration-none">
+                            <div class="card h-100 text-center p-4">
+                                <div class="card-body">
+                                    <div class="feature-icon gradient-4 mx-auto mb-3">
+                                        <i class="fas fa-user-plus"></i>
+                                    </div>
+                                    <h4>${msg.text("getStarted.registerOwner.title")}</h4>
+                                    <p class="text-muted">${msg.text("getStarted.registerOwner.desc")}</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="/vets" class="text-decoration-none">
+                            <div class="card h-100 text-center p-4">
+                                <div class="card-body">
+                                    <div class="feature-icon gradient-2 mx-auto mb-3">
+                                        <i class="fas fa-stethoscope"></i>
+                                    </div>
+                                    <h4>${msg.text("getStarted.ourVets.title")}</h4>
+                                    <p class="text-muted">${msg.text("getStarted.ourVets.desc")}</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+`, msg = msg, request = request)
