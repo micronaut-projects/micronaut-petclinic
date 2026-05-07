@@ -3,8 +3,7 @@
   "extends": [
     "config:recommended",
     ":dependencyDashboard",
-    ":semanticCommits",
-    "helpers:pinGitHubActionDigests"
+    ":semanticCommits"
   ],
   "labels": ["dependencies"],
   "rangeStrategy": "auto",
