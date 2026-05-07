@@ -51,10 +51,6 @@
     {
       "matchManagers": ["gradle-wrapper"],
       "groupName": "Gradle wrapper"
-    },
-    {
-      "matchManagers": ["github-actions"],
-      "groupName": "GitHub Actions"
     }
   ]
 }
