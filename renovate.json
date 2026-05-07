@@ -1,0 +1,60 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "labels": ["dependencies"],
+  "rangeStrategy": "auto",
+  "packageRules": [
+    {
+      "matchManagers": ["maven", "gradle"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "Java deps (non-major)"
+    },
+    {
+      "matchManagers": ["maven", "gradle"],
+      "matchPackagePrefixes": ["io.micronaut", "io.micronaut."],
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "Micronaut (non-major)"
+    },
+    {
+      "matchManagers": ["maven", "gradle"],
+      "matchPackageNames": [
+        "com.h2database:h2",
+        "org.postgresql:postgresql",
+        "com.mysql:mysql-connector-j",
+        "com.oracle.database.jdbc:ojdbc11"
+      ],
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "JDBC drivers (non-major)"
+    },
+    {
+      "matchManagers": ["maven", "gradle"],
+      "matchPackagePrefixes": ["org.junit", "org.junit."],
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "JUnit (non-major)"
+    },
+    {
+      "matchManagers": ["maven", "gradle"],
+      "matchPackageNames": ["ch.qos.logback:logback-classic"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "Logging (non-major)"
+    },
+    {
+      "matchManagers": ["maven", "gradle"],
+      "matchUpdateTypes": ["major"],
+      "groupName": "Java deps (major)"
+    },
+    {
+      "matchManagers": ["gradle-wrapper"],
+      "groupName": "Gradle wrapper"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions"
+    }
+  ]
+}
