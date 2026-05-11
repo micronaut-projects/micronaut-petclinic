@@ -192,7 +192,7 @@ src/main/java/
       └── system/          #
 
 src/main/resources/
-  ├── views/              # Thymeleaf HTML templates
+  ├── views/              # JTE templates
   ├── static/             # CSS and images
   ├── i18n/               # Message translations
   └── application*.yml    # Configuration files
@@ -227,7 +227,7 @@ export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
 - **Micronaut 4.x** - Framework
 - **Java 21** - Programming language
 - **Micronaut Data JPA** - Database access
-- **Thymeleaf** - HTML template engine
+- **JTE** - HTML template engine
 - **Hibernate** - JPA implementation
 - **Caffeine** - Caching
 - **Bootstrap 5** - CSS framework

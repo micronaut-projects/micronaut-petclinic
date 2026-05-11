@@ -4,32 +4,19 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 
 /**
- * Join table mapping for vets <-> specialties.
+ * Join table mapping for vets {@literal <->} specialties.
  *
  * The Petclinic schema models this as a pure join table without its own id.
+ *
+ * @param vetId the vet identifier
+ * @param specialtyId the specialty identifier
  */
-@MappedEntity("vet_specialties")
-public class VetSpecialty {
+@MappedEntity("VET_SPECIALTIES")
+public record VetSpecialty(
+        @MappedProperty("VET_ID")
+        Integer vetId,
 
-    @MappedProperty("vet_id")
-    private Integer vetId;
-
-    @MappedProperty("specialty_id")
-    private Integer specialtyId;
-
-    public Integer getVetId() {
-        return vetId;
-    }
-
-    public void setVetId(Integer vetId) {
-        this.vetId = vetId;
-    }
-
-    public Integer getSpecialtyId() {
-        return specialtyId;
-    }
-
-    public void setSpecialtyId(Integer specialtyId) {
-        this.specialtyId = specialtyId;
-    }
+        @MappedProperty("SPECIALTY_ID")
+        Integer specialtyId
+) {
 }

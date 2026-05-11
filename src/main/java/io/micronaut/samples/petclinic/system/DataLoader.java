@@ -10,6 +10,8 @@ import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Set;
 
 /**
  * Populates the database with sample data on application startup.
@@ -28,6 +30,17 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
     private final VisitRepository visitRepository;
     private final VetSpecialtyRepository vetSpecialtyRepository;
 
+    /**
+     * Creates the data loader with the repositories used to seed sample data.
+     *
+     * @param vetRepository repository for vets
+     * @param specialtyRepository repository for specialties
+     * @param petTypeRepository repository for pet types
+     * @param ownerRepository repository for owners
+     * @param petRepository repository for pets
+     * @param visitRepository repository for visits
+     * @param vetSpecialtyRepository repository for vet-specialty join rows
+     */
     public DataLoader(VetRepository vetRepository,
                       SpecialtyRepository specialtyRepository,
                       PetTypeRepository petTypeRepository,
@@ -44,6 +57,11 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
         this.vetSpecialtyRepository = vetSpecialtyRepository;
     }
 
+    /**
+     * Seeds the database when the application starts.
+     *
+     * @param event the startup event
+     */
     @Override
     @Transactional
     public void onApplicationEvent(StartupEvent event) {
@@ -121,18 +139,10 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
     }
 
     private Vet createVet(String firstName, String lastName, Specialty... specialties) {
-        Vet vet = new Vet();
-        vet.setFirstName(firstName);
-        vet.setLastName(lastName);
-        for (Specialty specialty : specialties) {
-            vet.addSpecialty(specialty);
-        }
+        Vet vet = new Vet(firstName, lastName).withSpecialties(Set.copyOf(Arrays.asList(specialties)));
         Vet saved = vetRepository.save(vet);
         for (Specialty specialty : specialties) {
-            VetSpecialty vs = new VetSpecialty();
-            vs.setVetId(saved.getId());
-            vs.setSpecialtyId(specialty.getId());
-            vetSpecialtyRepository.save(vs);
+            vetSpecialtyRepository.save(new VetSpecialty(saved.id(), specialty.id()));
         }
         return saved;
     }
@@ -143,29 +153,17 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
     }
 
     private Owner createOwner(String firstName, String lastName, String address, String city, String telephone) {
-        Owner owner = new Owner();
-        owner.setFirstName(firstName);
-        owner.setLastName(lastName);
-        owner.setAddress(address);
-        owner.setCity(city);
-        owner.setTelephone(telephone);
+        Owner owner = new Owner(firstName, lastName, address, city, telephone);
         return ownerRepository.save(owner);
     }
 
     private Pet createPet(String name, LocalDate birthDate, PetType type, Owner owner) {
-        Pet pet = new Pet();
-        pet.setName(name);
-        pet.setBirthDate(birthDate);
-        pet.setType(type);
-        pet.setOwner(owner);
+        Pet pet = new Pet(name, birthDate, type, owner);
         return petRepository.save(pet);
     }
 
     private Visit createVisit(Pet pet, LocalDate date, String description) {
-        Visit visit = new Visit();
-        visit.setDate(date);
-        visit.setDescription(description);
-        visit.setPet(pet);
+        Visit visit = new Visit(date, description, pet);
         return visitRepository.save(visit);
     }
 }

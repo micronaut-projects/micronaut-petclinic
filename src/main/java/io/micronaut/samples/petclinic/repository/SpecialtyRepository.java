@@ -1,8 +1,6 @@
 package io.micronaut.samples.petclinic.repository;
 
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.samples.petclinic.model.Specialty;
 import java.util.List;
@@ -11,8 +9,8 @@ import java.util.Optional;
 /**
  * Repository for {@link Specialty} entities.
  * Uses Micronaut Data JPA for compile-time query generation.
+ * Dialect-specific {@code @JdbcRepository} beans extend this interface.
  */
-@JdbcRepository(dialect = Dialect.ANSI)
 public interface SpecialtyRepository extends CrudRepository<Specialty, Integer> {
 
     /**

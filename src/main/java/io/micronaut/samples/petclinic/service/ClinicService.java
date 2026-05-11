@@ -8,6 +8,8 @@ import jakarta.transaction.Transactional;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import io.micronaut.data.model.Sort;
 
 /**
@@ -25,6 +27,17 @@ public class ClinicService {
     private final SpecialtyRepository specialtyRepository;
     private final VetSpecialtyRepository vetSpecialtyRepository;
 
+    /**
+     * Creates the service facade with its repository dependencies.
+     *
+     * @param ownerRepository repository for owners
+     * @param petRepository repository for pets
+     * @param petTypeRepository repository for pet types
+     * @param visitRepository repository for visits
+     * @param vetRepository repository for vets
+     * @param specialtyRepository repository for specialties
+     * @param vetSpecialtyRepository repository for vet-specialty join rows
+     */
     public ClinicService(OwnerRepository ownerRepository,
                          PetRepository petRepository,
                           PetTypeRepository petTypeRepository,
@@ -72,6 +85,7 @@ public class ClinicService {
     /**
      * Save an owner (create or update).
      * @param owner the owner to save
+     * @return the persisted owner returned by the repository
      */
     @Transactional
     public Owner saveOwner(Owner owner) {
@@ -113,6 +127,7 @@ public class ClinicService {
     /**
      * Save a pet (create or update).
      * @param pet the pet to save
+     * @return the persisted pet returned by the repository
      */
     @Transactional
     public Pet savePet(Pet pet) {
@@ -174,6 +189,7 @@ public class ClinicService {
     /**
      * Save a visit (create or update).
      * @param visit the visit to save
+     * @return the persisted visit returned by the repository
      */
     @Transactional
     public Visit saveVisit(Visit visit) {
@@ -203,11 +219,9 @@ public class ClinicService {
     @Cacheable("vets")
     public Collection<Vet> findAllVets() {
         var vets = vetRepository.findAllWithSpecialties();
-        for (var vet : vets) {
-            vet.getSpecialtiesInternal().clear();
-            vet.getSpecialtiesInternal().addAll(vetSpecialtyRepository.findSpecialtiesByVetId(vet.getId()));
-        }
-        return vets;
+        return vets.stream()
+                .map(vet -> vet.withSpecialties(Set.copyOf(vetSpecialtyRepository.findSpecialtiesByVetId(vet.id()))))
+                .collect(Collectors.toList());
     }
 
     /**

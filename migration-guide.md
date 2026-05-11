@@ -35,6 +35,8 @@ Use constructor injection in Micronaut. Field injection and `@Inject` are not re
 
 ### Controller Return Types
 
+Note: This guide contains some Thymeleaf examples from an earlier iteration of the project. The current codebase uses Micronaut Views + JTE.
+
 **Spring Boot:**
 ```java
 @GetMapping("/owners/{id}")

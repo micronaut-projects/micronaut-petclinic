@@ -27,12 +27,13 @@ dependencies {
 
     implementation(libs.micronaut.http.server.netty)
     implementation(libs.micronaut.serde.jackson)
-    implementation(libs.micronaut.views.thymeleaf)
+    implementation(libs.micronaut.views.jte)
     implementation(libs.micronaut.data.jdbc)
     implementation(libs.micronaut.jdbc.hikari)
     implementation(libs.micronaut.validation)
     implementation(libs.jakarta.validation.api)
     implementation(libs.micronaut.cache.caffeine)
+    implementation(libs.micronaut.sourcegen.annotations)
 
     runtimeOnly(libs.h2)
     runtimeOnly(libs.ojdbc11)
@@ -47,9 +48,11 @@ dependencies {
     annotationProcessor(libs.micronaut.data.processor)
     annotationProcessor(libs.micronaut.validation.processor)
     annotationProcessor(libs.micronaut.serde.processor)
+    annotationProcessor(libs.micronaut.sourcegen.generator.java)
     testAnnotationProcessor(libs.micronaut.data.processor)
     testAnnotationProcessor(libs.micronaut.validation.processor)
     testAnnotationProcessor(libs.micronaut.serde.processor)
+    testAnnotationProcessor(libs.micronaut.sourcegen.generator.java)
 
     testImplementation(libs.micronaut.test.junit5)
     testImplementation(libs.micronaut.http.client)

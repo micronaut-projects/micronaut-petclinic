@@ -60,16 +60,11 @@ class OwnerRepositoryTest {
 
     @Test
     void shouldSaveNewOwner() {
-        Owner owner = new Owner();
-        owner.setFirstName("Test");
-        owner.setLastName("Owner");
-        owner.setAddress("123 Test St");
-        owner.setCity("Test City");
-        owner.setTelephone("5551234567");
+        Owner owner = new Owner("Test", "Owner", "123 Test St", "Test City", "5551234567");
 
         Owner saved = ownerRepository.save(owner);
         
-        assertThat(saved.getId()).isNotNull();
+        assertThat(saved.id()).isNotNull();
         assertThat(saved.getFirstName()).isEqualTo("Test");
     }
 
@@ -78,8 +73,7 @@ class OwnerRepositoryTest {
         Optional<Owner> owner = ownerRepository.findById(1);
         assertThat(owner).isPresent();
         
-        owner.get().setCity("New City");
-        Owner updated = ownerRepository.update(owner.get());
+        Owner updated = ownerRepository.update(owner.get().withCity("New City"));
         
         assertThat(updated.getCity()).isEqualTo("New City");
     }

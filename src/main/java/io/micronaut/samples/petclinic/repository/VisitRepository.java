@@ -2,8 +2,6 @@ package io.micronaut.samples.petclinic.repository;
 
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.samples.petclinic.model.Visit;
 import java.util.Collection;
@@ -11,8 +9,8 @@ import java.util.Collection;
 /**
  * Repository for {@link Visit} entities.
  * Uses Micronaut Data JPA for compile-time query generation.
+ * Dialect-specific {@code @JdbcRepository} beans extend this interface.
  */
-@JdbcRepository(dialect = Dialect.ANSI)
 public interface VisitRepository extends CrudRepository<Visit, Integer> {
 
     /**
@@ -20,13 +18,5 @@ public interface VisitRepository extends CrudRepository<Visit, Integer> {
      * @param petId the pet ID
      * @return collection of visits for the pet
      */
-    @Query("SELECT v.* FROM visits v WHERE v.pet_id = :petId ORDER BY v.visit_date DESC")
     Collection<Visit> findByPetId(Integer petId);
-
-    /**
-     * Find all visits for a specific owner (across all their pets).
-     * @param ownerId the owner ID
-     * @return collection of visits for all pets of the owner
-     */
-    // Owner visits can be derived by loading pets then their visits.
 }

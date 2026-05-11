@@ -3,6 +3,11 @@ micronaut:
     port: -1
   application:
     name: micronaut-petclinic-test
+  server:
+    port: -1
+  views:
+    jte:
+      dynamic: true
 
 # Test datasource configuration (H2 in-memory)
 datasources:

@@ -3,8 +3,6 @@ package io.micronaut.samples.petclinic.repository;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Join;
 import static io.micronaut.data.annotation.Join.Type.LEFT_FETCH;
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.samples.petclinic.model.Pet;
 import java.util.Collection;
@@ -14,20 +12,27 @@ import java.util.Optional;
 /**
  * Repository for {@link Pet} entities.
  * Uses Micronaut Data JPA for compile-time query generation.
+ * Dialect-specific {@code @JdbcRepository} beans extend this interface.
  */
-@JdbcRepository(dialect = Dialect.ANSI)
 public interface PetRepository extends CrudRepository<Pet, Integer> {
 
     /**
      * Find a pet by ID, eagerly fetching visits.
+     * Visits are loaded explicitly via {@link VisitRepository}.
+     *
      * @param id the pet ID
      * @return the pet with visits loaded
      */
-    // Visits are loaded explicitly via VisitRepository
     default Optional<Pet> findByIdWithVisits(Integer id) {
         return findById(id);
     }
 
+    /**
+     * Finds a pet by id with owner, type, and visits loaded.
+     *
+     * @param id the pet id
+     * @return the pet, if found
+     */
     @Join(value = "owner", type = LEFT_FETCH)
     @Join(value = "type", type = LEFT_FETCH)
     @Join(value = "visits", type = LEFT_FETCH)
@@ -38,9 +43,13 @@ public interface PetRepository extends CrudRepository<Pet, Integer> {
      * @param ownerId the owner ID
      * @return collection of pets belonging to the owner
      */
-    @Query("SELECT p.* FROM pets p WHERE p.owner_id = :ownerId ORDER BY p.name")
     Collection<Pet> findByOwnerId(Integer ownerId);
 
-    @Query("SELECT p.* FROM pets p WHERE p.owner_id IN (:ownerIds) ORDER BY p.owner_id, p.name")
+    /**
+     * Finds all pets for a collection of owners.
+     *
+     * @param ownerIds owner ids to match
+     * @return pets belonging to the supplied owners
+     */
     List<Pet> findByOwnerIdIn(List<Integer> ownerIds);
 }

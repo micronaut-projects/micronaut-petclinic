@@ -7,7 +7,8 @@ import io.micronaut.http.annotation.Produces;
 import io.micronaut.samples.petclinic.model.Vet;
 import io.micronaut.samples.petclinic.service.ClinicService;
 import io.micronaut.views.View;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * Controller for veterinarian-related operations.
@@ -18,6 +19,11 @@ public class VetController {
 
     private final ClinicService clinicService;
 
+    /**
+     * Creates the controller with the service facade.
+     *
+     * @param clinicService the facade used for vet lookups
+     */
     public VetController(ClinicService clinicService) {
         this.clinicService = clinicService;
     }
@@ -29,10 +35,8 @@ public class VetController {
     @Get
     @View("vets/vetList")
     public Map<String, Object> showVetList() {
-        Map<String, Object> model = new HashMap<>();
         Collection<Vet> vets = clinicService.findAllVets();
-        model.put("vets", vets);
-        return model;
+        return Map.of("vets", vets);
     }
 
     /**
@@ -57,21 +61,10 @@ public class VetController {
     }
 
     /**
-     * A wrapper class to hold the list of vets for XML/JSON serialization.
+     * Wrapper for a list of vets for XML/JSON serialization.
+     *
+     * @param vetList the vets to expose
      */
-    public static class Vets {
-        private Collection<Vet> vetList;
-
-        public Vets(Collection<Vet> vets) {
-            this.vetList = vets;
-        }
-
-        public Collection<Vet> getVetList() {
-            return vetList;
-        }
-
-        public void setVetList(Collection<Vet> vetList) {
-            this.vetList = vetList;
-        }
+    public record Vets(Collection<Vet> vetList) {
     }
 }

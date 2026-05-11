@@ -12,6 +12,12 @@ import jakarta.inject.Singleton;
 public class MessageSourceFactory {
 
     /**
+     * Creates the message-source factory.
+     */
+    public MessageSourceFactory() {
+    }
+
+    /**
      * Creates a ResourceBundleMessageSource that loads messages from
      * i18n/messages*.properties files
      * 

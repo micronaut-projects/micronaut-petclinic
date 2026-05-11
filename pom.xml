@@ -23,6 +23,7 @@
         <jdk.version>21</jdk.version>
         <release.version>21</release.version>
         <micronaut.version>4.10.2</micronaut.version>
+        <micronaut.sourcegen.version>1.8.4</micronaut.sourcegen.version>
         <micronaut.runtime>netty</micronaut.runtime>
         <micronaut.aot.enabled>false</micronaut.aot.enabled>
         <exec.mainClass>io.micronaut.samples.petclinic.Application</exec.mainClass>
@@ -46,10 +47,10 @@
             <scope>compile</scope>
         </dependency>
         
-        <!-- Micronaut Views (Thymeleaf) -->
+        <!-- Micronaut Views (JTE) -->
         <dependency>
             <groupId>io.micronaut.views</groupId>
-            <artifactId>micronaut-views-thymeleaf</artifactId>
+            <artifactId>micronaut-views-jte</artifactId>
             <scope>compile</scope>
         </dependency>
         
@@ -106,6 +107,12 @@
         <dependency>
             <groupId>io.micronaut.cache</groupId>
             <artifactId>micronaut-cache-caffeine</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.sourcegen</groupId>
+            <artifactId>micronaut-sourcegen-annotations</artifactId>
+            <version>${micronaut.sourcegen.version}</version>
             <scope>compile</scope>
         </dependency>
         
@@ -190,6 +197,11 @@
                             <groupId>io.micronaut.serde</groupId>
                             <artifactId>micronaut-serde-processor</artifactId>
                             <version>${micronaut.serialization.version}</version>
+                        </path>
+                        <path>
+                            <groupId>io.micronaut.sourcegen</groupId>
+                            <artifactId>micronaut-sourcegen-generator-java</artifactId>
+                            <version>${micronaut.sourcegen.version}</version>
                         </path>
                     </annotationProcessorPaths>
                     <compilerArgs>

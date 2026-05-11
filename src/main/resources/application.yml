@@ -14,8 +14,9 @@ micronaut:
       expire-after-write: 60s
       maximum-size: 100
   views:
-    thymeleaf:
-      enabled: true
+    jte:
+      dynamic: true
+      binary-static-content: true
   messages:
     basename: i18n/messages
 

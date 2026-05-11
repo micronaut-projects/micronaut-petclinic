@@ -1,81 +1,118 @@
 package io.micronaut.samples.petclinic.model;
 
-import io.micronaut.serde.annotation.Serdeable;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.MappedProperty;
-import io.micronaut.data.annotation.Transient;
-import static io.micronaut.data.annotation.Relation.Kind.MANY_TO_ONE;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.serde.annotation.Serdeable;
+import io.micronaut.sourcegen.annotations.Builder;
+import io.micronaut.sourcegen.annotations.Wither;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
 import java.time.LocalDate;
+
+import static io.micronaut.data.annotation.Relation.Kind.MANY_TO_ONE;
 
 /**
  * Entity representing a visit to the pet clinic.
  * A visit is associated with a pet and has a date and description.
+ *
+ * @param id the database identifier, or {@code null} for a new visit
+ * @param date the visit date
+ * @param description the visit description
+ * @param pet the pet that received the visit
  */
-@MappedEntity("visits")
+@MappedEntity("VISITS")
 @Serdeable
-public class Visit extends BaseEntity {
+@Builder
+@Wither
+public record Visit(
+        @Id
+        @GeneratedValue
+        Integer id,
 
-    @MappedProperty("visit_date")
-    @NotNull
-    private LocalDate date;
+        @MappedProperty("VISIT_DATE")
+        @NotNull
+        LocalDate date,
 
-    @MappedProperty("description")
-    @NotBlank
-    private String description;
+        @MappedProperty("DESCRIPTION")
+        @NotBlank
+        String description,
 
-    @Relation(MANY_TO_ONE)
-    @MappedProperty("pet_id")
-    private Pet pet;
+        @Relation(MANY_TO_ONE)
+        @MappedProperty("PET_ID")
+        Pet pet
+) implements BaseEntity, VisitWither {
 
-    public Visit() {
-        this.date = LocalDate.now();
-    }
-
-    public LocalDate getDate() {
-        return this.date;
-    }
-
-    public void setDate(LocalDate date) {
+    /**
+     * Creates a visit.
+     *
+     * @param id the database identifier, or {@code null} for a new visit
+     * @param date the visit date
+     * @param description the visit description
+     * @param pet the pet that received the visit
+     */
+    public Visit(Integer id, LocalDate date, String description, @Nullable Pet pet) {
+        this.id = id;
         this.date = date;
-    }
-
-    public String getDescription() {
-        return this.description;
-    }
-
-    public void setDescription(String description) {
         this.description = description;
-    }
-
-    public Pet getPet() {
-        return this.pet;
-    }
-
-    public void setPet(Pet pet) {
         this.pet = pet;
     }
 
     /**
-     * Get the pet's ID for this visit.
-     * @return the pet ID, or null if no pet is associated
+     * Creates an empty visit for framework binding.
      */
-    @Transient
-    public Integer getPetId() {
-        return this.pet != null ? this.pet.getId() : null;
+    public Visit() {
+        this(null, LocalDate.now(), null, null);
     }
 
-    // pet_id is managed via the Pet association
+    /**
+     * Creates a new visit without an id.
+     *
+     * @param date the visit date
+     * @param description the visit description
+     * @param pet the pet that received the visit
+     */
+    public Visit(LocalDate date, String description, Pet pet) {
+        this(null, date, description, pet);
+    }
 
+    /**
+     * Compares visits by entity identity.
+     *
+     * @param other the object being compared
+     * @return {@code true} when the other object represents the same visit
+     */
+    @Override
+    public boolean equals(Object other) {
+        return BaseEntity.entityEquals(this, other);
+    }
+
+    /**
+     * Returns the entity-identity hash code.
+     *
+     * @return the hash code based on the visit id
+     */
+    @Override
+    public int hashCode() {
+        return BaseEntity.entityHashCode(this);
+    }
+
+    /**
+     * Returns a diagnostic representation of the visit.
+     *
+     * @return a string containing the visit fields
+     */
     @Override
     public String toString() {
         return "Visit{" +
-                "id=" + getId() +
+                "id=" + id +
                 ", date=" + date +
                 ", description='" + description + '\'' +
-                ", petId=" + getPetId() +
+                ", petId=" + (pet != null ? pet.id() : null) +
                 '}';
     }
 }

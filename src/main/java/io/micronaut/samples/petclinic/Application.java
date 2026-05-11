@@ -7,7 +7,7 @@ import io.micronaut.runtime.Micronaut;
  * 
  * This is a sample application demonstrating Micronaut features including:
  * - Micronaut Data JPA for database access
- * - Thymeleaf for server-side rendering
+ * - JTE for server-side rendering
  * - Caffeine for caching
  * - Bean validation
  * - Internationalization (i18n)
@@ -17,7 +17,18 @@ import io.micronaut.runtime.Micronaut;
  * Migrated from the Spring Pet Clinic sample application.
  */
 public class Application {
-    
+
+    /**
+     * Creates the application bootstrap type.
+     */
+    public Application() {
+    }
+
+    /**
+     * Starts the Micronaut Pet Clinic application.
+     *
+     * @param args command-line arguments passed to Micronaut
+     */
     public static void main(String[] args) {
         Micronaut.run(Application.class, args);
     }

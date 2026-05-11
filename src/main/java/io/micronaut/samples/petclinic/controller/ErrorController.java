@@ -5,8 +5,8 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Error;
 import io.micronaut.views.View;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Controller for handling errors.
@@ -16,6 +16,12 @@ import java.util.Map;
 public class ErrorController {
 
     /**
+     * Creates the error controller.
+     */
+    public ErrorController() {
+    }
+
+    /**
      * Handle 404 Not Found errors.
      * @param request the original request
      * @return the error view
@@ -23,10 +29,10 @@ public class ErrorController {
     @Error(status = io.micronaut.http.HttpStatus.NOT_FOUND, global = true)
     @View("error/404")
     public Map<String, Object> notFound(HttpRequest<?> request) {
-        Map<String, Object> model = new HashMap<>();
-        model.put("path", request.getPath());
-        model.put("message", "Page not found");
-        return model;
+        return Map.of(
+                "path", request.getPath(),
+                "message", "Page not found"
+        );
     }
 
     /**
@@ -38,10 +44,10 @@ public class ErrorController {
     @Error(global = true)
     @View("error/error")
     public Map<String, Object> handleError(HttpRequest<?> request, Throwable throwable) {
-        Map<String, Object> model = new HashMap<>();
-        model.put("path", request.getPath());
-        model.put("message", throwable.getMessage());
-        model.put("exception", throwable.getClass().getSimpleName());
-        return model;
+        return Map.of(
+                "path", request.getPath(),
+                "message", Objects.toString(throwable.getMessage(), ""),
+                "exception", throwable.getClass().getSimpleName()
+        );
     }
 }

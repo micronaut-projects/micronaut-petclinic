@@ -22,6 +22,18 @@ public class CookieLocaleResolver implements HttpLocaleResolver {
     private static final String LOCALE_COOKIE_NAME = "locale";
     private static final Locale DEFAULT_LOCALE = Locale.ENGLISH;
 
+    /**
+     * Creates the cookie-backed locale resolver.
+     */
+    public CookieLocaleResolver() {
+    }
+
+    /**
+     * Resolves the request locale from the locale cookie, falling back to the request locale.
+     *
+     * @param request the current HTTP request
+     * @return the resolved locale, if one can be determined
+     */
     @Override
     @NonNull
     public Optional<Locale> resolve(@NonNull HttpRequest<?> request) {
@@ -39,6 +51,12 @@ public class CookieLocaleResolver implements HttpLocaleResolver {
         return request.getLocale();
     }
 
+    /**
+     * Resolves the request locale, returning English when no locale is available.
+     *
+     * @param request the current HTTP request
+     * @return the resolved locale or the default locale
+     */
     @Override
     @NonNull
     public Locale resolveOrDefault(@NonNull HttpRequest<?> request) {
