@@ -1,0 +1,15 @@
+{
+  "resources": {
+    "includes": [
+      {"pattern": "\\Qi18n/messages.properties\\E"},
+      {"pattern": "\\Qi18n/messages_de.properties\\E"},
+      {"pattern": "\\Qi18n/messages_es.properties\\E"}
+    ]
+  },
+  "bundles": [
+    {
+      "name": "i18n.messages",
+      "locales": ["", "en", "en_US", "de", "es"]
+    }
+  ]
+}

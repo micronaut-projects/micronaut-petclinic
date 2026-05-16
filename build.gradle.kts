@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.micronaut.application)
     jacoco
     alias(libs.plugins.graalvm.native)
+    alias(libs.plugins.jte.gradle)
 }
 
 group = providers.gradleProperty("projectGroup").orElse("io.micronaut.samples").get()
@@ -76,4 +77,58 @@ tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     maxParallelForks = 1
     systemProperty("micronaut.server.port", "-1")
+}
+
+jte {
+    sourceDirectory.set(file("src/main/resources/views").toPath())
+    contentType.set(gg.jte.ContentType.Html)
+    generate()
+}
+
+tasks.named("inspectRuntimeClasspath") {
+    dependsOn(tasks.named("generateJte"), generateJteNativeConfig)
+}
+
+// Generate reflect-config.json for JTE precompiled template classes so GraalVM native image
+// can load them dynamically via ClassLoader.loadClass() and invoke render() via reflection.
+val jteNativeConfigBaseDir = layout.buildDirectory.dir("generated-resources/jte-native-image")
+val jteNativeConfigOutputDir = jteNativeConfigBaseDir.map {
+    it.dir("META-INF/native-image/io.micronaut.samples/micronaut-petclinic")
+}
+
+val generateJteNativeConfig by tasks.registering {
+    dependsOn(tasks.named("compileJava"))
+    inputs.dir(layout.buildDirectory.dir("classes/java/main/gg/jte/generated/precompiled"))
+    outputs.dir(jteNativeConfigBaseDir)
+
+    doLast {
+        val classesDir = layout.buildDirectory.dir("classes/java/main").get().asFile
+        val jteClasses = fileTree(classesDir) {
+            include("gg/jte/generated/precompiled/**/*.class")
+            exclude("**/*\$*.class") // exclude anonymous/inner classes
+        }
+
+        val entries = jteClasses.files.map { file ->
+            val className = file.relativeTo(classesDir)
+                .path
+                .replace(File.separatorChar, '.')
+                .removeSuffix(".class")
+            """  {
+    "name": "$className",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  }"""
+        }
+
+        val json = "[\n${entries.joinToString(",\n")}\n]\n"
+        val outputFile = jteNativeConfigOutputDir.get().file("reflect-config.json").asFile
+        outputFile.parentFile.mkdirs()
+        outputFile.writeText(json)
+    }
+}
+
+sourceSets["main"].resources.srcDir(jteNativeConfigBaseDir)
+
+tasks.named("processResources") {
+    dependsOn(generateJteNativeConfig)
 }
