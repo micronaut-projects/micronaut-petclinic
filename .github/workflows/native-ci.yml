@@ -1,0 +1,34 @@
+name: Native CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  native:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (GraalVM)
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: "21"
+          distribution: "graalvm"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Native compile
+        run: ./gradlew nativeCompile --no-daemon
+
+      - name: Upload native binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-native
+          path: build/native/nativeCompile/*
