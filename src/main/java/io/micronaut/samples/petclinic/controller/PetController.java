@@ -162,10 +162,12 @@ public class PetController {
         Optional<Pet> pet = clinicService.findPetById(petId);
 
         if (pet.isPresent()) {
+            Pet existingPet = pet.get();
+            Integer typeId = existingPet.getTypeId();
             return Map.of(
-                    "pet", formMapper.toPetForm(pet.get()),
+                    "pet", new PetForm(existingPet.id(), existingPet.name(), existingPet.birthDate(), typeId),
                     "petId", petId,
-                    "owner", pet.get().getOwner(),
+                    "owner", existingPet.getOwner(),
                     "types", clinicService.findPetTypes(),
                     "isNew", false,
                     "validationErrors", Map.of()
@@ -184,8 +186,8 @@ public class PetController {
      */
     @Post(value = "/{petId}/edit", consumes = MediaType.APPLICATION_FORM_URLENCODED)
     public HttpResponse<?> processUpdateForm(@PathVariable Integer ownerId,
-                                              @PathVariable Integer petId,
-                                              @Valid @Body PetForm form) {
+                                             @PathVariable Integer petId,
+                                             @Valid @Body PetForm form) {
         Optional<Owner> owner = getOwner(ownerId);
         if (owner.isEmpty()) {
             return HttpResponse.notFound();
