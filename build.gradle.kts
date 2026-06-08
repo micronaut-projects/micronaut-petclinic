@@ -1,7 +1,10 @@
+import gg.jte.ContentType
+
 plugins {
     alias(libs.plugins.micronaut.application)
     jacoco
     alias(libs.plugins.graalvm.native)
+    alias(libs.plugins.jte)
 }
 
 group = providers.gradleProperty("projectGroup").orElse("io.micronaut.samples").get()
@@ -22,6 +25,7 @@ micronaut {
 
 dependencies {
     implementation(platform(libs.micronaut.platform.parent))
+    implementation(platform(libs.netty.bom))
     annotationProcessor(platform(libs.micronaut.platform.parent))
     testAnnotationProcessor(platform(libs.micronaut.platform.parent))
 
@@ -42,7 +46,6 @@ dependencies {
     runtimeOnly(libs.logback.classic)
     runtimeOnly(libs.snakeyaml)
 
-    compileOnly(libs.micronaut.inject.java)
     annotationProcessor(libs.micronaut.inject.java)
     testAnnotationProcessor(libs.micronaut.inject.java)
     annotationProcessor(libs.micronaut.data.processor)
@@ -60,6 +63,46 @@ dependencies {
     testRuntimeOnly(libs.junit.jupiter.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.assertj.core)
+    jteGenerate(libs.jte.native.resources)
+}
+
+jte {
+    sourceDirectory = file("src/main/resources/views").toPath()
+    contentType = ContentType.Html
+    binaryStaticContent = true
+    jteExtension("gg.jte.nativeimage.NativeResourcesExtension")
+    generate()
+}
+
+fun nativeImageJavaMajorVersion(): Int {
+    val javaHome = providers.environmentVariable("JAVA_HOME").orNull?.let(::file)
+    val releaseFile = javaHome?.resolve("release")
+    val javaVersion = if (releaseFile?.isFile == true) {
+        releaseFile.readLines()
+            .first { it.startsWith("JAVA_VERSION=") }
+            .substringAfter("=\"")
+            .substringBefore("\"")
+    } else {
+        JavaVersion.current().majorVersion
+    }
+    return javaVersion.substringBefore(".").toInt()
+}
+
+graalvmNative {
+    binaries {
+        named("main") {
+            buildArgs.add("--enable-native-access=ALL-UNNAMED")
+            if (nativeImageJavaMajorVersion() >= 24) {
+                buildArgs.add("-J--sun-misc-unsafe-memory-access=allow")
+            }
+            buildArgs.add("--exclude-config")
+            buildArgs.add(".*micronaut-http-netty-[^/]+\\.jar")
+            buildArgs.add("^/META-INF/native-image/io\\.micronaut\\.micronaut\\.http\\.netty/native-image\\.properties$")
+            buildArgs.add("--initialize-at-run-time=io.netty.util.internal.CleanerJava25")
+            buildArgs.add("--initialize-at-run-time=sun.security.util.Password\$ConsoleHolder")
+            buildArgs.add("--initialize-at-run-time=jdk.internal.io.JdkConsoleImpl\$1ConsoleHolder")
+        }
+    }
 }
 
 tasks.withType<JavaCompile>().configureEach {
@@ -70,6 +113,10 @@ tasks.withType<JavaCompile>().configureEach {
             "-Amicronaut.processing.module=micronaut-petclinic"
         )
     )
+}
+
+tasks.named("inspectRuntimeClasspath") {
+    dependsOn(tasks.named("generateJte"))
 }
 
 tasks.withType<Test>().configureEach {

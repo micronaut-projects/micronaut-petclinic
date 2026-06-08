@@ -24,10 +24,24 @@
         <release.version>21</release.version>
         <micronaut.version>4.10.2</micronaut.version>
         <micronaut.sourcegen.version>1.8.4</micronaut.sourcegen.version>
+        <netty.version>4.2.12.Final</netty.version>
         <micronaut.runtime>netty</micronaut.runtime>
         <micronaut.aot.enabled>false</micronaut.aot.enabled>
         <exec.mainClass>io.micronaut.samples.petclinic.Application</exec.mainClass>
+        <jte.version>3.2.1</jte.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <!-- Micronaut Core -->
@@ -131,13 +145,6 @@
             <scope>runtime</scope>
         </dependency>
         
-        <!-- Annotation Processors -->
-        <dependency>
-            <groupId>io.micronaut</groupId>
-            <artifactId>micronaut-inject-java</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        
         <!-- Testing -->
         <dependency>
             <groupId>io.micronaut.test</groupId>
@@ -227,10 +234,92 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.graalvm.buildtools</groupId>
-                <artifactId>native-maven-plugin</artifactId>
-                 <version>0.11.3</version>
+                <groupId>gg.jte</groupId>
+                <artifactId>jte-maven-plugin</artifactId>
+                <version>${jte.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>gg.jte</groupId>
+                        <artifactId>jte-native-resources</artifactId>
+                        <version>${jte.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <sourceDirectory>${project.basedir}/src/main/resources/views</sourceDirectory>
+                    <targetDirectory>${project.build.directory}/generated-sources/jte</targetDirectory>
+                    <targetResourceDirectory>${project.build.outputDirectory}</targetResourceDirectory>
+                    <contentType>Html</contentType>
+                    <binaryStaticContent>true</binaryStaticContent>
+                    <packageName>gg.jte.generated.precompiled</packageName>
+                    <extensions>
+                        <extension>
+                            <className>gg.jte.nativeimage.NativeResourcesExtension</className>
+                        </extension>
+                    </extensions>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>generate-jte</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>native</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>0.11.3</version>
+                        <executions>
+                            <execution>
+                                <id>native-compile</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>compile-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <classesDirectory>${project.build.outputDirectory}</classesDirectory>
+                            <buildArgs>
+                                <buildArg>--enable-native-access=ALL-UNNAMED</buildArg>
+                                <buildArg>--exclude-config</buildArg>
+                                <buildArg>.*micronaut-http-netty-[^/]+\.jar</buildArg>
+                                <buildArg>^/META-INF/native-image/io\.micronaut\.micronaut\.http\.netty/native-image\.properties$</buildArg>
+                                <buildArg>--initialize-at-run-time=io.netty.util.internal.CleanerJava25</buildArg>
+                                <buildArg>--initialize-at-run-time=sun.security.util.Password$ConsoleHolder</buildArg>
+                                <buildArg>--initialize-at-run-time=jdk.internal.io.JdkConsoleImpl$1ConsoleHolder</buildArg>
+                            </buildArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>native-jdk24-plus</id>
+            <activation>
+                <jdk>[24,)</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <configuration>
+                            <buildArgs combine.children="append">
+                                <buildArg>-J--sun-misc-unsafe-memory-access=allow</buildArg>
+                            </buildArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

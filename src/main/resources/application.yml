@@ -15,7 +15,7 @@ micronaut:
       maximum-size: 100
   views:
     jte:
-      dynamic: true
+      dynamic: false
       binary-static-content: true
   messages:
     basename: i18n/messages

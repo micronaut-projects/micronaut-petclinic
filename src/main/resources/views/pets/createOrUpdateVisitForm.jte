@@ -40,20 +40,18 @@
                         </div>
                         <div class="detail-body">
                             <div class="text-center mb-4">
-                                @{
-                                    String typeKey = (pet.getType() != null && pet.getType().name() != null)
-                                        ? pet.getType().name().trim().toLowerCase(Locale.ROOT)
-                                        : "";
-                                    String iconClass = switch (typeKey) {
-                                        case "cat" -> "fa-cat";
-                                        case "bird" -> "fa-dove";
-                                        case "hamster" -> "fa-hippo";
-                                        case "snake" -> "fa-worm";
-                                        default -> "fa-dog";
-                                    };
-                                }
-                                <div class="pet-icon mx-auto mb-3 ${typeKey.isBlank() ? "dog" : typeKey}" style="width: 80px; height: 80px; font-size: 2rem;">
-                                    <i class="fas ${iconClass}"></i>
+                                <div class="pet-icon mx-auto mb-3 ${
+                                    ((pet.getType() != null && pet.getType().name() != null) ? pet.getType().name().trim().toLowerCase(Locale.ROOT) : "dog")
+                                }" style="width: 80px; height: 80px; font-size: 2rem;">
+                                    <i class="fas ${
+                                        switch (((pet.getType() != null && pet.getType().name() != null) ? pet.getType().name().trim().toLowerCase(Locale.ROOT) : "")) {
+                                            case "cat" -> "fa-cat";
+                                            case "bird" -> "fa-dove";
+                                            case "hamster" -> "fa-hippo";
+                                            case "snake" -> "fa-worm";
+                                            default -> "fa-dog";
+                                        }
+                                    }"></i>
                                 </div>
                                 <h5>${pet.name()}</h5>
                             </div>

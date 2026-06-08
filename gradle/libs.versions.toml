@@ -2,14 +2,17 @@
 micronaut-platform = "4.10.2"
 micronaut-gradle-plugin = "4.6.2"
 micronaut-sourcegen = "1.8.4"
+netty = "4.2.12.Final"
 ojdbc = "23.9.0.25.07"
 mysql = "9.3.0"
 postgresql = "42.7.7"
 logback = "1.5.21"
 graalvm-native = "0.11.3"
+jte = "3.2.1"
 
 [libraries]
 micronaut-platform-parent = { module = "io.micronaut.platform:micronaut-parent", version.ref = "micronaut-platform" }
+netty-bom = { module = "io.netty:netty-bom", version.ref = "netty" }
 
 micronaut-http-server-netty = { module = "io.micronaut:micronaut-http-server-netty" }
 micronaut-http-client = { module = "io.micronaut:micronaut-http-client" }
@@ -34,6 +37,7 @@ mysql-connector-j = { module = "com.mysql:mysql-connector-j", version.ref = "mys
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 snakeyaml = { module = "org.yaml:snakeyaml" }
+jte-native-resources = { module = "gg.jte:jte-native-resources", version.ref = "jte" }
 
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
@@ -43,3 +47,4 @@ assertj-core = { module = "org.assertj:assertj-core" }
 [plugins]
 micronaut-application = { id = "io.micronaut.application", version.ref = "micronaut-gradle-plugin" }
 graalvm-native = { id = "org.graalvm.buildtools.native", version.ref = "graalvm-native" }
+jte = { id = "gg.jte.gradle", version.ref = "jte" }
