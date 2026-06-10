@@ -15,14 +15,14 @@
     <parent>
         <groupId>io.micronaut.platform</groupId>
         <artifactId>micronaut-parent</artifactId>
-        <version>4.10.2</version>
+        <version>4.10.16</version>
     </parent>
 
     <properties>
         <packaging>jar</packaging>
-        <jdk.version>21</jdk.version>
-        <release.version>21</release.version>
-        <micronaut.version>4.10.2</micronaut.version>
+        <jdk.version>25</jdk.version>
+        <release.version>25</release.version>
+        <micronaut.version>4.10.16</micronaut.version>
         <micronaut.sourcegen.version>1.8.4</micronaut.sourcegen.version>
         <netty.version>4.2.12.Final</netty.version>
         <micronaut.runtime>netty</micronaut.runtime>
@@ -134,7 +134,6 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.5.21</version>
             <scope>runtime</scope>
         </dependency>
         

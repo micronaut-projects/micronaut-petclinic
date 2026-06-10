@@ -124,3 +124,15 @@ tasks.withType<Test>().configureEach {
     maxParallelForks = 1
     systemProperty("micronaut.server.port", "-1")
 }
+
+graalvmNative {
+    metadataRepository {
+        enabled = true
+    }
+    binaries {
+        all {
+            resources.autodetect()
+            buildArgs.add("-H:+SharedArenaSupport")
+        }
+    }
+}

@@ -1,0 +1,60 @@
+name: GraalVM Native CI
+
+on:
+  push:
+    branches:
+      - main
+      - '[1-9]+.[0-9]+.x'
+  pull_request:
+    branches:
+      - main
+      - '[1-9]+.[0-9]+.x'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      GRAALVM_QUICK_BUILD: true
+
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo apt-get clean
+          df -h
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup GraalVM
+        uses: graalvm/setup-graalvm@v1.4.1
+        with:
+          distribution: graalvm
+          java-version: '25'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run native tests
+        run: ./gradlew nativeTest --no-daemon --continue
+
+      - name: Publish native test report
+        if: always()
+        uses: mikepenz/action-junit-report@v5
+        with:
+          check_name: GraalVM Native CI / Test Report
+          report_paths: '**/build/test-results/nativeTest/TEST-*.xml'
+          check_retries: 'true'

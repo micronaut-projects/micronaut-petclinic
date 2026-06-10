@@ -1,0 +1,48 @@
+name: Maven CI
+
+on:
+  push:
+    branches:
+      - main
+      - '[1-9]+.[0-9]+.x'
+  pull_request:
+    branches:
+      - main
+      - '[1-9]+.[0-9]+.x'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup GraalVM
+        uses: graalvm/setup-graalvm@v1.4.1
+        with:
+          distribution: graalvm
+          java-version: '25'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build with Maven
+        run: ./mvnw -B -ntp verify
+
+      - name: Publish test report
+        if: always()
+        uses: mikepenz/action-junit-report@v5
+        with:
+          check_name: Maven CI / Test Report
+          report_paths: |
+            **/target/surefire-reports/TEST-*.xml
+            **/target/failsafe-reports/TEST-*.xml
+          check_retries: 'true'
