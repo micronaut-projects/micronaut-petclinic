@@ -1,4 +1,4 @@
-name: Maven Native CI
+name: Maven Native Test CI
 
 on:
   push:
@@ -20,7 +20,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  native-image:
+  native-test:
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -45,14 +45,14 @@ jobs:
           java-version: '25'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build native image with Maven
-        run: ./mvnw -B -ntp package -Dpackaging=native-image
+      - name: Run native tests with Maven
+        run: ./mvnw -B -ntp -Pnative test
 
       - name: Publish test report
         if: always()
         uses: mikepenz/action-junit-report@v5
         with:
-          check_name: Maven Native CI / Test Report
+          check_name: Maven Native Test CI / Test Report
           report_paths: |
             **/target/surefire-reports/TEST-*.xml
             **/target/failsafe-reports/TEST-*.xml
