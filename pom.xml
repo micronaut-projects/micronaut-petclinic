@@ -27,7 +27,7 @@
         <micronaut.runtime>netty</micronaut.runtime>
         <micronaut.aot.enabled>false</micronaut.aot.enabled>
         <exec.mainClass>io.micronaut.samples.petclinic.Application</exec.mainClass>
-        <jte.version>3.2.1</jte.version>
+        <jte.version>3.2.4</jte.version>
     </properties>
 
     <dependencies>
