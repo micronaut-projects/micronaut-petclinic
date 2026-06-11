@@ -1,7 +1,10 @@
+import gg.jte.ContentType
+
 plugins {
     alias(libs.plugins.micronaut.application)
     jacoco
     alias(libs.plugins.graalvm.native)
+    alias(libs.plugins.jte)
 }
 
 group = providers.gradleProperty("projectGroup").orElse("io.micronaut.samples").get()
@@ -42,7 +45,6 @@ dependencies {
     runtimeOnly(libs.logback.classic)
     runtimeOnly(libs.snakeyaml)
 
-    compileOnly(libs.micronaut.inject.java)
     annotationProcessor(libs.micronaut.inject.java)
     testAnnotationProcessor(libs.micronaut.inject.java)
     annotationProcessor(libs.micronaut.data.processor)
@@ -60,6 +62,28 @@ dependencies {
     testRuntimeOnly(libs.junit.jupiter.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.assertj.core)
+    jteGenerate(libs.jte.native.resources)
+}
+
+jte {
+    sourceDirectory = file("src/main/resources/views").toPath()
+    contentType = ContentType.Html
+    binaryStaticContent = true
+    jteExtension("gg.jte.nativeimage.NativeResourcesExtension")
+    generate()
+}
+
+graalvmNative {
+    binaries {
+        named("main") {
+            buildArgs.add("--enable-native-access=ALL-UNNAMED")
+            buildArgs.add("-J--sun-misc-unsafe-memory-access=allow")
+            buildArgs.add("--exclude-config")
+            buildArgs.add(".*micronaut-http-netty-[^/]+\\.jar")
+            buildArgs.add("^/META-INF/native-image/io\\.micronaut\\.micronaut\\.http\\.netty/native-image\\.properties$")
+            buildArgs.add("--initialize-at-run-time=io.netty.util.internal.CleanerJava25")
+        }
+    }
 }
 
 tasks.withType<JavaCompile>().configureEach {
@@ -70,6 +94,10 @@ tasks.withType<JavaCompile>().configureEach {
             "-Amicronaut.processing.module=micronaut-petclinic"
         )
     )
+}
+
+tasks.named("inspectRuntimeClasspath") {
+    dependsOn(tasks.named("generateJte"))
 }
 
 tasks.withType<Test>().configureEach {
