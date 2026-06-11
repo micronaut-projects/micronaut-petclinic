@@ -7,7 +7,7 @@ mysql = "9.3.0"
 postgresql = "42.7.7"
 logback = "1.5.21"
 graalvm-native = "0.11.5"
-jte = "3.2.1"
+jte = "3.2.4"
 
 [libraries]
 micronaut-platform-parent = { module = "io.micronaut.platform:micronaut-parent", version.ref = "micronaut-platform" }
