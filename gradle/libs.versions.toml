@@ -2,7 +2,6 @@
 micronaut-platform = "4.10.16"
 micronaut-gradle-plugin = "4.6.2"
 micronaut-sourcegen = "1.8.4"
-netty = "4.2.12.Final"
 ojdbc = "23.9.0.25.07"
 mysql = "9.3.0"
 postgresql = "42.7.7"
@@ -12,7 +11,6 @@ jte = "3.2.1"
 
 [libraries]
 micronaut-platform-parent = { module = "io.micronaut.platform:micronaut-parent", version.ref = "micronaut-platform" }
-netty-bom = { module = "io.netty:netty-bom", version.ref = "netty" }
 
 micronaut-http-server-netty = { module = "io.micronaut:micronaut-http-server-netty" }
 micronaut-http-client = { module = "io.micronaut:micronaut-http-client" }

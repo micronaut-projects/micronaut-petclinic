@@ -24,24 +24,11 @@
         <release.version>25</release.version>
         <micronaut.version>4.10.16</micronaut.version>
         <micronaut.sourcegen.version>1.8.4</micronaut.sourcegen.version>
-        <netty.version>4.2.12.Final</netty.version>
         <micronaut.runtime>netty</micronaut.runtime>
         <micronaut.aot.enabled>false</micronaut.aot.enabled>
         <exec.mainClass>io.micronaut.samples.petclinic.Application</exec.mainClass>
         <jte.version>3.2.1</jte.version>
     </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-bom</artifactId>
-                <version>${netty.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <dependencies>
         <!-- Micronaut Core -->
@@ -289,31 +276,11 @@
                             <classesDirectory>${project.build.outputDirectory}</classesDirectory>
                             <buildArgs>
                                 <buildArg>--enable-native-access=ALL-UNNAMED</buildArg>
+                                <buildArg>-J--sun-misc-unsafe-memory-access=allow</buildArg>
                                 <buildArg>--exclude-config</buildArg>
                                 <buildArg>.*micronaut-http-netty-[^/]+\.jar</buildArg>
                                 <buildArg>^/META-INF/native-image/io\.micronaut\.micronaut\.http\.netty/native-image\.properties$</buildArg>
                                 <buildArg>--initialize-at-run-time=io.netty.util.internal.CleanerJava25</buildArg>
-                                <buildArg>--initialize-at-run-time=sun.security.util.Password$ConsoleHolder</buildArg>
-                                <buildArg>--initialize-at-run-time=jdk.internal.io.JdkConsoleImpl$1ConsoleHolder</buildArg>
-                            </buildArgs>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>native-jdk24-plus</id>
-            <activation>
-                <jdk>[24,)</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.graalvm.buildtools</groupId>
-                        <artifactId>native-maven-plugin</artifactId>
-                        <configuration>
-                            <buildArgs combine.children="append">
-                                <buildArg>-J--sun-misc-unsafe-memory-access=allow</buildArg>
                             </buildArgs>
                         </configuration>
                     </plugin>
