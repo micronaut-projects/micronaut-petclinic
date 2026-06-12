@@ -77,11 +77,12 @@ graalvmNative {
     binaries {
         named("main") {
             buildArgs.add("--enable-native-access=ALL-UNNAMED")
-            buildArgs.add("-J--sun-misc-unsafe-memory-access=allow")
             buildArgs.add("--exclude-config")
             buildArgs.add(".*micronaut-http-netty-[^/]+\\.jar")
             buildArgs.add("^/META-INF/native-image/io\\.micronaut\\.micronaut\\.http\\.netty/native-image\\.properties$")
             buildArgs.add("--initialize-at-run-time=io.netty.util.internal.CleanerJava25")
+            buildArgs.add("--initialize-at-run-time=sun.security.util.Password\$ConsoleHolder")
+            buildArgs.add("--initialize-at-run-time=jdk.internal.io.JdkConsoleImpl\$1ConsoleHolder")
         }
     }
 }

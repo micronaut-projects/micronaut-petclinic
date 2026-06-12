@@ -276,11 +276,12 @@
                             <classesDirectory>${project.build.outputDirectory}</classesDirectory>
                             <buildArgs>
                                 <buildArg>--enable-native-access=ALL-UNNAMED</buildArg>
-                                <buildArg>-J--sun-misc-unsafe-memory-access=allow</buildArg>
                                 <buildArg>--exclude-config</buildArg>
                                 <buildArg>.*micronaut-http-netty-[^/]+\.jar</buildArg>
                                 <buildArg>^/META-INF/native-image/io\.micronaut\.micronaut\.http\.netty/native-image\.properties$</buildArg>
                                 <buildArg>--initialize-at-run-time=io.netty.util.internal.CleanerJava25</buildArg>
+                                <buildArg>--initialize-at-run-time=sun.security.util.Password$ConsoleHolder</buildArg>
+                                <buildArg>--initialize-at-run-time=jdk.internal.io.JdkConsoleImpl$1ConsoleHolder</buildArg>
                             </buildArgs>
                         </configuration>
                     </plugin>
