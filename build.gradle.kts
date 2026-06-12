@@ -113,7 +113,9 @@ graalvmNative {
     binaries {
         all {
             resources.autodetect()
-            buildArgs.add("-H:+SharedArenaSupport")
+            if (JavaVersion.current().majorVersion == "25") {
+                buildArgs.add("-H:+SharedArenaSupport")
+            }
         }
     }
 }
