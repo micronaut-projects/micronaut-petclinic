@@ -21,7 +21,12 @@ concurrency:
 
 jobs:
   build:
+    name: JDK ${{ matrix.java-version }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java-version: ['21', '25']
 
     steps:
       - name: Checkout repository
@@ -31,7 +36,7 @@ jobs:
         uses: graalvm/setup-graalvm@v1.4.1
         with:
           distribution: graalvm
-          java-version: '25'
+          java-version: ${{ matrix.java-version }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Gradle
@@ -44,6 +49,6 @@ jobs:
         if: always()
         uses: mikepenz/action-junit-report@v5
         with:
-          check_name: Java CI / Test Report
+          check_name: Java CI / JDK ${{ matrix.java-version }} / Test Report
           report_paths: '**/build/test-results/test/TEST-*.xml'
           check_retries: 'true'

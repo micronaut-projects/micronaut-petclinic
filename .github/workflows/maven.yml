@@ -21,7 +21,12 @@ concurrency:
 
 jobs:
   build:
+    name: JDK ${{ matrix.java-version }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java-version: ['21', '25']
 
     steps:
       - name: Checkout repository
@@ -31,17 +36,17 @@ jobs:
         uses: graalvm/setup-graalvm@v1.4.1
         with:
           distribution: graalvm
-          java-version: '25'
+          java-version: ${{ matrix.java-version }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build with Maven
-        run: ./mvnw -B -ntp verify
+        run: ./mvnw -B -ntp -Djdk.version=${{ matrix.java-version }} -Drelease.version=${{ matrix.java-version }} verify
 
       - name: Publish test report
         if: always()
         uses: mikepenz/action-junit-report@v5
         with:
-          check_name: Maven CI / Test Report
+          check_name: Maven CI / JDK ${{ matrix.java-version }} / Test Report
           report_paths: |
             **/target/surefire-reports/TEST-*.xml
             **/target/failsafe-reports/TEST-*.xml
