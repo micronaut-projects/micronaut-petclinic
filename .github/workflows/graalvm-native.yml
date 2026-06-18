@@ -41,7 +41,7 @@ jobs:
           df -h
 
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Setup GraalVM
         uses: graalvm/setup-graalvm@v1.4.1
