@@ -5,7 +5,7 @@ micronaut-sourcegen = "1.8.5"
 ojdbc = "23.26.2.0.0"
 mysql = "9.3.0"
 postgresql = "42.7.11"
-logback = "1.5.35"
+logback = "1.5.37"
 graalvm-native = "1.1.2"
 jte = "3.2.4"
 
