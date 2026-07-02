@@ -6,7 +6,7 @@ import io.micronaut.runtime.Micronaut;
  * Micronaut Pet Clinic Application.
  * 
  * This is a sample application demonstrating Micronaut features including:
- * - Micronaut Data JPA for database access
+ * - Micronaut Data JDBC for database access
  * - JTE for server-side rendering
  * - Caffeine for caching
  * - Bean validation

@@ -71,16 +71,15 @@ class ClinicServiceTest {
     }
 
     @Test
-    void shouldFindVetWithSpecialties() {
+    void shouldFindVetWithSpecialities() {
         Collection<Vet> vets = clinicService.findAllVets();
-        Vet vetWithSpecialties = vets.stream()
-                .filter(v -> !v.getSpecialties().isEmpty())
+        Vet vetWithSpecialities = vets.stream()
+                .filter(v -> !v.getSpecialities().isEmpty())
                 .findFirst()
                 .orElse(null);
 
-        // In the JDBC migration we currently don't persist/assemble vet specialties.
-        assertThat(vetWithSpecialties).isNotNull();
-        assertThat(vetWithSpecialties.getSpecialties()).isNotEmpty();
+        assertThat(vetWithSpecialities).isNotNull();
+        assertThat(vetWithSpecialities.getSpecialities()).isNotEmpty();
     }
 
     @Test
@@ -129,9 +128,9 @@ class ClinicServiceTest {
     }
 
     @Test
-    void shouldFindAllSpecialties() {
-        Collection<Specialty> specialties = clinicService.findAllSpecialties();
-        assertThat(specialties).isNotEmpty();
-        assertThat(specialties.size()).isGreaterThanOrEqualTo(3);
+    void shouldFindAllSpecialities() {
+        Collection<Speciality> specialities = clinicService.findAllSpecialities();
+        assertThat(specialities).isNotEmpty();
+        assertThat(specialities.size()).isGreaterThanOrEqualTo(3);
     }
 }

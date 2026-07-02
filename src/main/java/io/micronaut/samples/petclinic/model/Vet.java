@@ -20,12 +20,12 @@ import java.util.TreeSet;
 
 /**
  * Entity representing a veterinarian.
- * A vet can have multiple specialties.
+ * A vet can have multiple specialities.
  *
  * @param id the database identifier, or {@code null} for a new vet
  * @param firstName the vet's first name
  * @param lastName the vet's last name
- * @param specialties the transient specialties associated with the vet
+ * @param specialities the transient specialities associated with the vet
  */
 @MappedEntity("VETS")
 @Serdeable
@@ -44,14 +44,14 @@ public record Vet(
         String lastName,
 
         @Transient
-        Set<Specialty> specialties
+        Set<Speciality> specialities
 ) implements Person, VetWither {
 
     /**
-     * Creates a vet and normalizes a {@code null} specialty set to an empty immutable set.
+     * Creates a vet and normalizes a {@code null} speciality set to an empty immutable set.
      */
     public Vet {
-        specialties = specialties != null ? Set.copyOf(specialties) : Set.of();
+        specialities = specialities != null ? Set.copyOf(specialities) : Set.of();
     }
 
     /**
@@ -74,7 +74,7 @@ public record Vet(
     }
 
     /**
-     * Creates a new vet without an id or specialties.
+     * Creates a new vet without an id or specialities.
      *
      * @param firstName the vet's first name
      * @param lastName the vet's last name
@@ -84,36 +84,36 @@ public record Vet(
     }
 
     /**
-     * Returns the transient specialties associated with this vet.
+     * Returns the transient specialities associated with this vet.
      *
-     * @return the immutable specialty set
+     * @return the immutable speciality set
      */
     @Override
     @Transient
-    public Set<Specialty> specialties() {
-        return specialties;
+    public Set<Speciality> specialities() {
+        return specialities;
     }
 
     /**
-     * Returns the vet specialties sorted by name.
+     * Returns the vet specialities sorted by name.
      *
-     * @return an immutable sorted specialty set
+     * @return an immutable sorted speciality set
      */
     @Transient
-    public Set<Specialty> getSpecialties() {
-        List<Specialty> sortedSpecialties = new ArrayList<>(specialties());
-        sortedSpecialties.sort(Comparator.comparing(Specialty::name));
-        return Collections.unmodifiableSet(new LinkedHashSet<>(sortedSpecialties));
+    public Set<Speciality> getSpecialities() {
+        List<Speciality> sortedSpecialities = new ArrayList<>(specialities());
+        sortedSpecialities.sort(Comparator.comparing(Speciality::name));
+        return Collections.unmodifiableSet(new LinkedHashSet<>(sortedSpecialities));
     }
 
     /**
-     * Returns the number of specialties associated with this vet.
+     * Returns the number of specialities associated with this vet.
      *
-     * @return the specialty count
+     * @return the speciality count
      */
     @Transient
-    public int getNrOfSpecialties() {
-        return specialties.size();
+    public int getNrOfSpecialities() {
+        return specialities.size();
     }
 
     /**
@@ -124,7 +124,7 @@ public record Vet(
      */
     @Override
     public Vet withId(Integer id) {
-        return new Vet(id, firstName, lastName, specialties);
+        return new Vet(id, firstName, lastName, specialities);
     }
 
     /**
@@ -135,7 +135,7 @@ public record Vet(
      */
     @Override
     public Vet withFirstName(String firstName) {
-        return new Vet(id, firstName, lastName, specialties);
+        return new Vet(id, firstName, lastName, specialities);
     }
 
     /**
@@ -146,59 +146,59 @@ public record Vet(
      */
     @Override
     public Vet withLastName(String lastName) {
-        return new Vet(id, firstName, lastName, specialties);
+        return new Vet(id, firstName, lastName, specialities);
     }
 
     /**
-     * Returns a copy of this vet with a different specialty set.
+     * Returns a copy of this vet with a different speciality set.
      *
-     * @param specialties the replacement specialties
-     * @return a vet copy with the supplied specialties
+     * @param specialities the replacement specialities
+     * @return a vet copy with the supplied specialities
      */
     @Override
-    public Vet withSpecialties(Set<Specialty> specialties) {
-        return new Vet(id, firstName, lastName, specialties);
+    public Vet withSpecialities(Set<Speciality> specialities) {
+        return new Vet(id, firstName, lastName, specialities);
     }
 
     /**
-     * Returns a copy of this vet with a specialty added.
+     * Returns a copy of this vet with a speciality added.
      *
-     * @param specialty the specialty to add
-     * @return a vet copy containing the specialty
+     * @param speciality the speciality to add
+     * @return a vet copy containing the speciality
      */
-    public Vet withSpecialtyAdded(Specialty specialty) {
-        Set<Specialty> updatedSpecialties = new TreeSet<>(Comparator.comparing(Specialty::name));
-        updatedSpecialties.addAll(specialties);
-        updatedSpecialties.add(specialty);
-        return withSpecialties(updatedSpecialties);
+    public Vet withSpecialityAdded(Speciality speciality) {
+        Set<Speciality> updatedSpecialities = new TreeSet<>(Comparator.comparing(Speciality::name));
+        updatedSpecialities.addAll(specialities);
+        updatedSpecialities.add(speciality);
+        return withSpecialities(updatedSpecialities);
     }
 
     /**
-     * Returns a copy of this vet with a specialty removed.
+     * Returns a copy of this vet with a speciality removed.
      *
-     * @param specialty the specialty to remove
-     * @return a vet copy without the specialty
+     * @param speciality the speciality to remove
+     * @return a vet copy without the speciality
      */
-    public Vet withoutSpecialty(Specialty specialty) {
-        Set<Specialty> updatedSpecialties = new TreeSet<>(Comparator.comparing(Specialty::name));
-        updatedSpecialties.addAll(specialties);
-        updatedSpecialties.remove(specialty);
-        return withSpecialties(updatedSpecialties);
+    public Vet withoutSpeciality(Speciality speciality) {
+        Set<Speciality> updatedSpecialities = new TreeSet<>(Comparator.comparing(Speciality::name));
+        updatedSpecialities.addAll(specialities);
+        updatedSpecialities.remove(speciality);
+        return withSpecialities(updatedSpecialities);
     }
 
     /**
-     * Returns a comma-separated list of specialty names for display.
+     * Returns a comma-separated list of speciality names for display.
      *
-     * @return the specialty names, or {@code none} when the vet has no specialties
+     * @return the speciality names, or {@code none} when the vet has no specialities
      */
     @Transient
-    public String getSpecialtiesAsString() {
-        if (specialties.isEmpty()) {
+    public String getSpecialitiesAsString() {
+        if (specialities.isEmpty()) {
             return "none";
         }
         List<String> names = new ArrayList<>();
-        for (Specialty specialty : getSpecialties()) {
-            names.add(specialty.name());
+        for (Speciality speciality : getSpecialities()) {
+            names.add(speciality.name());
         }
         return String.join(", ", names);
     }
@@ -235,7 +235,7 @@ public record Vet(
                 "id=" + id +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
-                ", specialties=" + getSpecialtiesAsString() +
+                ", specialities=" + getSpecialitiesAsString() +
                 '}';
     }
 }

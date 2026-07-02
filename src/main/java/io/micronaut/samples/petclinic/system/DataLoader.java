@@ -23,38 +23,38 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
     private static final Logger LOG = LoggerFactory.getLogger(DataLoader.class);
 
     private final VetRepository vetRepository;
-    private final SpecialtyRepository specialtyRepository;
+    private final SpecialityRepository specialityRepository;
     private final PetTypeRepository petTypeRepository;
     private final OwnerRepository ownerRepository;
     private final PetRepository petRepository;
     private final VisitRepository visitRepository;
-    private final VetSpecialtyRepository vetSpecialtyRepository;
+    private final VetSpecialityRepository vetSpecialityRepository;
 
     /**
      * Creates the data loader with the repositories used to seed sample data.
      *
      * @param vetRepository repository for vets
-     * @param specialtyRepository repository for specialties
+     * @param specialityRepository repository for specialities
      * @param petTypeRepository repository for pet types
      * @param ownerRepository repository for owners
      * @param petRepository repository for pets
      * @param visitRepository repository for visits
-     * @param vetSpecialtyRepository repository for vet-specialty join rows
+     * @param vetSpecialityRepository repository for vet-speciality join rows
      */
     public DataLoader(VetRepository vetRepository,
-                      SpecialtyRepository specialtyRepository,
+                      SpecialityRepository specialityRepository,
                       PetTypeRepository petTypeRepository,
                       OwnerRepository ownerRepository,
                       PetRepository petRepository,
                       VisitRepository visitRepository,
-                      VetSpecialtyRepository vetSpecialtyRepository) {
+                      VetSpecialityRepository vetSpecialityRepository) {
         this.vetRepository = vetRepository;
-        this.specialtyRepository = specialtyRepository;
+        this.specialityRepository = specialityRepository;
         this.petTypeRepository = petTypeRepository;
         this.ownerRepository = ownerRepository;
         this.petRepository = petRepository;
         this.visitRepository = visitRepository;
-        this.vetSpecialtyRepository = vetSpecialtyRepository;
+        this.vetSpecialityRepository = vetSpecialityRepository;
     }
 
     /**
@@ -71,10 +71,10 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
     }
 
     private void loadData() {
-        // Create specialties
-        Specialty radiology = createSpecialty("radiology");
-        Specialty surgery = createSpecialty("surgery");
-        Specialty dentistry = createSpecialty("dentistry");
+        // Create specialities
+        Speciality radiology = createSpeciality("radiology");
+        Speciality surgery = createSpeciality("surgery");
+        Speciality dentistry = createSpeciality("dentistry");
 
         // Create vets
         Vet james = createVet("James", "Carter");
@@ -133,16 +133,16 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
         createVisit(max, LocalDate.of(2013, 1, 3), "neutered");
     }
 
-    private Specialty createSpecialty(String name) {
-        Specialty specialty = new Specialty(name);
-        return specialtyRepository.save(specialty);
+    private Speciality createSpeciality(String name) {
+        Speciality speciality = new Speciality(name);
+        return specialityRepository.save(speciality);
     }
 
-    private Vet createVet(String firstName, String lastName, Specialty... specialties) {
-        Vet vet = new Vet(firstName, lastName).withSpecialties(Set.copyOf(Arrays.asList(specialties)));
+    private Vet createVet(String firstName, String lastName, Speciality... specialities) {
+        Vet vet = new Vet(firstName, lastName).withSpecialities(Set.copyOf(Arrays.asList(specialities)));
         Vet saved = vetRepository.save(vet);
-        for (Specialty specialty : specialties) {
-            vetSpecialtyRepository.save(new VetSpecialty(saved.id(), specialty.id()));
+        for (Speciality speciality : specialities) {
+            vetSpecialityRepository.save(new VetSpeciality(saved.id(), speciality.id()));
         }
         return saved;
     }

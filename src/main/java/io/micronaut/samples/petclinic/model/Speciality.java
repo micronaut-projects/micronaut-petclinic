@@ -9,15 +9,15 @@ import io.micronaut.sourcegen.annotations.Wither;
 import jakarta.validation.constraints.NotBlank;
 
 /**
- * Entity representing a veterinarian specialty (e.g., surgery, dentistry).
+ * Entity representing a veterinarian speciality (e.g., surgery, dentistry).
  *
- * @param id the database identifier, or {@code null} for a new specialty
- * @param name the display name of the specialty
+ * @param id the database identifier, or {@code null} for a new speciality
+ * @param name the display name of the speciality
  */
 @MappedEntity("SPECIALTIES")
 @Serdeable
 @Wither
-public record Specialty(
+public record Speciality(
         @Id
         @GeneratedValue
         Integer id,
@@ -25,29 +25,29 @@ public record Specialty(
         @MappedProperty("NAME")
         @NotBlank
         String name
-) implements NamedEntity, SpecialtyWither {
+) implements NamedEntity, SpecialityWither {
 
     /**
-     * Creates an empty specialty for framework binding.
+     * Creates an empty speciality for framework binding.
      */
-    public Specialty() {
+    public Speciality() {
         this(null, null);
     }
 
     /**
-     * Creates a new specialty without an id.
+     * Creates a new speciality without an id.
      *
-     * @param name the display name of the specialty
+     * @param name the display name of the speciality
      */
-    public Specialty(String name) {
+    public Speciality(String name) {
         this(null, name);
     }
 
     /**
-     * Compares specialties by entity identity.
+     * Compares specialities by entity identity.
      *
      * @param other the object being compared
-     * @return {@code true} when the other object represents the same specialty
+     * @return {@code true} when the other object represents the same speciality
      */
     @Override
     public boolean equals(Object other) {
@@ -57,7 +57,7 @@ public record Specialty(
     /**
      * Returns the entity-identity hash code.
      *
-     * @return the hash code based on the specialty id
+     * @return the hash code based on the speciality id
      */
     @Override
     public int hashCode() {
@@ -65,9 +65,9 @@ public record Specialty(
     }
 
     /**
-     * Returns the specialty display name.
+     * Returns the speciality display name.
      *
-     * @return the specialty name
+     * @return the speciality name
      */
     @Override
     public String toString() {

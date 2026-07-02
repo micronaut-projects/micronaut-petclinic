@@ -11,7 +11,7 @@ import java.util.Optional;
 
 /**
  * Repository for {@link Pet} entities.
- * Uses Micronaut Data JPA for compile-time query generation.
+ * Uses Micronaut Data JDBC for compile-time query generation.
  * Dialect-specific {@code @JdbcRepository} beans extend this interface.
  */
 public interface PetRepository extends CrudRepository<Pet, Integer> {

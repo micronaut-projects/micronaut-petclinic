@@ -60,11 +60,11 @@ public final class MySqlRepositories {
     }
 
     /**
-     * MySQL specialty repository bean.
+     * MySQL speciality repository bean.
      */
     @Requires(env = "mysql")
     @JdbcRepository(dialect = Dialect.MYSQL)
-    public interface MySqlSpecialtyRepository extends SpecialtyRepository {
+    public interface MySqlSpecialityRepository extends SpecialityRepository {
     }
 
     /**
@@ -80,7 +80,7 @@ public final class MySqlRepositories {
          */
         @Override
         @Query(value = "SELECT v.* FROM VETS v ORDER BY v.LAST_NAME", nativeQuery = true)
-        Collection<Vet> findAllWithSpecialties();
+        Collection<Vet> findAllWithSpecialities();
     }
 
     /**
@@ -101,19 +101,19 @@ public final class MySqlRepositories {
     }
 
     /**
-     * MySQL vet-specialty join repository bean.
+     * MySQL vet-speciality join repository bean.
      */
     @Requires(env = "mysql")
     @JdbcRepository(dialect = Dialect.MYSQL)
-    public interface MySqlVetSpecialtyRepository extends VetSpecialtyRepository {
+    public interface MySqlVetSpecialityRepository extends VetSpecialityRepository {
         /**
-         * Finds specialties for a vet using MySQL SQL.
+         * Finds specialities for a vet using MySQL SQL.
          *
          * @param vetId the vet id
-         * @return specialties associated with the vet
+         * @return specialities associated with the vet
          */
         @Override
         @Query(value = "SELECT s.* FROM SPECIALTIES s JOIN VET_SPECIALTIES vs ON vs.SPECIALTY_ID = s.id WHERE vs.VET_ID = :vetId ORDER BY s.NAME", nativeQuery = true)
-        List<Specialty> findSpecialtiesByVetId(Integer vetId);
+        List<Speciality> findSpecialitiesByVetId(Integer vetId);
     }
 }

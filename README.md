@@ -15,7 +15,7 @@ This Micronaut PetClinic app allows you to:
 - Manage pet owners (create, update, search)
 - Register pets for owners
 - Schedule veterinary visits
-- View veterinarians and their specialties
+- View veterinarians and their specialities
 - Switch between English, Spanish, and German
 
 
@@ -168,7 +168,7 @@ If you have GraalVM installed:
 
 ### Viewing Veterinarians
 
-Click "VETERINARIANS" in the navigation to see all vets and their specialties.
+Click "VETERINARIANS" in the navigation to see all vets and their specialities.
 
 ### Changing Language
 
@@ -184,7 +184,7 @@ Use the language selector in the top-right corner to switch between:
 ```
 src/main/java/
   └── io/micronaut/samples/petclinic/
-      ├── model/           # JPA entities (Owner, Pet, Visit, Vet)
+      ├── model/           # Micronaut Data JDBC entities (Owner, Pet, Visit, Vet)
       ├── repository/      # Data access interfaces
       ├── service/         # Business logic
       ├── dto/             # Form objects
@@ -226,9 +226,9 @@ export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
 
 - **Micronaut 4.x** - Framework
 - **Java 21** - Programming language
-- **Micronaut Data JPA** - Database access
+- **Micronaut Data JDBC** - Database access
 - **JTE** - HTML template engine
-- **Hibernate** - JPA implementation
+- **HikariCP** - JDBC connection pooling
 - **Caffeine** - Caching
 - **Bootstrap 5** - CSS framework
 

@@ -12,7 +12,7 @@ import java.util.Map;
 
 /**
  * Controller for veterinarian-related operations.
- * Displays the list of vets with their specialties.
+ * Displays the list of vets with their specialities.
  */
 @Controller("/vets")
 public class VetController {

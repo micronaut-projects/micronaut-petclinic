@@ -60,11 +60,11 @@ public final class OracleRepositories {
     }
 
     /**
-     * Oracle specialty repository bean.
+     * Oracle speciality repository bean.
      */
     @Requires(env = "oracle")
     @JdbcRepository(dialect = Dialect.ORACLE)
-    public interface OracleSpecialtyRepository extends SpecialtyRepository {
+    public interface OracleSpecialityRepository extends SpecialityRepository {
     }
 
     /**
@@ -80,7 +80,7 @@ public final class OracleRepositories {
          */
         @Override
         @Query(value = "SELECT v.* FROM VETS v ORDER BY v.LAST_NAME", nativeQuery = true)
-        Collection<Vet> findAllWithSpecialties();
+        Collection<Vet> findAllWithSpecialities();
     }
 
     /**
@@ -101,19 +101,19 @@ public final class OracleRepositories {
     }
 
     /**
-     * Oracle vet-specialty join repository bean.
+     * Oracle vet-speciality join repository bean.
      */
     @Requires(env = "oracle")
     @JdbcRepository(dialect = Dialect.ORACLE)
-    public interface OracleVetSpecialtyRepository extends VetSpecialtyRepository {
+    public interface OracleVetSpecialityRepository extends VetSpecialityRepository {
         /**
-         * Finds specialties for a vet using Oracle SQL.
+         * Finds specialities for a vet using Oracle SQL.
          *
          * @param vetId the vet id
-         * @return specialties associated with the vet
+         * @return specialities associated with the vet
          */
         @Override
         @Query(value = "SELECT s.* FROM SPECIALTIES s JOIN VET_SPECIALTIES vs ON vs.SPECIALTY_ID = s.id WHERE vs.VET_ID = :vetId ORDER BY s.NAME", nativeQuery = true)
-        List<Specialty> findSpecialtiesByVetId(Integer vetId);
+        List<Speciality> findSpecialitiesByVetId(Integer vetId);
     }
 }

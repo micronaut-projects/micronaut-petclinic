@@ -75,15 +75,15 @@
                             <div class="vet-card-body">
                                 <h5>${vet.getFirstName()} ${vet.getLastName()}</h5>
 
-                                @if (vet.getSpecialties() != null && !vet.getSpecialties().isEmpty())
+                                @if (vet.getSpecialities() != null && !vet.getSpecialities().isEmpty())
                                     <div class="mt-3">
-                                        @for (io.micronaut.samples.petclinic.model.Specialty s : vet.getSpecialties())
-                                            <span class="specialty-badge">${s.name()}</span>
+                                        @for (io.micronaut.samples.petclinic.model.Speciality s : vet.getSpecialities())
+                                            <span class="speciality-badge">${s.name()}</span>
                                         @endfor
                                     </div>
                                 @else
                                     <div class="mt-3">
-                                        <span class="specialty-badge">${msg.text("vet.generalPractice")}</span>
+                                        <span class="speciality-badge">${msg.text("vet.generalPractice")}</span>
                                     </div>
                                 @endif
 

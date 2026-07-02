@@ -24,8 +24,8 @@ public class ClinicService {
     private final PetTypeRepository petTypeRepository;
     private final VisitRepository visitRepository;
     private final VetRepository vetRepository;
-    private final SpecialtyRepository specialtyRepository;
-    private final VetSpecialtyRepository vetSpecialtyRepository;
+    private final SpecialityRepository specialityRepository;
+    private final VetSpecialityRepository vetSpecialityRepository;
 
     /**
      * Creates the service facade with its repository dependencies.
@@ -35,23 +35,23 @@ public class ClinicService {
      * @param petTypeRepository repository for pet types
      * @param visitRepository repository for visits
      * @param vetRepository repository for vets
-     * @param specialtyRepository repository for specialties
-     * @param vetSpecialtyRepository repository for vet-specialty join rows
+     * @param specialityRepository repository for specialities
+     * @param vetSpecialityRepository repository for vet-speciality join rows
      */
     public ClinicService(OwnerRepository ownerRepository,
                          PetRepository petRepository,
                           PetTypeRepository petTypeRepository,
                           VisitRepository visitRepository,
                           VetRepository vetRepository,
-                          SpecialtyRepository specialtyRepository,
-                          VetSpecialtyRepository vetSpecialtyRepository) {
+                          SpecialityRepository specialityRepository,
+                          VetSpecialityRepository vetSpecialityRepository) {
         this.ownerRepository = ownerRepository;
         this.petRepository = petRepository;
         this.petTypeRepository = petTypeRepository;
         this.visitRepository = visitRepository;
         this.vetRepository = vetRepository;
-        this.specialtyRepository = specialtyRepository;
-        this.vetSpecialtyRepository = vetSpecialtyRepository;
+        this.specialityRepository = specialityRepository;
+        this.vetSpecialityRepository = vetSpecialityRepository;
     }
 
     // ========== Owner Operations ==========
@@ -218,9 +218,9 @@ public class ClinicService {
      */
     @Cacheable("vets")
     public Collection<Vet> findAllVets() {
-        var vets = vetRepository.findAllWithSpecialties();
+        var vets = vetRepository.findAllWithSpecialities();
         return vets.stream()
-                .map(vet -> vet.withSpecialties(Set.copyOf(vetSpecialtyRepository.findSpecialtiesByVetId(vet.id()))))
+                .map(vet -> vet.withSpecialities(Set.copyOf(vetSpecialityRepository.findSpecialitiesByVetId(vet.id()))))
                 .collect(Collectors.toList());
     }
 
@@ -233,22 +233,22 @@ public class ClinicService {
         return vetRepository.findById(id);
     }
 
-    // ========== Specialty Operations ==========
+    // ========== Speciality Operations ==========
 
     /**
-     * Find all specialties.
-     * @return list of all specialties
+     * Find all specialities.
+     * @return list of all specialities
      */
-    public List<Specialty> findAllSpecialties() {
-        return specialtyRepository.findAllOrderByName();
+    public List<Speciality> findAllSpecialities() {
+        return specialityRepository.findAllOrderByName();
     }
 
     /**
-     * Find a specialty by ID.
-     * @param id the specialty ID
-     * @return the specialty, if found
+     * Find a speciality by ID.
+     * @param id the speciality ID
+     * @return the speciality, if found
      */
-    public Optional<Specialty> findSpecialtyById(Integer id) {
-        return specialtyRepository.findById(id);
+    public Optional<Speciality> findSpecialityById(Integer id) {
+        return specialityRepository.findById(id);
     }
 }

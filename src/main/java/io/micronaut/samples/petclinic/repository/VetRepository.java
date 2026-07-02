@@ -8,14 +8,14 @@ import java.util.Collection;
 
 /**
  * Repository for {@link Vet} entities.
- * Uses Micronaut Data JPA for compile-time query generation.
+ * Uses Micronaut Data JDBC for compile-time query generation.
  * Dialect-specific {@code @JdbcRepository} beans extend this interface.
  */
 public interface VetRepository extends CrudRepository<Vet, Integer> {
 
     /**
-     * Find all vets with their specialties, ordered by last name.
-     * @return collection of all vets with specialties loaded
+     * Find all vets with their specialities, ordered by last name.
+     * @return collection of all vets with specialities loaded
      */
-    Collection<Vet> findAllWithSpecialties();
+    Collection<Vet> findAllWithSpecialities();
 }

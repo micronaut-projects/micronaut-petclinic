@@ -60,11 +60,11 @@ public final class PostgresRepositories {
     }
 
     /**
-     * PostgreSQL specialty repository bean.
+     * PostgreSQL speciality repository bean.
      */
     @Requires(env = "postgres")
     @JdbcRepository(dialect = Dialect.POSTGRES)
-    public interface PostgresSpecialtyRepository extends SpecialtyRepository {
+    public interface PostgresSpecialityRepository extends SpecialityRepository {
     }
 
     /**
@@ -80,7 +80,7 @@ public final class PostgresRepositories {
          */
         @Override
         @Query(value = "SELECT v.* FROM VETS v ORDER BY v.LAST_NAME", nativeQuery = true)
-        Collection<Vet> findAllWithSpecialties();
+        Collection<Vet> findAllWithSpecialities();
     }
 
     /**
@@ -101,19 +101,19 @@ public final class PostgresRepositories {
     }
 
     /**
-     * PostgreSQL vet-specialty join repository bean.
+     * PostgreSQL vet-speciality join repository bean.
      */
     @Requires(env = "postgres")
     @JdbcRepository(dialect = Dialect.POSTGRES)
-    public interface PostgresVetSpecialtyRepository extends VetSpecialtyRepository {
+    public interface PostgresVetSpecialityRepository extends VetSpecialityRepository {
         /**
-         * Finds specialties for a vet using PostgreSQL SQL.
+         * Finds specialities for a vet using PostgreSQL SQL.
          *
          * @param vetId the vet id
-         * @return specialties associated with the vet
+         * @return specialities associated with the vet
          */
         @Override
         @Query(value = "SELECT s.* FROM SPECIALTIES s JOIN VET_SPECIALTIES vs ON vs.SPECIALTY_ID = s.id WHERE vs.VET_ID = :vetId ORDER BY s.NAME", nativeQuery = true)
-        List<Specialty> findSpecialtiesByVetId(Integer vetId);
+        List<Speciality> findSpecialitiesByVetId(Integer vetId);
     }
 }

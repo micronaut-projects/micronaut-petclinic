@@ -62,11 +62,11 @@ public final class H2Repositories {
     }
 
     /**
-     * H2 specialty repository bean.
+     * H2 speciality repository bean.
      */
     @Requires(notEnv = {"mysql", "postgres", "oracle"})
     @JdbcRepository(dialect = Dialect.H2)
-    public interface H2SpecialtyRepository extends SpecialtyRepository {
+    public interface H2SpecialityRepository extends SpecialityRepository {
     }
 
     /**
@@ -82,7 +82,7 @@ public final class H2Repositories {
          */
         @Override
         @Query(value = "SELECT v.* FROM VETS v ORDER BY v.LAST_NAME", nativeQuery = true)
-        Collection<Vet> findAllWithSpecialties();
+        Collection<Vet> findAllWithSpecialities();
     }
 
     /**
@@ -103,19 +103,19 @@ public final class H2Repositories {
     }
 
     /**
-     * H2 vet-specialty join repository bean.
+     * H2 vet-speciality join repository bean.
      */
     @Requires(notEnv = {"mysql", "postgres", "oracle"})
     @JdbcRepository(dialect = Dialect.H2)
-    public interface H2VetSpecialtyRepository extends VetSpecialtyRepository {
+    public interface H2VetSpecialityRepository extends VetSpecialityRepository {
         /**
-         * Finds specialties for a vet using H2 SQL.
+         * Finds specialities for a vet using H2 SQL.
          *
          * @param vetId the vet id
-         * @return specialties associated with the vet
+         * @return specialities associated with the vet
          */
         @Override
         @Query(value = "SELECT s.* FROM SPECIALTIES s JOIN VET_SPECIALTIES vs ON vs.SPECIALTY_ID = s.id WHERE vs.VET_ID = :vetId ORDER BY s.NAME", nativeQuery = true)
-        List<Specialty> findSpecialtiesByVetId(Integer vetId);
+        List<Speciality> findSpecialitiesByVetId(Integer vetId);
     }
 }
