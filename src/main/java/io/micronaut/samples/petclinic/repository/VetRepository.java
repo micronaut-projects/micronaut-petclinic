@@ -1,9 +1,8 @@
 package io.micronaut.samples.petclinic.repository;
 
-import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.samples.petclinic.model.Vet;
+import io.micronaut.samples.petclinic.model.VetWithSpecialities;
 import java.util.Collection;
 
 /**
@@ -14,8 +13,8 @@ import java.util.Collection;
 public interface VetRepository extends CrudRepository<Vet, Integer> {
 
     /**
-     * Find all vets with their specialities, ordered by last name.
+     * Find all vets with their aggregated specialities, ordered by last name.
      * @return collection of all vets with specialities loaded
      */
-    Collection<Vet> findAllWithSpecialities();
+    Collection<VetWithSpecialities> findAllWithSpecialities();
 }

@@ -6,6 +6,7 @@ import io.micronaut.samples.petclinic.repository.*;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -218,10 +219,27 @@ public class ClinicService {
      */
     @Cacheable("vets")
     public Collection<Vet> findAllVets() {
-        var vets = vetRepository.findAllWithSpecialities();
-        return vets.stream()
-                .map(vet -> vet.withSpecialities(Set.copyOf(vetSpecialityRepository.findSpecialitiesByVetId(vet.id()))))
+        return vetRepository.findAllWithSpecialities().stream()
+                .map(ClinicService::toVet)
                 .collect(Collectors.toList());
+    }
+
+    private static Vet toVet(VetWithSpecialities vet) {
+        return new Vet(vet.id(), vet.firstName(), vet.lastName(), parseSpecialities(vet.specialityRows()));
+    }
+
+    private static Set<Speciality> parseSpecialities(String specialityRows) {
+        if (specialityRows == null || specialityRows.isBlank()) {
+            return Set.of();
+        }
+        Set<Speciality> specialities = new LinkedHashSet<>();
+        for (String specialityRow : specialityRows.split("\\|")) {
+            String[] parts = specialityRow.split(":", 2);
+            if (parts.length == 2) {
+                specialities.add(new Speciality(Integer.valueOf(parts[0]), parts[1]));
+            }
+        }
+        return specialities;
     }
 
     /**

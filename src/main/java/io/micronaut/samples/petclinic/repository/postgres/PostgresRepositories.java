@@ -74,13 +74,27 @@ public final class PostgresRepositories {
     @JdbcRepository(dialect = Dialect.POSTGRES)
     public interface PostgresVetRepository extends VetRepository {
         /**
-         * Finds all vets using PostgreSQL SQL.
+         * Finds all vets and aggregates their specialities using PostgreSQL SQL.
          *
-         * @return all vets ordered by last name
+         * @return all vets ordered by last name with aggregated speciality rows
          */
         @Override
-        @Query(value = "SELECT v.* FROM VETS v ORDER BY v.LAST_NAME", nativeQuery = true)
-        Collection<Vet> findAllWithSpecialities();
+        @Query(value = """
+                SELECT
+                    v.id,
+                    v.FIRST_NAME AS first_name,
+                    v.LAST_NAME AS last_name,
+                    STRING_AGG(
+                        CASE WHEN s.id IS NOT NULL THEN s.id::text || ':' || s.NAME END,
+                        '|' ORDER BY s.NAME
+                    ) AS speciality_rows
+                FROM VETS v
+                LEFT JOIN VET_SPECIALTIES vs ON vs.VET_ID = v.id
+                LEFT JOIN SPECIALTIES s ON s.id = vs.SPECIALTY_ID
+                GROUP BY v.id, v.FIRST_NAME, v.LAST_NAME
+                ORDER BY v.LAST_NAME
+                """, nativeQuery = true)
+        Collection<VetWithSpecialities> findAllWithSpecialities();
     }
 
     /**

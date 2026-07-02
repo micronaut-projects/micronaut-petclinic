@@ -74,13 +74,27 @@ public final class MySqlRepositories {
     @JdbcRepository(dialect = Dialect.MYSQL)
     public interface MySqlVetRepository extends VetRepository {
         /**
-         * Finds all vets using MySQL SQL.
+         * Finds all vets and aggregates their specialities using MySQL SQL.
          *
-         * @return all vets ordered by last name
+         * @return all vets ordered by last name with aggregated speciality rows
          */
         @Override
-        @Query(value = "SELECT v.* FROM VETS v ORDER BY v.LAST_NAME", nativeQuery = true)
-        Collection<Vet> findAllWithSpecialities();
+        @Query(value = """
+                SELECT
+                    v.id,
+                    v.FIRST_NAME AS first_name,
+                    v.LAST_NAME AS last_name,
+                    GROUP_CONCAT(
+                        CASE WHEN s.id IS NOT NULL THEN CONCAT(s.id, ':', s.NAME) END
+                        ORDER BY s.NAME SEPARATOR '|'
+                    ) AS speciality_rows
+                FROM VETS v
+                LEFT JOIN VET_SPECIALTIES vs ON vs.VET_ID = v.id
+                LEFT JOIN SPECIALTIES s ON s.id = vs.SPECIALTY_ID
+                GROUP BY v.id, v.FIRST_NAME, v.LAST_NAME
+                ORDER BY v.LAST_NAME
+                """, nativeQuery = true)
+        Collection<VetWithSpecialities> findAllWithSpecialities();
     }
 
     /**
