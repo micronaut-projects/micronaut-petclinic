@@ -1,6 +1,6 @@
 [versions]
 micronaut-platform = "4.10.16"
-micronaut-gradle-plugin = "4.6.2"
+micronaut-gradle-plugin = "5.0.2"
 micronaut-sourcegen = "1.8.5"
 ojdbc = "23.26.2.0.0"
 mysql = "9.3.0"
