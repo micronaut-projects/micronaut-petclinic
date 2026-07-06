@@ -1,6 +1,6 @@
 # Micronaut Pet Clinic
 
-Micronaut PetClinic sample application built with Micronaut 4.
+Micronaut PetClinic sample application built with Micronaut 5.
 
 A modern **Micronaut PetClinic example** and implementation of the classic Spring PetClinic, demonstrating how to build fast, cloud-native Java applications using the Micronaut framework.
 
