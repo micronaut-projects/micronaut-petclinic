@@ -44,7 +44,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup GraalVM
-        uses: graalvm/setup-graalvm@v1.5.6
+        uses: graalvm/setup-graalvm@v1.6.3
         with:
           distribution: graalvm
           java-version: ${{ matrix.java-version }}
