@@ -55,7 +55,7 @@ jobs:
 
       - name: Publish test report
         if: always()
-        uses: mikepenz/action-junit-report@v5
+        uses: mikepenz/action-junit-report@v6
         with:
           check_name: Maven Native Test CI / JDK ${{ matrix.java-version }} / Test Report
           report_paths: '**/target/**/TEST-*.xml'

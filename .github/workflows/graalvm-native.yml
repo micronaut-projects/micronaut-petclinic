@@ -58,7 +58,7 @@ jobs:
 
       - name: Publish native test report
         if: always()
-        uses: mikepenz/action-junit-report@v5
+        uses: mikepenz/action-junit-report@v6
         with:
           check_name: GraalVM Native CI / JDK ${{ matrix.java-version }} / Test Report
           report_paths: '**/build/test-results/nativeTest/TEST-*.xml'
