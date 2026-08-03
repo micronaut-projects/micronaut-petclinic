@@ -1,5 +1,5 @@
 # Build stage
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM eclipse-temurin:25-jdk-alpine AS build
 WORKDIR /app
 
 # Install curl (needed by Maven/Gradle wrappers)
@@ -22,7 +22,7 @@ RUN ./mvnw package -DskipTests
 # RUN ./gradlew build -x test --no-daemon
 
 # Run stage (JVM)
-FROM eclipse-temurin:21-jre-alpine AS jvm
+FROM eclipse-temurin:25-jre-alpine AS jvm
 WORKDIR /app
 COPY --from=build /app/target/micronaut-petclinic-*.jar app.jar
 EXPOSE 8080
