@@ -112,29 +112,9 @@ Changes:
 
 The `mvnw` script was regenerated as part of this update.
 
-## 6. Fix native-image build for Java 25
+## 6. Native-image configuration for Java 25
 
-Native-image settings were adjusted for the Java 25 / Micronaut 5 combination.
-
-Gradle native configuration in `build.gradle.kts` includes:
-
-```kotlin
-buildArgs.add("--enable-native-access=ALL-UNNAMED")
-buildArgs.add("--exclude-config")
-buildArgs.add(".*micronaut-http-netty-[^/]+\\.jar")
-buildArgs.add("^/META-INF/native-image/io\\.micronaut\\.micronaut\\.http\\.netty/native-image\\.properties$")
-buildArgs.add("--initialize-at-run-time=io.netty.util.internal.CleanerJava25")
-buildArgs.add("--initialize-at-run-time=sun.security.util.Password\$ConsoleHolder")
-buildArgs.add("--initialize-at-run-time=jdk.internal.io.JdkConsoleImpl\$1ConsoleHolder")
-```
-
-It also enables:
-
-```kotlin
-if (JavaVersion.current().majorVersion == "25") {
-    buildArgs.add("-H:+SharedArenaSupport")
-}
-```
+Native-image configuration for the Java 25 / Micronaut 5 combination is kept aligned with the standard Micronaut and GraalVM plugin setup.
 
 Maven native configuration in `pom.xml` mirrors the runtime-initialization and Netty native-image exclusions, and the native Maven plugin was updated:
 
