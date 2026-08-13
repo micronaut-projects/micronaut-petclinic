@@ -161,19 +161,14 @@ public class PetController {
     public Map<String, Object> initUpdateForm(@PathVariable Integer ownerId, @PathVariable Integer petId) {
         Optional<Pet> pet = clinicService.findPetById(petId);
 
-        if (pet.isPresent()) {
-            Pet existingPet = pet.get();
-            Integer typeId = existingPet.getTypeId();
-            return Map.of(
-                    "pet", new PetForm(existingPet.id(), existingPet.name(), existingPet.birthDate(), typeId),
-                    "petId", petId,
-                    "owner", existingPet.getOwner(),
-                    "types", clinicService.findPetTypes(),
-                    "isNew", false,
-                    "validationErrors", Map.of()
-            );
-        }
-        return Map.of("error", "Pet not found");
+        return pet.map(value -> Map.of(
+                "pet", formMapper.toPetForm(value),
+                "petId", petId,
+                "owner", value.getOwner(),
+                "types", clinicService.findPetTypes(),
+                "isNew", false,
+                "validationErrors", Map.of()
+        )).orElseGet(() -> Map.of("error", "Pet not found"));
     }
 
     /**
