@@ -29,6 +29,7 @@
         <exec.mainClass>io.micronaut.samples.petclinic.Application</exec.mainClass>
         <jte.version>3.2.4</jte.version>
         <h2gis.version>2.2.5</h2gis.version>
+        <langchain4j.version>1.18.0-beta28</langchain4j.version>
         <maven.native.plugin.version>1.1.10</maven.native.plugin.version>
         <maven.shared.utils.version>3.4.2</maven.shared.utils.version>
     </properties>
@@ -120,6 +121,14 @@
             <groupId>io.micronaut.sourcegen</groupId>
             <artifactId>micronaut-sourcegen-annotations</artifactId>
             <version>${micronaut.sourcegen.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Local semantic embeddings -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-embeddings-all-minilm-l6-v2</artifactId>
+            <version>${langchain4j.version}</version>
             <scope>compile</scope>
         </dependency>
         
