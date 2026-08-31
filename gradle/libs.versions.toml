@@ -9,6 +9,7 @@ h2gis = "2.2.5"
 logback = "1.6.3"
 graalvm-native = "1.1.10"
 jte = "3.2.4"
+langchain4j = "1.18.0-beta28"
 
 [libraries]
 micronaut-platform-parent = { module = "io.micronaut.platform:micronaut-parent", version.ref = "micronaut-platform" }
@@ -39,6 +40,7 @@ postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" 
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 snakeyaml = { module = "org.yaml:snakeyaml" }
 jte-native-resources = { module = "gg.jte:jte-native-resources", version.ref = "jte" }
+langchain4j-embeddings-all-minilm-l6-v2 = { module = "dev.langchain4j:langchain4j-embeddings-all-minilm-l6-v2", version.ref = "langchain4j" }
 
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }

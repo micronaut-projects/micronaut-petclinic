@@ -38,6 +38,7 @@ dependencies {
     implementation(libs.micronaut.cache.caffeine)
     implementation(libs.micronaut.sourcegen.annotations)
     implementation(libs.micronaut.managment)
+    implementation(libs.langchain4j.embeddings.all.minilm.l6.v2)
 
     runtimeOnly(libs.h2)
     runtimeOnly(libs.h2gis)

@@ -200,6 +200,20 @@ curl -X POST http://localhost:8080/clinics/intersects \
 ```
 ---
 
+### Oracle semantic chunk retrieval
+
+The Oracle profile also includes a retrieval-only vector search example based on Micronaut Data's [vector type support](https://github.com/micronaut-projects/micronaut-data/pull/3637). It seeds a small pet-care knowledge base, stores each chunk as a `FloatVector` in an Oracle `VECTOR(384, FLOAT32)` column, and uses the derived vector-search repository method with cosine distance.
+
+Start the Oracle profile and open http://localhost:8080/knowledge. The demo uses LangChain4j's local [all-MiniLM-L6-v2](https://github.com/langchain4j/langchain4j/blob/main/docs/docs/integrations/embedding-models/1-in-process.md) ONNX embedding model, so no LLM or external API key is required. It returns ranked chunks with their source, topic, species, and distance. The HTTP API is:
+
+```bash
+curl -X POST http://localhost:8080/knowledge/search \
+  -H "Content-Type: application/json" \
+  -d '{"query":"What vaccinations does my puppy need?"}'
+```
+
+The embedding service is intentionally an interface, making it straightforward to replace the local model with another embedding provider while keeping Oracle retrieval unchanged.
+
 ## Project Structure
 
 ```
