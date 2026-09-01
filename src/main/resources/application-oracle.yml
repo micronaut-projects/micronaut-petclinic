@@ -9,4 +9,5 @@ datasources:
     connection-timeout: 30000
     maximum-pool-size: 10
     minimum-idle: 2
-
+    dialect-options:
+      version: 23.1

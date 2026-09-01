@@ -44,6 +44,30 @@ class ClinicServiceGeoTest {
     }
 
     @Test
+    void shouldFilterNearbyClinicsByAvailability() {
+        Collection<Clinic> clinics = clinicService.findClinicsNear(
+                -89.3840, 43.0745, 5000, true, true);
+
+        assertThat(clinics).isNotEmpty();
+        assertThat(clinics).allMatch(clinic -> clinic.acceptingNewPatients() && clinic.emergencyService());
+        assertThat(clinics).extracting(Clinic::name)
+                .contains("Downtown Madison Pet Clinic", "East Madison Pet Clinic")
+                .doesNotContain("Capitol Square Pet Clinic", "University Pet Clinic");
+    }
+
+    @Test
+    void shouldFilterPolygonClinicsByNewPatientAvailability() {
+        Collection<Clinic> clinics = clinicService.findClinicsWithinBounds(
+                -89.55, 43.00, -89.20, 43.20, false, null);
+
+        assertThat(clinics).isNotEmpty();
+        assertThat(clinics).allMatch(clinic -> !clinic.acceptingNewPatients());
+        assertThat(clinics).extracting(Clinic::name)
+                .contains("University Pet Clinic", "South Madison Pet Clinic")
+                .doesNotContain("Downtown Madison Pet Clinic");
+    }
+
+    @Test
     void shouldFindClinicsWithinBounds() {
         Collection<Clinic> clinics = clinicService.findClinicsWithinBounds(-89.55, 43.00, -89.20, 43.20);
         assertThat(clinics).isNotEmpty();

@@ -181,6 +181,8 @@ Use the language selector in the top-right corner to switch between:
 
 The application also includes a Micronaut Data geospatial example. It stores sample clinic branches as WGS 84 `Point` values (SRID 4326) and exposes three derived repository methods through `ClinicRepository`: `findByLocationNear`, `findByLocationGeoWithin`, and `findByLocationGeoIntersects`. Micronaut Data translates those derived methods to the spatial functions/operators of the active dialect. For example, `Near` is compiled to Oracle `SDO_WITHIN_DISTANCE` when the Oracle profile is active.
 
+Clinic branches also include `ACCEPTING_NEW_PATIENTS` and `EMERGENCY_SERVICE` boolean fields. The clinic search page can filter spatial results by either flag, and the JSON response displays both values.
+
 Open http://localhost:8080/clinics to try the clinic search page.
 
 Use the manual form or the map tab to search clinic locations. Use `nearby` for radius searches around a single point, `within` for clinics inside a bounding-box or drawn polygon, and `intersects` for clinics whose location intersects an open `LineString`. Using a line for `intersects` makes the example distinct from `within`, which uses a filled `Polygon`.

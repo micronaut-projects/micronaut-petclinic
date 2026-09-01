@@ -17,12 +17,14 @@ micronaut-http-server-netty = { module = "io.micronaut:micronaut-http-server-net
 micronaut-http-client = { module = "io.micronaut:micronaut-http-client" }
 micronaut-serde-jackson = { module = "io.micronaut.serde:micronaut-serde-jackson" }
 micronaut-views-jte = { module = "io.micronaut.views:micronaut-views-jte" }
-micronaut-data-jdbc = { module = "io.micronaut.data:micronaut-data-jdbc" }
+# TODO: Temp Versioning pending micronaut data 5.2.0 release, need to be removerd afterwards
+micronaut-data-jdbc = { module = "io.micronaut.data:micronaut-data-jdbc", version= "5.2.0-SNAPSHOT" }
 micronaut-jdbc-hikari = { module = "io.micronaut.sql:micronaut-jdbc-hikari" }
 micronaut-validation = { module = "io.micronaut.validation:micronaut-validation" }
 micronaut-cache-caffeine = { module = "io.micronaut.cache:micronaut-cache-caffeine" }
 micronaut-inject-java = { module = "io.micronaut:micronaut-inject-java" }
-micronaut-data-processor = { module = "io.micronaut.data:micronaut-data-processor" }
+# TODO: Temp Versioning pending micronaut data 5.2.0 release, need to be removerd afterwards
+micronaut-data-processor = { module = "io.micronaut.data:micronaut-data-processor", version = "5.2.0-SNAPSHOT" }
 micronaut-validation-processor = { module = "io.micronaut.validation:micronaut-validation-processor" }
 micronaut-serde-processor = { module = "io.micronaut.serde:micronaut-serde-processor" }
 micronaut-sourcegen-annotations = { module = "io.micronaut.sourcegen:micronaut-sourcegen-annotations", version.ref = "micronaut-sourcegen" }

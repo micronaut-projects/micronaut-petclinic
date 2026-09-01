@@ -69,6 +69,27 @@
                             <option value="intersects">${msg.text("clinic.mode.intersects")}</option>
                         </select>
                     </div>
+                    <div class="col-md-8">
+                        <label class="form-label">
+                            <i class="fas fa-sliders me-2"></i>${msg.text("clinic.filters")}
+                        </label>
+                        <div class="d-flex flex-wrap gap-4 pt-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="acceptingNewPatients"
+                                       name="acceptingNewPatients">
+                                <label class="form-check-label" for="acceptingNewPatients">
+                                    ${msg.text("clinic.acceptingNewPatients")}
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="emergencyService"
+                                       name="emergencyService">
+                                <label class="form-check-label" for="emergencyService">
+                                    ${msg.text("clinic.emergencyService")}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <ul class="nav nav-tabs mb-3" id="clinic-search-tabs" role="tablist">
@@ -158,7 +179,7 @@
                             </div>
                             <div class="col-md-4 d-flex align-items-end gap-2">
                                 <button class="btn btn-secondary btn-lg w-50 clinic-reset-search" type="button">
-                                    <i class="fas fa-rotate-left me-2"></i>Reset
+                                    <i class="fas fa-rotate-left me-2"></i>${msg.text("clinic.reset")}
                                 </button>
                                 <button class="btn btn-primary btn-lg w-50" type="submit">
                                     <i class="fas fa-search me-2"></i>${msg.text("button.search")}
@@ -187,7 +208,7 @@
                                 <i class="fas fa-route me-2"></i>${msg.text("clinic.exampleLine")}
                             </button>
                             <button class="btn btn-secondary btn-lg clinic-reset-search" type="button">
-                                <i class="fas fa-rotate-left me-2"></i>Reset
+                                <i class="fas fa-rotate-left me-2"></i>${msg.text("clinic.reset")}
                             </button>
                             <button class="btn btn-primary btn-lg" type="submit">
                                 <i class="fas fa-search me-2"></i>${msg.text("button.search")}
@@ -211,7 +232,18 @@
             <div id="clinic-results"
                  data-empty-title="${msg.text("clinic.noClinicsFound")}"
                  data-empty-message="${msg.text("clinic.noClinicsMessage")}"
-                 data-coordinates-label="${msg.text("clinic.coordinates")}">
+                 data-coordinates-label="${msg.text("clinic.coordinates")}"
+                 data-accepting-label="${msg.text("clinic.acceptingNewPatients")}"
+                 data-emergency-label="${msg.text("clinic.emergencyService")}"
+                 data-yes-label="${msg.text("clinic.status.yes")}"
+                 data-no-label="${msg.text("clinic.status.no")}"
+                 data-remove-point-label="${msg.text("clinic.removePoint")}"
+                 data-drag-to-resize-radius-title="${msg.text("clinic.dragToResizeRadius")}"
+                 data-drag-to-move-point-title="${msg.text("clinic.dragToMovePoint")}"
+                 data-search-result-title="${msg.text("clinic.searchResult", "__clinic__")}"
+                 data-search-failed="${msg.text("clinic.searchFailed")}"
+                 data-map-attribution="${msg.text("clinic.mapAttribution")}"
+                 data-map-language="${locale != null ? locale.getLanguage() : "en"}">
             </div>
         </section>
     </main>
@@ -294,6 +326,13 @@
                 form.elements[name].value = value;
             }
 
+            function availabilityFilters() {
+                return {
+                    acceptingNewPatients: form.elements.acceptingNewPatients.checked ? true : null,
+                    emergencyService: form.elements.emergencyService.checked ? true : null
+                };
+            }
+
             function numberFieldValue(name) {
                 return Number(fieldValue(name));
             }
@@ -311,7 +350,9 @@
                             body: JSON.stringify({
                                 latitude: numberFieldValue('latitude'),
                                 longitude: numberFieldValue('longitude'),
-                                radiusMeters: numberFieldValue('radiusMeters')
+                                radiusMeters: numberFieldValue('radiusMeters'),
+                                acceptingNewPatients: availabilityFilters().acceptingNewPatients,
+                                emergencyService: availabilityFilters().emergencyService
                             })
                         }
                     };
@@ -327,9 +368,7 @@
                             'Accept': 'application/json',
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({
-                            coordinates: coordinates
-                        })
+                        body: JSON.stringify(Object.assign({coordinates: coordinates}, availabilityFilters()))
                     }
                 };
             }
@@ -360,7 +399,7 @@
                     '<div class="col-md-1 fw-semibold manual-' + type + '-point-number"></div>',
                     '<div class="col-md-4"><label class="form-label" for="' + latitudeId + '"></label><input class="form-control" id="' + latitudeId + '" type="number" step="0.000001" data-' + type + '-latitude></div>',
                     '<div class="col-md-4"><label class="form-label" for="' + longitudeId + '"></label><input class="form-control" id="' + longitudeId + '" type="number" step="0.000001" data-' + type + '-longitude></div>',
-                    '<div class="col-md-3"><button class="btn btn-outline-danger w-100" type="button" data-remove-' + type + '-point><i class="fas fa-trash me-2"></i>Remove</button></div>'
+                    '<div class="col-md-3"><button class="btn btn-outline-danger w-100" type="button" data-remove-' + type + '-point><i class="fas fa-trash me-2"></i>' + escapeHtml(results.dataset.removePointLabel) + '</button></div>'
                 ].join('');
                 fields.querySelector('[data-' + type + '-latitude]').value = latitude;
                 fields.querySelector('[data-' + type + '-longitude]').value = longitude;
@@ -573,6 +612,16 @@
                             '<i class="fas fa-crosshairs me-2"></i>',
                             escapeHtml(results.dataset.coordinatesLabel) + ': ' + escapeHtml(clinic.latitude) + ', ' + escapeHtml(clinic.longitude),
                             '</p>',
+                            '<div class="d-flex flex-wrap gap-2 mb-3">',
+                            '<span class="badge ' + (clinic.acceptingNewPatients ? 'bg-success' : 'bg-secondary') + '">',
+                            escapeHtml(results.dataset.acceptingLabel) + ': ',
+                            escapeHtml(clinic.acceptingNewPatients ? results.dataset.yesLabel : results.dataset.noLabel),
+                            '</span>',
+                            '<span class="badge ' + (clinic.emergencyService ? 'bg-danger' : 'bg-secondary') + '">',
+                            escapeHtml(results.dataset.emergencyLabel) + ': ',
+                            escapeHtml(clinic.emergencyService ? results.dataset.yesLabel : results.dataset.noLabel),
+                            '</span>',
+                            '</div>',
                             '</div>',
                             '<span class="pet-badge">',
                             '<i class="fas fa-circle-check"></i>',
@@ -608,7 +657,7 @@
                 clinicMap.setMaxBounds(mapBounds);
                 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19,
-                    attribution: '&copy; OpenStreetMap contributors'
+                    attribution: '&copy; ' + results.dataset.mapAttribution
                 }).addTo(clinicMap);
                 clinicSearchResultIcon = L.divIcon({
                     className: 'clinic-search-result-marker',
@@ -631,10 +680,11 @@
                 });
                 radiusHandle = L.marker(radiusHandleLatLng(), {
                     draggable: true,
-                    title: 'Drag to resize radius'
+                    title: results.dataset.dragToResizeRadiusTitle
                 });
 
                 if (clinicMap.pm) {
+                    clinicMap.pm.setLang(results.dataset.mapLanguage || 'en');
                     clinicMap.on('pm:create', function (event) {
                         setDrawnLayer(event.layer);
                     });
@@ -893,7 +943,7 @@
                 drawnPoints.forEach(function (point, index) {
                     const marker = L.marker(point, {
                         draggable: true,
-                        title: 'Drag to move point'
+                        title: results.dataset.dragToMovePointTitle
                     });
                     marker.on('drag', function () {
                         if (!isWithinMapBounds(marker.getLatLng())) {
@@ -973,6 +1023,8 @@
                 setFieldValue('latitude', '');
                 setFieldValue('longitude', '');
                 setFieldValue('radiusMeters', '');
+                form.elements.acceptingNewPatients.checked = false;
+                form.elements.emergencyService.checked = false;
                 hasManualSelectionSinceModeChange = false;
                 resetMapAndResults();
             }
@@ -1122,7 +1174,7 @@
                 clinics.forEach(function (clinic) {
                     L.marker([clinic.latitude, clinic.longitude], {
                         icon: clinicSearchResultIcon,
-                        title: 'Search result: ' + clinic.name,
+                        title: results.dataset.searchResultTitle.replace('__clinic__', clinic.name),
                         zIndexOffset: 1000
                     })
                         .bindPopup(escapeHtml(clinic.name))
@@ -1298,7 +1350,7 @@
                 fetch(request.url, request.options)
                     .then((response) => {
                         if (!response.ok) {
-                            throw new Error('Clinic search failed');
+                            throw new Error(results.dataset.searchFailed);
                         }
                         return response.json();
                     })
