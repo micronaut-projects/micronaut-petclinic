@@ -120,6 +120,11 @@ graalvmNative {
             if (JavaVersion.current().majorVersion == "25") {
                 buildArgs.add("-H:+SharedArenaSupport")
             }
+            buildArgs.add("--initialize-at-run-time=ai.onnxruntime.OnnxRuntime")
+            buildArgs.add("--initialize-at-run-time=ai.onnxruntime.OrtEnvironment")
+            buildArgs.add("--initialize-at-run-time=ai.djl.huggingface.tokenizers.jni.LibUtils")
+            buildArgs.add("--initialize-at-run-time=ai.djl.huggingface.tokenizers.jni.TokenizersLibrary")
+            buildArgs.add("--initialize-at-run-time=dev.langchain4j.model.embedding.onnx.allminilml6v2.AllMiniLmL6V2EmbeddingModel")
         }
     }
 }

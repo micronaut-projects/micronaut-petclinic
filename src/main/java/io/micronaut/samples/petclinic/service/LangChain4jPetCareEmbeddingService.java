@@ -1,9 +1,5 @@
 package io.micronaut.samples.petclinic.service;
 
-import dev.langchain4j.data.embedding.Embedding;
-import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.model.embedding.onnx.allminilml6v2.AllMiniLmL6V2EmbeddingModel;
-import dev.langchain4j.model.output.Response;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.samples.petclinic.model.PetCareEmbeddingDimensions;
@@ -21,7 +17,7 @@ import jakarta.inject.Singleton;
 @Requires(env = "oracle")
 public class LangChain4jPetCareEmbeddingService implements PetCareEmbeddingService {
 
-    private final EmbeddingModel embeddingModel = new AllMiniLmL6V2EmbeddingModel();
+    private volatile NativeCompatibleAllMiniLmL6V2EmbeddingModel embeddingModel;
 
     @Override
     public FloatVector embed(String text) {
@@ -29,12 +25,31 @@ public class LangChain4jPetCareEmbeddingService implements PetCareEmbeddingServi
             return new FloatVector(new float[PetCareEmbeddingDimensions.VALUE]);
         }
 
-        Response<Embedding> response = embeddingModel.embed(text);
-        float[] vector = response.content().vector();
+        float[] vector = embeddingModel().embed(text).content().vector();
         if (vector.length != PetCareEmbeddingDimensions.VALUE) {
             throw new IllegalStateException("Expected a " + PetCareEmbeddingDimensions.VALUE
                     + "-dimensional embedding but received " + vector.length);
         }
         return new FloatVector(vector);
+    }
+
+    /**
+     * Creates the ONNX model only when a real embedding is requested. The model
+     * loads a 90 MB resource and two native libraries, so eager construction is
+     * especially problematic for GraalVM native images and for non-Oracle
+     * application starts.
+     */
+    private NativeCompatibleAllMiniLmL6V2EmbeddingModel embeddingModel() {
+        NativeCompatibleAllMiniLmL6V2EmbeddingModel model = embeddingModel;
+        if (model == null) {
+            synchronized (this) {
+                model = embeddingModel;
+                if (model == null) {
+                    model = new NativeCompatibleAllMiniLmL6V2EmbeddingModel();
+                    embeddingModel = model;
+                }
+            }
+        }
+        return model;
     }
 }
