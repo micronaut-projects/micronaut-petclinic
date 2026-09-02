@@ -1,10 +1,12 @@
 package io.micronaut.samples.petclinic.service;
 
+import io.micronaut.samples.petclinic.dto.VisitSearchCriteria;
 import io.micronaut.samples.petclinic.model.*;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -125,6 +127,22 @@ class ClinicServiceTest {
         // Pet with ID 7 (Samantha) has visits in sample data
         Collection<Visit> visits = clinicService.findVisitsByPetId(7);
         assertThat(visits).isNotEmpty();
+    }
+
+    @Test
+    void shouldSearchVisitsByDurationAndFollowUpPeriod() {
+        List<Visit> visits = clinicService.searchVisits(new VisitSearchCriteria(
+                LocalDate.of(1900, 1, 1),
+                LocalDate.of(9999, 12, 31),
+                61,
+                13
+        ));
+
+        assertThat(visits).isNotEmpty();
+        assertThat(visits).allSatisfy(visit -> {
+            assertThat(visit.duration().toMinutes()).isLessThanOrEqualTo(61);
+            assertThat(visit.period().toTotalMonths()).isLessThanOrEqualTo(13);
+        });
     }
 
     @Test

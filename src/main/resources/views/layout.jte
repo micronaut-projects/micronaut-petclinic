@@ -2,6 +2,7 @@
 @param io.micronaut.samples.petclinic.system.I18nViewModelProcessor.Msg msg
 @param io.micronaut.http.HttpRequest<?> request
 @param java.util.Locale locale
+@param java.util.Set<String> activeNames
 
 <!DOCTYPE html>
 <html lang="${locale != null ? locale.toString() : "en"}">
@@ -45,6 +46,14 @@
                         <i class="fas fa-user-md"></i> ${msg.text("nav.veterinarians")}
                     </a>
                 </li>
+                @if(activeNames != null && activeNames.contains("oracle"))
+                    <li class="nav-item">
+                        <a class="nav-link" href="/visits">
+                            <i class="fas fa-calendar-check"></i> ${msg.text("nav.visits")}
+                        </a>
+                    </li>
+                @endif
+
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fas fa-globe"></i>

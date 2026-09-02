@@ -3,6 +3,7 @@
 @param io.micronaut.samples.petclinic.system.I18nViewModelProcessor.Msg msg
 @param io.micronaut.http.HttpRequest<?> request
 @param java.util.Locale locale
+@param java.util.Set<String> activeNames
 
 @template.layout(content = @`
     <main class="container flex-grow-1 d-flex align-items-center justify-content-center py-5">
@@ -34,4 +35,4 @@
             </div>
         </div>
     </main>
-`, msg = msg, request = request, locale = locale)
+`, msg = msg, request = request, locale = locale, activeNames = activeNames)

@@ -55,7 +55,7 @@ public class I18nViewModelProcessor implements ViewModelProcessor<Object, HttpRe
         model.putIfAbsent("locale", locale);
         model.putIfAbsent("msg", new Msg(messageSource, locale));
         model.putIfAbsent("request", request);
-        model.putIfAbsent("oracleProfile", environment.getActiveNames().contains("oracle"));
+        model.putIfAbsent("activeNames", environment.getActiveNames());
 
         modelAndView.setModel(model);
     }

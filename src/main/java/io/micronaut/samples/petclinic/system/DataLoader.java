@@ -24,7 +24,9 @@ import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -148,10 +150,24 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
         Pet sly = createPet("Sly", LocalDate.of(2012, 6, 8), cat, carlos);
 
         // Create some visits
-        createVisit(samantha, LocalDate.of(2013, 1, 1), "rabies shot");
-        createVisit(samantha, LocalDate.of(2013, 1, 4), "neutered");
-        createVisit(max, LocalDate.of(2013, 1, 2), "rabies shot");
-        createVisit(max, LocalDate.of(2013, 1, 3), "neutered");
+        createVisit(samantha, LocalDate.of(2026, 1, 5), "rabies shot", Duration.ofMinutes(30), Period.ofMonths(6));
+        createVisit(samantha, LocalDate.of(2026, 1, 15), "neutered", Duration.ofHours(1), Period.ofMonths(12));
+        createVisit(max, LocalDate.of(2026, 1, 9), "rabies shot", Duration.ofMinutes(15), Period.ofMonths(3));
+        createVisit(max, LocalDate.of(2026, 1, 12), "neutered", Duration.ofHours(2), Period.ofMonths(24));
+
+        // Additional visits cover different pets, dates, durations, and follow-up thresholds.
+        createVisit(leo, LocalDate.of(2017, 2, 8), "annual wellness exam", Duration.ofMinutes(15), Period.ofMonths(1));
+        createVisit(basil, LocalDate.of(2018, 2, 14), "vaccination", Duration.ofMinutes(45), Period.ofMonths(6));
+        createVisit(jewel, LocalDate.of(2019, 3, 1), "dental cleaning", Duration.ofMinutes(75), Period.ofMonths(9));
+        createVisit(rosy, LocalDate.of(2020, 3, 15), "ear infection", Duration.ofMinutes(90), Period.ofMonths(18));
+        createVisit(iggy, LocalDate.of(2021, 4, 2), "skin check", Duration.ofMinutes(120), Period.ofMonths(12));
+        createVisit(george2, LocalDate.of(2022, 5, 10), "routine checkup", Duration.ofMinutes(150), Period.ofMonths(24));
+        createVisit(lucky, LocalDate.of(2023, 6, 18), "wing injury", Duration.ofMinutes(20), Period.ofMonths(3));
+        createVisit(mulligan, LocalDate.of(2024, 7, 22), "arthritis review", Duration.ofMinutes(180), Period.ofMonths(36));
+        createVisit(freddy, LocalDate.of(2025, 8, 9), "follow-up examination", Duration.ofMinutes(30), Period.ofMonths(6));
+        createVisit(lucky2, LocalDate.of(2026, 1, 12), "vaccination", Duration.ofMinutes(60), Period.ofMonths(12));
+        createVisit(sly, LocalDate.of(2026, 6, 21), "dental cleaning", Duration.ofMinutes(210), Period.ofMonths(18));
+        createVisit(max, LocalDate.of(2026, 8, 25), "allergy consultation", Duration.ofMinutes(45), Period.ofMonths(6));
 
         loadClinicData();
     }
@@ -185,8 +201,8 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
         return petRepository.save(pet);
     }
 
-    private Visit createVisit(Pet pet, LocalDate date, String description) {
-        Visit visit = new Visit(date, description, pet);
+    private Visit createVisit(Pet pet, LocalDate date, String description, Duration duration, Period period) {
+        Visit visit = new Visit(date, description, pet, duration, period);
         return visitRepository.save(visit);
     }
 

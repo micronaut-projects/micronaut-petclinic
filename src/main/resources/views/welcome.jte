@@ -1,7 +1,7 @@
 @param io.micronaut.samples.petclinic.system.I18nViewModelProcessor.Msg msg
 @param io.micronaut.http.HttpRequest<?> request
 @param java.util.Locale locale
-@param boolean oracleProfile
+@param java.util.Set<String> activeNames
 
 @template.layout(content = @`
     <div class="container-fluid px-0">
@@ -161,7 +161,7 @@
                             </div>
                         </a>
                     </div>
-                    @if(oracleProfile)
+                    @if(activeNames.contains("oracle"))
                         <div class="col-md-4">
                             <a href="/knowledge" class="text-decoration-none">
                                 <div class="card h-100 text-center p-4 border-primary">
@@ -180,4 +180,4 @@
             </div>
         </section>
     </div>
-`, msg = msg, request = request, locale = locale)
+`, msg = msg, request = request, locale = locale, activeNames = activeNames)

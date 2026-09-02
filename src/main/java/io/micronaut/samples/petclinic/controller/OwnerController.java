@@ -1,18 +1,24 @@
 package io.micronaut.samples.petclinic.controller;
 
-import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
-import io.micronaut.http.annotation.*;
+import io.micronaut.http.annotation.Body;
+import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.PathVariable;
+import io.micronaut.http.annotation.Post;
+import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.samples.petclinic.dto.OwnerForm;
 import io.micronaut.samples.petclinic.mapper.FormMapper;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.service.ClinicService;
 import io.micronaut.views.View;
-import jakarta.validation.Valid;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
 
 import java.net.URI;
 import java.util.Collection;
@@ -121,11 +127,8 @@ public class OwnerController {
     @Get("/{ownerId}")
     @View("owners/ownerDetails")
     public Map<String, Object> showOwner(@PathVariable Integer ownerId) {
-        Optional<Owner> owner = clinicService.findOwnerById(ownerId);
-        if (owner.isPresent()) {
-            return Map.of("owner", owner.get());
-        }
-        return Map.of("error", "Owner not found");
+        Owner owner = clinicService.findOwnerById(ownerId).orElseThrow(NotFoundException::new);
+        return Map.of("owner", owner);
     }
 
     /**
@@ -198,21 +201,15 @@ public class OwnerController {
     @Get("/{ownerId}/edit")
     @View("owners/createOrUpdateOwnerForm")
     public Map<String, Object> initUpdateOwnerForm(@PathVariable Integer ownerId) {
-        Optional<Owner> owner = clinicService.findOwnerById(ownerId);
-        if (owner.isPresent()) {
+        Owner owner = clinicService.findOwnerById(ownerId).orElseThrow(NotFoundException::new);
             return Map.of(
-                    "owner", formMapper.toOwnerForm(owner.get()),
+                    "owner", formMapper.toOwnerForm(owner),
                     "ownerId", ownerId,
                     "isNew", false,
                     "validationErrors", Map.of()
             );
         }
-        return Map.of(
-                "error", "Owner not found",
-                "isNew", false,
-                "validationErrors", Map.of()
-        );
-    }
+
 
     /**
      * Process the form to update an existing owner.

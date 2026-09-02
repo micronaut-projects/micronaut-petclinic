@@ -11,6 +11,7 @@
 @param io.micronaut.samples.petclinic.system.I18nViewModelProcessor.Msg msg
 @param io.micronaut.http.HttpRequest<?> request
 @param java.util.Locale locale
+@param java.util.Set<String> activeNames
 
 @template.layout(content = @`
     <div class="page-header">
@@ -81,6 +82,10 @@
                                         <div class="visit-item">
                                             <div class="visit-date">${previousVisit.date() != null ? previousVisit.date().toString() : ""}</div>
                                             <div class="visit-description">${previousVisit.description()}</div>
+                                            <div class="visit-meta">
+                                                <span><i class="fas fa-clock me-1"></i>${previousVisit.duration() != null ? previousVisit.duration().toMinutes() + " " + msg.text("visit.minutes") : ""}</span>
+                                                <span><i class="fas fa-calendar-check me-1"></i>${previousVisit.period() != null ? previousVisit.period().toTotalMonths() + " " + msg.text("visit.months") : ""}</span>
+                                            </div>
                                         </div>
                                     @endfor
                                 </div>
@@ -106,7 +111,7 @@
                         </div>
                     @endif
  
-                    <form action="/owners/${owner.id()}/pets/${pet.id()}/visits/new" method="post" class="needs-validation" novalidate>
+                    <form id="visit-form" action="/owners/${owner.id()}/pets/${pet.id()}/visits/new" method="post" class="needs-validation" data-submit-failed-message="${msg.text("validation.submitFailed")}" novalidate>
                         <div class="mb-4">
                             <label for="date" class="form-label">
                                 <i class="fas fa-calendar me-2 text-primary"></i>${msg.text("visit.visitDate")}
@@ -124,12 +129,37 @@
                             <label for="description" class="form-label">
                                 <i class="fas fa-notes-medical me-2 text-primary"></i>${msg.text("visit.description")}
                             </label>
-                            <textarea class="form-control ${validationErrors != null && validationErrors.containsKey("description") ? "is-invalid" : ""}" id="description" name="description" rows="4" required>${visit != null && visit.description() != null ? visit.description() : ""}</textarea>
+                            <textarea class="form-control ${validationErrors != null && validationErrors.containsKey("description") ? "is-invalid" : ""}" id="description" name="description" rows="4" minlength="1" maxlength="255" data-required-message="${msg.text("validation.description.required")}" required>${visit != null && visit.description() != null ? visit.description() : ""}</textarea>
                             @if(validationErrors != null && validationErrors.containsKey("description"))
                                 <div class="invalid-feedback">${validationErrors.get("description")}</div>
                             @else
                                 <div class="invalid-feedback">${msg.text("validation.description.required")}</div>
                             @endif
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="durationMinutes" class="form-label">
+                                    <i class="fas fa-clock me-2 text-primary"></i>${msg.text("visit.durationMinutes")}
+                                </label>
+                                <input type="number" class="form-control ${validationErrors != null && validationErrors.containsKey("durationMinutes") ? "is-invalid" : ""}"
+                                       id="durationMinutes" name="durationMinutes" min="1"
+                                       value="${visit != null && visit.durationMinutes() != null ? visit.durationMinutes().toString() : "30"}" required>
+                                @if(validationErrors != null && validationErrors.containsKey("durationMinutes"))
+                                    <div class="invalid-feedback">${validationErrors.get("durationMinutes")}</div>
+                                @endif
+                            </div>
+                            <div class="col-md-6">
+                                <label for="followUpPeriodMonths" class="form-label">
+                                    <i class="fas fa-calendar-check me-2 text-primary"></i>${msg.text("visit.followUpPeriodMonths")}
+                                </label>
+                                <input type="number" class="form-control ${validationErrors != null && validationErrors.containsKey("followUpPeriodMonths") ? "is-invalid" : ""}"
+                                       id="followUpPeriodMonths" name="followUpPeriodMonths" min="1"
+                                       value="${visit != null && visit.followUpPeriodMonths() != null ? visit.followUpPeriodMonths().toString() : "6"}" required>
+                                @if(validationErrors != null && validationErrors.containsKey("followUpPeriodMonths"))
+                                    <div class="invalid-feedback">${validationErrors.get("followUpPeriodMonths")}</div>
+                                @endif
+                            </div>
                         </div>
 
                         <hr class="my-4">
@@ -143,8 +173,62 @@
                             </a>
                         </div>
                     </form>
+
+                    <script>
+                        (() => {
+                            const form = document.getElementById('visit-form');
+                            const description = document.getElementById('description');
+
+                            description.addEventListener('input', () => {
+                                description.setCustomValidity(
+                                    description.value.trim().length === 0
+                                        ? description.dataset.requiredMessage
+                                        : ''
+                                );
+                            });
+
+                            form.addEventListener('submit', async (event) => {
+                                event.preventDefault();
+                                description.dispatchEvent(new Event('input'));
+                                form.classList.add('was-validated');
+
+                                if (!form.checkValidity()) {
+                                    return;
+                                }
+
+                                const formData = new FormData(form);
+                                const payload = {
+                                    date: formData.get('date'),
+                                    description: description.value.trim(),
+                                    durationMinutes: Number(formData.get('durationMinutes')),
+                                    followUpPeriodMonths: Number(formData.get('followUpPeriodMonths'))
+                                };
+
+                                try {
+                                    const response = await fetch(form.action, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify(payload)
+                                    });
+
+                                    const responseBody = await response.text();
+                                    if (response.redirected) {
+                                        window.location.assign(response.url);
+                                    } else if (responseBody) {
+                                        document.open();
+                                        document.write(responseBody);
+                                        document.close();
+                                    }
+                                } catch (error) {
+                                    window.alert(form.dataset.submitFailedMessage);
+                                }
+                            });
+                        })();
+                    </script>
                 </div>
             </div>
         </div>
     </main>
-`, msg = msg, request = request, locale = locale)
+`, msg = msg, request = request, locale = locale, activeNames = activeNames)
