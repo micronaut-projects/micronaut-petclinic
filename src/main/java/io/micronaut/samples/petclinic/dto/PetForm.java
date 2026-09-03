@@ -16,7 +16,6 @@ import java.time.LocalDate;
  * @param birthDate the submitted birth date
  * @param typeId the submitted pet type id
  */
-@Introspected
 @Serdeable
 public record PetForm(
         Integer id,

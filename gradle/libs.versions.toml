@@ -9,6 +9,7 @@ h2gis = "2.2.5"
 logback = "1.6.3"
 graalvm-native = "1.1.11"
 jte = "3.2.4"
+spring-security-crypto = "6.5.11"
 langchain4j = "1.18.0-beta28"
 
 [libraries]
@@ -29,6 +30,9 @@ micronaut-serde-processor = { module = "io.micronaut.serde:micronaut-serde-proce
 micronaut-sourcegen-annotations = { module = "io.micronaut.sourcegen:micronaut-sourcegen-annotations", version.ref = "micronaut-sourcegen" }
 micronaut-sourcegen-generator-java = { module = "io.micronaut.sourcegen:micronaut-sourcegen-generator-java", version.ref = "micronaut-sourcegen" }
 micronaut-test-junit5 = { module = "io.micronaut.test:micronaut-test-junit5" }
+micronaut-security = { module = "io.micronaut.security:micronaut-security" }
+micronaut-security-session = { module = "io.micronaut.security:micronaut-security-session" }
+micronaut-reactor = { module = "io.micronaut.reactor:micronaut-reactor" }
 micronaut-managment = { module = "io.micronaut:micronaut-management"}
 
 jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api" }
@@ -46,6 +50,9 @@ junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 assertj-core = { module = "org.assertj:assertj-core" }
+
+spring-security-crypto = { module = "org.springframework.security:spring-security-crypto", version.ref = "spring-security-crypto" }
+slf4j-jcl-over = { module = "org.slf4j:jcl-over-slf4j" }
 
 [plugins]
 micronaut-application = { id = "io.micronaut.application", version.ref = "micronaut-gradle-plugin" }

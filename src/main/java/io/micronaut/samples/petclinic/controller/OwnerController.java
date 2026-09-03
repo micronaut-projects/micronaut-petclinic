@@ -15,6 +15,8 @@ import io.micronaut.samples.petclinic.dto.OwnerForm;
 import io.micronaut.samples.petclinic.mapper.FormMapper;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.service.ClinicService;
+import io.micronaut.security.annotation.Secured;
+import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -25,6 +27,9 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import static io.micronaut.samples.petclinic.model.Role.Authority.ROLE_ADMIN_;
+import static io.micronaut.samples.petclinic.model.Role.Authority.ROLE_STAFF_;
 
 /**
  * Controller for owner-related operations.
@@ -53,6 +58,7 @@ public class OwnerController {
      * @param notFound whether no owners were found in previous search
      * @return the search form view
      */
+    @Secured(SecurityRule.IS_ANONYMOUS)
     @Get("/find")
     @View("owners/findOwners")
     public Map<String, Object> initFindForm(@QueryValue(defaultValue = "false") Boolean notFound) {
@@ -68,6 +74,7 @@ public class OwnerController {
      * @param lastName the last name to search for
      * @return redirect to owner details or list of matching owners
      */
+    @Secured(SecurityRule.IS_ANONYMOUS)
     @Get
     public HttpResponse<?> processFindForm(@QueryValue(defaultValue = "") String lastName) {
         Collection<Owner> results;
@@ -102,6 +109,7 @@ public class OwnerController {
      * @param lastName the last name filter
      * @return the owner list view
      */
+    @Secured(SecurityRule.IS_ANONYMOUS)
     @Get("/list")
     @View("owners/ownersList")
     public Map<String, Object> showOwnerList(@QueryValue(defaultValue = "") String lastName) {
@@ -124,6 +132,7 @@ public class OwnerController {
      * @param ownerId the owner ID
      * @return the owner details view
      */
+    @Secured(SecurityRule.IS_ANONYMOUS)
     @Get("/{ownerId}")
     @View("owners/ownerDetails")
     public Map<String, Object> showOwner(@PathVariable Integer ownerId) {
@@ -136,6 +145,7 @@ public class OwnerController {
      *
      * @return the create owner form view
      */
+    @Secured(SecurityRule.IS_ANONYMOUS)
     @Get("/new")
     @View("owners/createOrUpdateOwnerForm")
     public Map<String, Object> initCreationForm() {
@@ -152,6 +162,7 @@ public class OwnerController {
      * @param form the owner form data
      * @return redirect to owner details on success, or form with errors
      */
+    @Secured(ROLE_STAFF_)
     @Post(value = "/new", consumes = MediaType.APPLICATION_FORM_URLENCODED)
     public HttpResponse<?> processCreationForm(@Valid @Body OwnerForm form) {
         Owner owner = formMapper.toOwner(form);
@@ -198,6 +209,7 @@ public class OwnerController {
      * @param ownerId the owner ID
      * @return the edit owner form view
      */
+    @Secured(SecurityRule.IS_ANONYMOUS)
     @Get("/{ownerId}/edit")
     @View("owners/createOrUpdateOwnerForm")
     public Map<String, Object> initUpdateOwnerForm(@PathVariable Integer ownerId) {
@@ -218,6 +230,7 @@ public class OwnerController {
      * @param form    the updated owner form data
      * @return redirect to owner details on success
      */
+    @Secured({ROLE_STAFF_, ROLE_ADMIN_})
     @Post(value = "/{ownerId}/edit", consumes = MediaType.APPLICATION_FORM_URLENCODED)
     public HttpResponse<?> processUpdateOwnerForm(@PathVariable Integer ownerId, @Valid @Body OwnerForm form) {
         Optional<Owner> existingOwner = clinicService.findOwnerById(ownerId);

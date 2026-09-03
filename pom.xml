@@ -132,7 +132,7 @@
             <version>${langchain4j.version}</version>
             <scope>compile</scope>
         </dependency>
-        
+
         <!-- Logging -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -172,6 +172,27 @@
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.security</groupId>
+            <artifactId>micronaut-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.security</groupId>
+            <artifactId>micronaut-security-session</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.security</groupId>
+            <artifactId>micronaut-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+            <version>6.5.11</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
         </dependency>
         <dependency>
             <groupId>io.micronaut</groupId>
@@ -307,13 +328,6 @@
                         <configuration>
                             <classesDirectory>${project.build.outputDirectory}</classesDirectory>
                             <buildArgs>
-                                <buildArg>--enable-native-access=ALL-UNNAMED</buildArg>
-                                <buildArg>--exclude-config</buildArg>
-                                <buildArg>.*micronaut-http-netty-[^/]+\.jar</buildArg>
-                                <buildArg>^/META-INF/native-image/io\.micronaut\.micronaut\.http\.netty/native-image\.properties$</buildArg>
-                                <buildArg>--initialize-at-run-time=io.netty.util.internal.CleanerJava25</buildArg>
-                                <buildArg>--initialize-at-run-time=sun.security.util.Password$ConsoleHolder</buildArg>
-                                <buildArg>--initialize-at-run-time=jdk.internal.io.JdkConsoleImpl$1ConsoleHolder</buildArg>
                                 <buildArg>--initialize-at-run-time=ai.onnxruntime.OnnxRuntime</buildArg>
                                 <buildArg>--initialize-at-run-time=ai.onnxruntime.OrtEnvironment</buildArg>
                                 <buildArg>--initialize-at-run-time=ai.djl.huggingface.tokenizers.jni.LibUtils</buildArg>

@@ -37,6 +37,10 @@ dependencies {
     implementation(libs.jakarta.validation.api)
     implementation(libs.micronaut.cache.caffeine)
     implementation(libs.micronaut.sourcegen.annotations)
+    implementation(libs.micronaut.security)
+    implementation(libs.micronaut.security.session)
+    implementation(libs.spring.security.crypto)
+    implementation(libs.slf4j.jcl.over)
     implementation(libs.micronaut.managment)
     implementation(libs.langchain4j.embeddings.all.minilm.l6.v2)
 
@@ -111,15 +115,9 @@ tasks.withType<Test>().configureEach {
 }
 
 graalvmNative {
-    metadataRepository {
-        enabled = true
-    }
     binaries {
         all {
             resources.autodetect()
-            if (JavaVersion.current().majorVersion == "25") {
-                buildArgs.add("-H:+SharedArenaSupport")
-            }
             buildArgs.add("--initialize-at-run-time=ai.onnxruntime.OnnxRuntime")
             buildArgs.add("--initialize-at-run-time=ai.onnxruntime.OrtEnvironment")
             buildArgs.add("--initialize-at-run-time=ai.djl.huggingface.tokenizers.jni.LibUtils")

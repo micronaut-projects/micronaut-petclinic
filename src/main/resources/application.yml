@@ -20,6 +20,26 @@ micronaut:
   messages:
     basename: i18n/messages
 
+  security:
+    authentication: session
+    basic-auth:
+      enabled: false
+    redirect:
+      login-success: /
+      login-failure: /user/authFailed
+      unauthorized:
+        url: /user/auth
+        enabled: true
+    intercept-url-map:
+      - pattern: /resources/**
+        http-method: GET
+        access:
+          - isAnonymous()
+      - pattern: /favicon.ico
+        http-method: GET
+        access:
+          - isAnonymous()
+
 # Default datasource configuration (H2 in-memory)
 datasources:
   default:

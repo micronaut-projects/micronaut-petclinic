@@ -1,5 +1,6 @@
 package io.micronaut.samples.petclinic.service;
 
+import io.micronaut.cache.annotation.CacheInvalidate;
 import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Sort;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import io.micronaut.data.model.Sort;
 
 /**
  * Service class providing business logic for the Pet Clinic application.
@@ -294,6 +296,22 @@ public class ClinicService {
      */
     public Optional<Vet> findVetById(Integer id) {
         return vetRepository.findById(id);
+    }
+
+    /**
+     * Save a vet (create or update) and invalidate the cached vet list.
+     *
+     * @param vet the vet to save
+     * @return the persisted vet returned by the repository
+     */
+    @Transactional
+    @CacheInvalidate(value = "vets", all = true)
+    public Vet saveVet(Vet vet) {
+        if (vet.isNew()) {
+            return vetRepository.save(vet);
+        } else {
+            return vetRepository.update(vet);
+        }
     }
 
     // ========== Speciality Operations ==========

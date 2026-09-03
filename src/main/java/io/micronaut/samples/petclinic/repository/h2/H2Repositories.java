@@ -12,13 +12,19 @@ import io.micronaut.samples.petclinic.repository.ClinicRepository;
 import io.micronaut.samples.petclinic.repository.OwnerRepository;
 import io.micronaut.samples.petclinic.repository.PetRepository;
 import io.micronaut.samples.petclinic.repository.PetTypeRepository;
+import io.micronaut.samples.petclinic.repository.RoleJdbcRepository;
 import io.micronaut.samples.petclinic.repository.SpecialityRepository;
+import io.micronaut.samples.petclinic.repository.UserJdbcRepository;
+import io.micronaut.samples.petclinic.repository.UserRoleJdbcRepository;
 import io.micronaut.samples.petclinic.repository.VetRepository;
 import io.micronaut.samples.petclinic.repository.VetSpecialityRepository;
 import io.micronaut.samples.petclinic.repository.VisitRepository;
 
 import java.util.Collection;
 import java.util.List;
+
+import static io.micronaut.samples.petclinic.repository.RepositoryRequirements.DEFAULT_DIALECT_PROPERTY;
+import static io.micronaut.samples.petclinic.repository.RepositoryRequirements.DIALECT_H2;
 
 /**
  * H2-backed Micronaut Data repository beans used when no external database environment is active.
@@ -30,7 +36,7 @@ public final class H2Repositories {
     /**
      * H2 owner repository bean.
      */
-    @Requires(notEnv = {"mysql", "postgres", "oracle"})
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_H2)
     @JdbcRepository(dialect = Dialect.H2)
     public interface H2OwnerRepository extends OwnerRepository {
     }
@@ -38,7 +44,7 @@ public final class H2Repositories {
     /**
      * H2 pet repository bean.
      */
-    @Requires(notEnv = {"mysql", "postgres", "oracle"})
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_H2)
     @JdbcRepository(dialect = Dialect.H2)
     public interface H2PetRepository extends PetRepository {
         /**
@@ -65,7 +71,7 @@ public final class H2Repositories {
     /**
      * H2 pet type repository bean.
      */
-    @Requires(notEnv = {"mysql", "postgres", "oracle"})
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_H2)
     @JdbcRepository(dialect = Dialect.H2)
     public interface H2PetTypeRepository extends PetTypeRepository {
     }
@@ -73,7 +79,7 @@ public final class H2Repositories {
     /**
      * H2 speciality repository bean.
      */
-    @Requires(notEnv = {"mysql", "postgres", "oracle"})
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_H2)
     @JdbcRepository(dialect = Dialect.H2)
     public interface H2SpecialityRepository extends SpecialityRepository {
     }
@@ -111,7 +117,7 @@ public final class H2Repositories {
     /**
      * H2 visit repository bean.
      */
-    @Requires(notEnv = {"mysql", "postgres", "oracle"})
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_H2)
     @JdbcRepository(dialect = Dialect.H2)
     public interface H2VisitRepository extends VisitRepository {
         /**
@@ -128,7 +134,7 @@ public final class H2Repositories {
     /**
      * H2 vet-speciality join repository bean.
      */
-    @Requires(notEnv = {"mysql", "postgres", "oracle"})
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_H2)
     @JdbcRepository(dialect = Dialect.H2)
     public interface H2VetSpecialityRepository extends VetSpecialityRepository {
         /**
@@ -146,4 +152,43 @@ public final class H2Repositories {
     @JdbcRepository(dialect = Dialect.H2)
     public interface H2ClinicRepository extends ClinicRepository {
     }
+
+    /**
+     * H2 user repository bean.
+     */
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_H2)
+    @JdbcRepository(dialect = Dialect.H2)
+    public interface H2UserJdbcRepository extends UserJdbcRepository {
+    }
+
+    /**
+     * H2 role repository bean.
+     */
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_H2)
+    @JdbcRepository(dialect = Dialect.H2)
+    public interface H2RoleJdbcRepository extends RoleJdbcRepository {
+    }
+
+    /**
+     * H2 user-role repository bean.
+     */
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_H2)
+    @JdbcRepository(dialect = Dialect.H2)
+    public interface H2UserRoleJdbcRepository extends UserRoleJdbcRepository {
+        /**
+         * Finds authority names for a user using H2 SQL.
+         *
+         * @param username the user name whose authorities should be loaded
+         * @return authority names granted to the user
+         */
+        @Override
+        @Query(value = """
+                SELECT r.authority FROM `ROLE` r
+                INNER JOIN `USER_ROLE` ur ON ur.role_id = r.id
+                INNER JOIN `USER` u ON ur.user_id = u.ID
+                WHERE u.USERNAME = :username
+                """, nativeQuery = true)
+        List<String> findAllAuthoritiesByUsername(String username);
+    }
+
 }

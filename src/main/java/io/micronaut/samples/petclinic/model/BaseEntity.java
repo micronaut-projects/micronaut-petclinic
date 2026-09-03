@@ -11,7 +11,7 @@ import java.util.Objects;
  * instances have no identifier until a repository saves them and returns the
  * persisted copy.
  */
-public sealed interface BaseEntity permits NamedEntity, Person, Visit {
+public sealed interface BaseEntity permits NamedEntity, Person, User, Visit, Role {
 
     /**
      * Returns the persistence identifier.

@@ -90,6 +90,14 @@ h1, h2, h3, h4, h5, h6 {
     background: var(--gray-100);
 }
 
+.nav-link-button {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    font: inherit;
+    cursor: pointer;
+}
+
 .nav-link.active {
     color: var(--primary) !important;
     background: rgba(59, 130, 246, 0.1);

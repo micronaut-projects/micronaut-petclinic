@@ -16,6 +16,8 @@ import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.PetType;
 import io.micronaut.samples.petclinic.service.ClinicService;
+import io.micronaut.security.annotation.Secured;
+import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
@@ -24,6 +26,9 @@ import java.net.URI;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import static io.micronaut.samples.petclinic.model.Role.Authority.ROLE_ADMIN_;
+import static io.micronaut.samples.petclinic.model.Role.Authority.ROLE_STAFF_;
 
 /**
  * Controller for pet-related operations.
@@ -105,6 +110,7 @@ public class PetController {
      * @param ownerId the owner ID
      * @return the create pet form view
      */
+    @Secured(SecurityRule.IS_ANONYMOUS)
     @Get("/new")
     @View("pets/createOrUpdatePetForm")
     public Map<String, Object> initCreationForm(@PathVariable Integer ownerId) {
@@ -124,6 +130,7 @@ public class PetController {
      * @param form    the pet form data
      * @return redirect to owner details
      */
+    @Secured(ROLE_STAFF_)
     @Post(value = "/new", consumes = MediaType.APPLICATION_FORM_URLENCODED)
     public HttpResponse<?> processCreationForm(@PathVariable Integer ownerId, @Valid @Body PetForm form) {
         Optional<Owner> owner = getOwner(ownerId);
@@ -156,6 +163,7 @@ public class PetController {
      * @param petId   the pet ID
      * @return the edit pet form view
      */
+    @Secured(SecurityRule.IS_AUTHENTICATED)
     @Get("/{petId}/edit")
     @View("pets/createOrUpdatePetForm")
     public Map<String, Object> initUpdateForm(@PathVariable Integer ownerId, @PathVariable Integer petId) {
