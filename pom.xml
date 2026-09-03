@@ -29,6 +29,7 @@
         <exec.mainClass>io.micronaut.samples.petclinic.Application</exec.mainClass>
         <jte.version>3.2.4</jte.version>
         <h2gis.version>2.2.5</h2gis.version>
+        <maven.native.plugin.version>1.1.10</maven.native.plugin.version>
         <maven.native.plugin.version>1.1.11</maven.native.plugin.version>
         <maven.shared.utils.version>3.4.2</maven.shared.utils.version>
     </properties>
@@ -122,7 +123,7 @@
             <version>${micronaut.sourcegen.version}</version>
             <scope>compile</scope>
         </dependency>
-        
+
         <!-- Logging -->
         <dependency>
             <groupId>ch.qos.logback</groupId>

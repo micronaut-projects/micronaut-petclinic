@@ -161,6 +161,21 @@
                             </div>
                         </a>
                     </div>
+                    @if(activeNames != null && activeNames.contains("oracle"))
+                        <div class="col-md-4">
+                            <a href="/knowledge" class="text-decoration-none">
+                                <div class="card h-100 text-center p-4 border-primary">
+                                    <div class="card-body">
+                                        <div class="feature-icon gradient-3 mx-auto mb-3">
+                                            <i class="fas fa-brain"></i>
+                                        </div>
+                                        <h4>Pet Care Knowledge Search</h4>
+                                        <p class="text-muted">Retrieve relevant chunks with Oracle vector search.</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    @endif
                 </div>
             </div>
         </section>
