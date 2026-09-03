@@ -161,7 +161,7 @@
                             </div>
                         </a>
                     </div>
-                    @if(activeNames.contains("oracle"))
+                    @if(activeNames != null && activeNames.contains("oracle"))
                         <div class="col-md-4">
                             <a href="/knowledge" class="text-decoration-none">
                                 <div class="card h-100 text-center p-4 border-primary">
