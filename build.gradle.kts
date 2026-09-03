@@ -39,6 +39,7 @@ dependencies {
     implementation(libs.micronaut.sourcegen.annotations)
     implementation(libs.micronaut.managment)
     implementation(libs.langchain4j.embeddings.all.minilm.l6.v2)
+    implementation(libs.micronaut.email.javamail)
 
     runtimeOnly(libs.h2)
     runtimeOnly(libs.h2gis)
@@ -47,6 +48,7 @@ dependencies {
     runtimeOnly(libs.postgresql)
     runtimeOnly(libs.logback.classic)
     runtimeOnly(libs.snakeyaml)
+    runtimeOnly(libs.eclipse.angus.mail)
 
     annotationProcessor(libs.micronaut.inject.java)
     testAnnotationProcessor(libs.micronaut.inject.java)
@@ -111,15 +113,8 @@ tasks.withType<Test>().configureEach {
 }
 
 graalvmNative {
-    metadataRepository {
-        enabled = true
-    }
     binaries {
         all {
-            resources.autodetect()
-            if (JavaVersion.current().majorVersion == "25") {
-                buildArgs.add("-H:+SharedArenaSupport")
-            }
             buildArgs.add("--initialize-at-run-time=ai.onnxruntime.OnnxRuntime")
             buildArgs.add("--initialize-at-run-time=ai.onnxruntime.OrtEnvironment")
             buildArgs.add("--initialize-at-run-time=ai.djl.huggingface.tokenizers.jni.LibUtils")

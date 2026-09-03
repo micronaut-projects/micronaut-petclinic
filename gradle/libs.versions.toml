@@ -10,6 +10,7 @@ logback = "1.6.3"
 graalvm-native = "1.1.11"
 jte = "3.2.4"
 langchain4j = "1.18.0-beta28"
+eclipse-angus="2.0.5"
 
 [libraries]
 micronaut-platform-parent = { module = "io.micronaut.platform:micronaut-parent", version.ref = "micronaut-platform" }
@@ -30,6 +31,7 @@ micronaut-sourcegen-annotations = { module = "io.micronaut.sourcegen:micronaut-s
 micronaut-sourcegen-generator-java = { module = "io.micronaut.sourcegen:micronaut-sourcegen-generator-java", version.ref = "micronaut-sourcegen" }
 micronaut-test-junit5 = { module = "io.micronaut.test:micronaut-test-junit5" }
 micronaut-managment = { module = "io.micronaut:micronaut-management"}
+micronaut-email-javamail = { module = "io.micronaut.email:micronaut-email-javamail" }
 
 jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api" }
 h2 = { module = "com.h2database:h2" }
@@ -40,6 +42,7 @@ postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" 
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 snakeyaml = { module = "org.yaml:snakeyaml" }
 jte-native-resources = { module = "gg.jte:jte-native-resources", version.ref = "jte" }
+eclipse-angus-mail = {module  = "org.eclipse.angus:angus-mail", version.ref = "eclipse-angus" }
 langchain4j-embeddings-all-minilm-l6-v2 = { module = "dev.langchain4j:langchain4j-embeddings-all-minilm-l6-v2", version.ref = "langchain4j" }
 
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api" }
