@@ -37,6 +37,10 @@ class ClinicControllerTest {
         assertThat(response.body()).contains("clinic-reset-search");
         assertThat(response.body()).contains("id=\"clinic-example-line\"");
         assertThat(response.body()).contains("Example Line");
+        assertThat(response.body()).contains("id=\"acceptingNewPatients\"");
+        assertThat(response.body()).contains("id=\"emergencyService\"");
+        assertThat(response.body()).contains("Accepting new patients");
+        assertThat(response.body()).contains("Emergency service");
         assertThat(response.body()).contains("const exampleIntersectingLine = [");
         assertThat(response.body()).contains("[43.1100, -89.3300]");
         assertThat(response.body()).contains("function runClinicSearch()");

@@ -208,26 +208,26 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
 
     private void loadClinicData() {
         List<Clinic> clinics = new ArrayList<>();
-        clinics.add(new Clinic("Downtown Madison Pet Clinic", "15 E Main St.", "Madison", -89.3838, 43.0748));
-        clinics.add(new Clinic("Capitol Square Pet Clinic", "2 S Carroll St.", "Madison", -89.3844, 43.0742));
-        clinics.add(new Clinic("University Pet Clinic", "750 University Ave.", "Madison", -89.3985, 43.0739));
-        clinics.add(new Clinic("East Madison Pet Clinic", "2210 E Washington Ave.", "Madison", -89.3545, 43.1020));
-        clinics.add(new Clinic("South Madison Pet Clinic", "2300 S Park St.", "Madison", -89.3952, 43.0384));
-        clinics.add(new Clinic("West Madison Pet Clinic", "701 N High Point Rd.", "Madison", -89.5186, 43.0753));
-        clinics.add(new Clinic("Middleton Pet Clinic", "7428 University Ave.", "Middleton", -89.5137, 43.0972));
-        clinics.add(new Clinic("Fitchburg Pet Clinic", "5515 Nobel Dr.", "Fitchburg", -89.4233, 43.0026));
-        clinics.add(new Clinic("Monona Pet Clinic", "6000 Monona Dr.", "Monona", -89.3240, 43.0622));
-        clinics.add(new Clinic("McFarland Pet Clinic", "4910 Terminal Dr.", "McFarland", -89.2887, 43.0125));
-        clinics.add(new Clinic("Sun Prairie Pet Clinic", "300 E Main St.", "Sun Prairie", -89.2137, 43.1836));
-        clinics.add(new Clinic("Waunakee Pet Clinic", "100 W Main St.", "Waunakee", -89.4557, 43.1919));
-        clinics.add(new Clinic("Verona Pet Clinic", "101 W Verona Ave.", "Verona", -89.5332, 42.9908));
-        clinics.add(new Clinic("Stoughton Pet Clinic", "207 S Forrest St.", "Stoughton", -89.2179, 42.9169));
-        clinics.add(new Clinic("Oregon Pet Clinic", "117 Spring St.", "Oregon", -89.3848, 42.9261));
-        clinics.add(new Clinic("DeForest Pet Clinic", "120 S Stevenson St.", "DeForest", -89.3440, 43.2478));
-        clinics.add(new Clinic("Mount Horeb Pet Clinic", "138 E Main St.", "Mount Horeb", -89.7385, 43.0086));
-        clinics.add(new Clinic("Portage Pet Clinic", "117 W Cook St.", "Portage", -89.4626, 43.5391));
-        clinics.add(new Clinic("Janesville Pet Clinic", "20 S Main St.", "Janesville", -89.0187, 42.6828));
-        clinics.add(new Clinic("Milwaukee Pet Clinic", "200 E Wells St.", "Milwaukee", -87.9065, 43.0410));
+        clinics.add(new Clinic("Downtown Madison Pet Clinic", "15 E Main St.", "Madison", -89.3838, 43.0748, true, true));
+        clinics.add(new Clinic("Capitol Square Pet Clinic", "2 S Carroll St.", "Madison", -89.3844, 43.0742, true, false));
+        clinics.add(new Clinic("University Pet Clinic", "750 University Ave.", "Madison", -89.3985, 43.0739, false, false));
+        clinics.add(new Clinic("East Madison Pet Clinic", "2210 E Washington Ave.", "Madison", -89.3545, 43.1020, true, true));
+        clinics.add(new Clinic("South Madison Pet Clinic", "2300 S Park St.", "Madison", -89.3952, 43.0384, false, true));
+        clinics.add(new Clinic("West Madison Pet Clinic", "701 N High Point Rd.", "Madison", -89.5186, 43.0753, true, false));
+        clinics.add(new Clinic("Middleton Pet Clinic", "7428 University Ave.", "Middleton", -89.5137, 43.0972, true, false));
+        clinics.add(new Clinic("Fitchburg Pet Clinic", "5515 Nobel Dr.", "Fitchburg", -89.4233, 43.0026, false, false));
+        clinics.add(new Clinic("Monona Pet Clinic", "6000 Monona Dr.", "Monona", -89.3240, 43.0622, true, true));
+        clinics.add(new Clinic("McFarland Pet Clinic", "4910 Terminal Dr.", "McFarland", -89.2887, 43.0125, false, true));
+        clinics.add(new Clinic("Sun Prairie Pet Clinic", "300 E Main St.", "Sun Prairie", -89.2137, 43.1836, true, false));
+        clinics.add(new Clinic("Waunakee Pet Clinic", "100 W Main St.", "Waunakee", -89.4557, 43.1919, true, true));
+        clinics.add(new Clinic("Verona Pet Clinic", "101 W Verona Ave.", "Verona", -89.5332, 42.9908, false, false));
+        clinics.add(new Clinic("Stoughton Pet Clinic", "207 S Forrest St.", "Stoughton", -89.2179, 42.9169, false, true));
+        clinics.add(new Clinic("Oregon Pet Clinic", "117 Spring St.", "Oregon", -89.3848, 42.9261, true, false));
+        clinics.add(new Clinic("DeForest Pet Clinic", "120 S Stevenson St.", "DeForest", -89.3440, 43.2478, true, true));
+        clinics.add(new Clinic("Mount Horeb Pet Clinic", "138 E Main St.", "Mount Horeb", -89.7385, 43.0086, false, false));
+        clinics.add(new Clinic("Portage Pet Clinic", "117 W Cook St.", "Portage", -89.4626, 43.5391, true, false));
+        clinics.add(new Clinic("Janesville Pet Clinic", "20 S Main St.", "Janesville", -89.0187, 42.6828, false, true));
+        clinics.add(new Clinic("Milwaukee Pet Clinic", "200 E Wells St.", "Milwaukee", -87.9065, 43.0410, true, true));
         clinicRepository.saveAll(clinics);
     }
 }

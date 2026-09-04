@@ -31,6 +31,8 @@
         <h2gis.version>2.2.5</h2gis.version>
         <maven.native.plugin.version>1.1.11</maven.native.plugin.version>
         <maven.shared.utils.version>3.4.2</maven.shared.utils.version>
+<!--  TODO: Temp Versioning pending micronaut data 5.2.0 release, need to be removed afterwards-->
+        <micronaut.data.version>5.2.0-SNAPSHOT</micronaut.data.version>
     </properties>
 
     <dependencies>
@@ -62,6 +64,8 @@
         <dependency>
             <groupId>io.micronaut.data</groupId>
             <artifactId>micronaut-data-jdbc</artifactId>
+            <!--  TODO: Temp Versioning pending micronaut data 5.2.0 release, need to be removed afterwards-->
+            <version>${micronaut.data.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -215,6 +219,7 @@
                     <compilerArgs>
                         <arg>-Amicronaut.processing.group=io.micronaut.samples</arg>
                         <arg>-Amicronaut.processing.module=micronaut-petclinic</arg>
+                        <arg>-J-Dmicronaut.data.sql.dialect-options.oracle.version=23.1</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>

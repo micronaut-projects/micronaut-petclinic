@@ -324,7 +324,27 @@ public class ClinicService {
      * @return nearby clinics
      */
     public List<Clinic> findClinicsNear(double longitude, double latitude, double radiusMeters) {
-        return clinicRepository.findByLocationNear(new Point(longitude, latitude), radiusMeters);
+        return findClinicsNear(longitude, latitude, radiusMeters, null, null);
+    }
+
+    /**
+     * Finds physical clinic branches near a coordinate and applies optional
+     * Boolean availability filters.
+     *
+     * @param longitude the longitude coordinate
+     * @param latitude the latitude coordinate
+     * @param radiusMeters the search radius in meters
+     * @param acceptingNewPatients optional new-patient availability filter
+     * @param emergencyService optional emergency-service filter
+     * @return nearby clinics matching the requested filters
+     */
+    public List<Clinic> findClinicsNear(double longitude,
+                                        double latitude,
+                                        double radiusMeters,
+                                        Boolean acceptingNewPatients,
+                                        Boolean emergencyService) {
+        List<Clinic> clinics = clinicRepository.findByLocationNear(new Point(longitude, latitude), radiusMeters);
+        return filterByAvailability(clinics, acceptingNewPatients, emergencyService);
     }
 
     /**
@@ -340,7 +360,29 @@ public class ClinicService {
                                                 double minLatitude,
                                                 double maxLongitude,
                                                 double maxLatitude) {
-        return clinicRepository.findByLocationGeoWithin(toBoundingBox(minLongitude, minLatitude, maxLongitude, maxLatitude));
+        return findClinicsWithinBounds(minLongitude, minLatitude, maxLongitude, maxLatitude, null, null);
+    }
+
+    /**
+     * Finds clinics inside a bounding box and applies optional Boolean filters.
+     *
+     * @param minLongitude western bound
+     * @param minLatitude southern bound
+     * @param maxLongitude eastern bound
+     * @param maxLatitude northern bound
+     * @param acceptingNewPatients optional new-patient availability filter
+     * @param emergencyService optional emergency-service filter
+     * @return clinics inside the box matching the requested filters
+     */
+    public List<Clinic> findClinicsWithinBounds(double minLongitude,
+                                                double minLatitude,
+                                                double maxLongitude,
+                                                double maxLatitude,
+                                                Boolean acceptingNewPatients,
+                                                Boolean emergencyService) {
+        List<Clinic> clinics = clinicRepository.findByLocationGeoWithin(
+                toBoundingBox(minLongitude, minLatitude, maxLongitude, maxLatitude));
+        return filterByAvailability(clinics, acceptingNewPatients, emergencyService);
     }
 
     /**
@@ -350,7 +392,22 @@ public class ClinicService {
      * @return clinics inside the polygon
      */
     public List<Clinic> findClinicsWithinPolygon(List<Point> coordinates) {
-        return clinicRepository.findByLocationGeoWithin(toPolygon(coordinates));
+        return findClinicsWithinPolygon(coordinates, null, null);
+    }
+
+    /**
+     * Finds clinics inside a polygon and applies optional Boolean filters.
+     *
+     * @param coordinates polygon shell coordinates
+     * @param acceptingNewPatients optional new-patient availability filter
+     * @param emergencyService optional emergency-service filter
+     * @return clinics inside the polygon matching the requested filters
+     */
+    public List<Clinic> findClinicsWithinPolygon(List<Point> coordinates,
+                                                 Boolean acceptingNewPatients,
+                                                 Boolean emergencyService) {
+        List<Clinic> clinics = clinicRepository.findByLocationGeoWithin(toPolygon(coordinates));
+        return filterByAvailability(clinics, acceptingNewPatients, emergencyService);
     }
 
     /**
@@ -360,7 +417,53 @@ public class ClinicService {
      * @return clinics intersecting the line
      */
     public List<Clinic> findClinicsIntersectingLine(List<Point> coordinates) {
-        return clinicRepository.findByServiceAreaGeoIntersects(toLineString(coordinates));
+        return findClinicsIntersectingLine(coordinates, null, null);
+    }
+
+    /**
+     * Finds clinics whose service areas intersect a line and applies optional
+     * Boolean filters.
+     *
+     * @param coordinates line coordinates
+     * @param acceptingNewPatients optional new-patient availability filter
+     * @param emergencyService optional emergency-service filter
+     * @return intersecting clinics matching the requested filters
+     */
+    public List<Clinic> findClinicsIntersectingLine(List<Point> coordinates,
+                                                    Boolean acceptingNewPatients,
+                                                    Boolean emergencyService) {
+        List<Clinic> clinics = clinicRepository.findByServiceAreaGeoIntersects(toLineString(coordinates));
+        return filterByAvailability(clinics, acceptingNewPatients, emergencyService);
+    }
+
+    /**
+     * Applies availability predicates through the repository's Boolean query
+     * methods, then preserves the order returned by the spatial query.
+     */
+    private List<Clinic> filterByAvailability(List<Clinic> clinics,
+                                              Boolean acceptingNewPatients,
+                                              Boolean emergencyService) {
+        if (acceptingNewPatients == null && emergencyService == null) {
+            return clinics;
+        }
+
+        List<Clinic> availabilityMatches;
+        if (acceptingNewPatients != null && emergencyService != null) {
+            availabilityMatches = clinicRepository.findByAcceptingNewPatientsAndEmergencyService(
+                    acceptingNewPatients, emergencyService);
+        } else if (acceptingNewPatients != null) {
+            availabilityMatches = clinicRepository.findByAcceptingNewPatients(acceptingNewPatients);
+        } else {
+            availabilityMatches = clinicRepository.findByEmergencyService(emergencyService);
+        }
+
+        Set<Integer> matchingIds = availabilityMatches.stream()
+                .map(Clinic::id)
+                .filter(id -> id != null)
+                .collect(Collectors.toSet());
+        return clinics.stream()
+                .filter(clinic -> clinic.id() != null && matchingIds.contains(clinic.id()))
+                .toList();
     }
 
     private static Polygon toBoundingBox(double minLongitude,

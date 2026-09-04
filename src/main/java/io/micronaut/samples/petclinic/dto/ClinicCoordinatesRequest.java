@@ -10,18 +10,22 @@ import java.util.List;
  * Request body for clinic searches that submit an ordered coordinate list.
  *
  * @param coordinates coordinates used to build a polygon or line
+ * @param acceptingNewPatients optional filter for clinics accepting new patients
+ * @param emergencyService optional filter for clinics providing emergency service
  */
 @Introspected
 @Serdeable
 public record ClinicCoordinatesRequest(
-        List<ClinicCoordinateDto> coordinates
+        List<ClinicCoordinateDto> coordinates,
+        Boolean acceptingNewPatients,
+        Boolean emergencyService
 ) {
 
     /**
      * Creates an empty request for framework binding.
      */
     public ClinicCoordinatesRequest() {
-        this(null);
+        this(null, null, null);
     }
 
     /**
