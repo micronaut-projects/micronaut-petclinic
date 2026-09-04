@@ -87,6 +87,7 @@ services:
       APP_USER_PASSWORD: petclinic
     volumes:
       - oracle_data:/opt/oracle/oradata
+      - ./docker/oracle:/opt/oracle/scripts/startup
     healthcheck:
       test: ["CMD", "/opt/oracle/healthcheck.sh"]
       interval: 1s
