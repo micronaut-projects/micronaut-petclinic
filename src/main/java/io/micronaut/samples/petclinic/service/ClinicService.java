@@ -1,6 +1,7 @@
 package io.micronaut.samples.petclinic.service;
 
 import io.micronaut.cache.annotation.Cacheable;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.geo.LineString;
 import io.micronaut.data.model.geo.Point;
@@ -13,6 +14,7 @@ import io.micronaut.samples.petclinic.model.Speciality;
 import io.micronaut.samples.petclinic.model.Vet;
 import io.micronaut.samples.petclinic.model.VetWithSpecialities;
 import io.micronaut.samples.petclinic.model.Visit;
+import io.micronaut.samples.petclinic.dto.VisitSearchCriteria;
 import io.micronaut.samples.petclinic.repository.ClinicRepository;
 import io.micronaut.samples.petclinic.repository.OwnerRepository;
 import io.micronaut.samples.petclinic.repository.PetRepository;
@@ -24,6 +26,8 @@ import io.micronaut.samples.petclinic.repository.VisitRepository;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
 
+import java.time.Duration;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -61,6 +65,7 @@ public class ClinicService {
      * @param specialityRepository repository for specialities
      * @param vetSpecialityRepository repository for vet-speciality join rows
      * @param clinicRepository repository for clinic locations
+     * @param visitIntervalRepository repository for Oracle interval queries
      */
     public ClinicService(OwnerRepository ownerRepository,
                          PetRepository petRepository,
@@ -210,6 +215,21 @@ public class ClinicService {
      */
     public Collection<Visit> findVisitsByPetId(Integer petId) {
         return visitRepository.findByPetId(petId);
+    }
+
+    /**
+     * Searches visits using the supplied optional filters.
+     *
+     * @param criteria the search filters
+     * @return matching visits ordered from newest to oldest
+     */
+    public List<Visit> searchVisits(VisitSearchCriteria criteria) {
+        return visitRepository.findByDateBetweenAndDurationLessThanEqualsAndPeriodLessThanEquals(
+                criteria.fromDate(),
+                criteria.toDate(),
+                Duration.ofMinutes(criteria.maxDurationMinutes()),
+                Period.ofMonths(criteria.maxFollowUpMonths())
+        );
     }
 
     /**

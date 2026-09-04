@@ -1,18 +1,20 @@
 package io.micronaut.samples.petclinic.model;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.serde.annotation.Serdeable;
 import io.micronaut.sourcegen.annotations.Builder;
 import io.micronaut.sourcegen.annotations.Wither;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.Period;
 
 import static io.micronaut.data.annotation.Relation.Kind.MANY_TO_ONE;
 
@@ -24,6 +26,8 @@ import static io.micronaut.data.annotation.Relation.Kind.MANY_TO_ONE;
  * @param date the visit date
  * @param description the visit description
  * @param pet the pet that received the visit
+ * @param duration the length of the visit
+ * @param period the recommended follow-up period
  */
 @MappedEntity("VISITS")
 @Serdeable
@@ -44,7 +48,13 @@ public record Visit(
 
         @Relation(MANY_TO_ONE)
         @MappedProperty("PET_ID")
-        Pet pet
+        Pet pet,
+
+        @MappedProperty(value = "DURATION")
+        Duration duration,
+
+        @MappedProperty(value = "FOLLOW_UP_PERIOD")
+        Period period
 ) implements BaseEntity, VisitWither {
 
     /**
@@ -54,19 +64,48 @@ public record Visit(
      * @param date the visit date
      * @param description the visit description
      * @param pet the pet that received the visit
+     * @param duration the length of the visit
+     * @param period the recommended follow-up period
      */
-    public Visit(Integer id, LocalDate date, String description, @Nullable Pet pet) {
+    public Visit(Integer id, LocalDate date, String description, @Nullable Pet pet, Duration duration, Period period) {
         this.id = id;
         this.date = date;
         this.description = description;
         this.pet = pet;
+        this.duration = duration;
+        this.period = period;
     }
 
     /**
      * Creates an empty visit for framework binding.
      */
     public Visit() {
-        this(null, LocalDate.now(), null, null);
+        this(null, LocalDate.now(), null, null, Duration.ZERO, Period.ZERO);
+    }
+
+    /**
+     * Creates a visit with a duration and no follow-up period.
+     *
+     * @param id the database identifier, or {@code null} for a new visit
+     * @param date the visit date
+     * @param description the visit description
+     * @param pet the pet that received the visit
+     * @param duration the length of the visit
+     */
+    public Visit(Integer id, LocalDate date, String description, @Nullable Pet pet, Duration duration) {
+        this(id, date, description, pet, duration, Period.ZERO);
+    }
+
+    /**
+     * Creates a new visit without an id with no follow-up period.
+     *
+     * @param date the visit date
+     * @param description the visit description
+     * @param pet the pet that received the visit
+     * @param duration the length of the visit
+     */
+    public Visit(LocalDate date, String description, Pet pet, Duration duration) {
+        this(null, date, description, pet, duration, Period.ZERO);
     }
 
     /**
@@ -75,9 +114,22 @@ public record Visit(
      * @param date the visit date
      * @param description the visit description
      * @param pet the pet that received the visit
+     * @param duration the length of the visit
+     * @param period the recommended follow-up period
+     */
+    public Visit(LocalDate date, String description, Pet pet, Duration duration, Period period) {
+        this(null, date, description, pet, duration, period);
+    }
+
+    /**
+     * Creates a new visit without an id using zero values for the interval fields.
+     *
+     * @param date the visit date
+     * @param description the visit description
+     * @param pet the pet that received the visit
      */
     public Visit(LocalDate date, String description, Pet pet) {
-        this(null, date, description, pet);
+        this(null, date, description, pet, Duration.ZERO, Period.ZERO);
     }
 
     /**

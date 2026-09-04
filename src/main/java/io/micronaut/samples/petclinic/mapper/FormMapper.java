@@ -10,6 +10,9 @@ import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.Visit;
 import jakarta.inject.Singleton;
 
+import java.time.Duration;
+import java.time.Period;
+
 /**
  * Maps web form DTOs to and from the domain model.
  * <p>
@@ -78,5 +81,13 @@ public interface FormMapper {
      * @param form the submitted visit form
      * @return the mapped visit entity
      */
-    Visit toVisit(VisitForm form);
+    default Visit toVisit(VisitForm form) {
+        return new Visit(
+                form.date(),
+                form.description(),
+                null,
+                Duration.ofMinutes(form.durationMinutes()),
+                Period.ofMonths(form.followUpPeriodMonths())
+        );
+    }
 }

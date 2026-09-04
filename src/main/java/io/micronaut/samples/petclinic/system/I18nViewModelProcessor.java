@@ -1,6 +1,7 @@
 package io.micronaut.samples.petclinic.system;
 
 import io.micronaut.context.MessageSource;
+import io.micronaut.context.env.Environment;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.views.ModelAndView;
 import io.micronaut.views.model.ViewModelProcessor;
@@ -19,7 +20,7 @@ public class I18nViewModelProcessor implements ViewModelProcessor<Object, HttpRe
 
     private final MessageSource messageSource;
     private final io.micronaut.http.server.util.locale.HttpLocaleResolver httpLocaleResolver;
-
+    private final Environment environment;
     /**
      * Creates the processor with message and locale resolution dependencies.
      *
@@ -27,9 +28,11 @@ public class I18nViewModelProcessor implements ViewModelProcessor<Object, HttpRe
      * @param httpLocaleResolver the resolver used to select the request locale
      */
     public I18nViewModelProcessor(MessageSource messageSource,
-                                  io.micronaut.http.server.util.locale.HttpLocaleResolver httpLocaleResolver) {
+                                  io.micronaut.http.server.util.locale.HttpLocaleResolver httpLocaleResolver,
+                                  Environment environment) {
         this.messageSource = messageSource;
         this.httpLocaleResolver = httpLocaleResolver;
+        this.environment = environment;
     }
 
 
@@ -51,6 +54,7 @@ public class I18nViewModelProcessor implements ViewModelProcessor<Object, HttpRe
         model.putIfAbsent("locale", locale);
         model.putIfAbsent("msg", new Msg(messageSource, locale));
         model.putIfAbsent("request", request);
+        model.putIfAbsent("activeNames", environment.getActiveNames());
 
         modelAndView.setModel(model);
     }

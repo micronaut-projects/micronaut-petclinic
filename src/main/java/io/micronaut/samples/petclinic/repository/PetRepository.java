@@ -46,6 +46,16 @@ public interface PetRepository extends CrudRepository<Pet, Integer> {
     Collection<Pet> findByOwnerId(Integer ownerId);
 
     /**
+     * Finds pets whose names contain the supplied text.
+     *
+     * @param name the pet name fragment
+     * @return matching pets
+     */
+    @Join(value = "owner", type = LEFT_FETCH)
+    @Join(value = "type", type = LEFT_FETCH)
+    Collection<Pet> findByNameContainingIgnoreCase(String name);
+
+    /**
      * Finds all pets for a collection of owners.
      *
      * @param ownerIds owner ids to match

@@ -79,7 +79,7 @@ services:
       - postgres
 
   oracle:
-    image: container-registry.oracle.com/database/free:23.26.2.0-lite-arm64
+    image: container-registry.oracle.com/database/free:23.26.3.0-lite-arm64
     ports:
       - "1521:1521"
     environment:

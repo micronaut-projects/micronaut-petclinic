@@ -1,6 +1,7 @@
 @param io.micronaut.samples.petclinic.system.I18nViewModelProcessor.Msg msg
 @param io.micronaut.http.HttpRequest<?> request
 @param java.util.Locale locale
+@param java.util.Set<String> activeNames
 
 @template.layout(content = @`
     <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
@@ -1323,4 +1324,4 @@
             }
         })();
     </script>
-`, msg = msg, request = request, locale = locale)
+`, msg = msg, request = request, locale = locale, activeNames = activeNames)

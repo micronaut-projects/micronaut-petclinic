@@ -111,15 +111,6 @@ public final class OracleRepositories {
     @Requires(env = "oracle")
     @JdbcRepository(dialect = Dialect.ORACLE)
     public interface OracleVisitRepository extends VisitRepository {
-        /**
-         * Finds visits for a pet using Oracle SQL.
-         *
-         * @param petId the pet id
-         * @return visits for the pet
-         */
-        @Override
-        @Query(value = "SELECT v.* FROM VISITS v WHERE v.PET_ID = :petId ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
-        Collection<Visit> findByPetId(Integer petId);
     }
 
     /**
