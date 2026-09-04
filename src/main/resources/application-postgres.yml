@@ -1,9 +1,13 @@
 # PostgreSQL Configuration Profile
 datasources:
   default:
-    url: jdbc:postgresql://localhost:5432/petclinic
-    username: petclinic
-    password: petclinic
-    driver-class-name: org.postgresql.Driver
+    db-type: postgres
+    schema-generate: CREATE_DROP
     dialect: POSTGRES
 
+# We used this image because the default version that ships with test resources doesn't support geospatial features.
+# If you're not using geospatial features the default option should be sufficient & the following section can be removed.
+test-resources:
+  containers:
+    postgres:
+      image-name: postgis/postgis:18-3.6-alpine

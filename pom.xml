@@ -31,6 +31,11 @@
         <h2gis.version>2.2.5</h2gis.version>
         <maven.native.plugin.version>1.1.11</maven.native.plugin.version>
         <maven.shared.utils.version>3.4.2</maven.shared.utils.version>
+        <testcontainers.version>2.0.5</testcontainers.version>
+        <micronaut.test.resources.enabled>true</micronaut.test.resources.enabled>
+        <test.resources.client.timeout>180</test.resources.client.timeout>
+        <app.micronaut.environments>h2</app.micronaut.environments>
+        <test.micronaut.environments>test,h2</test.micronaut.environments>
     </properties>
 
     <dependencies>
@@ -144,6 +149,11 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>io.micronaut.testresources</groupId>
+            <artifactId>micronaut-test-resources-client</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <scope>test</scope>
@@ -163,6 +173,13 @@
             <artifactId>assertj-core</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Keep Maven aligned with Testcontainers 2.0.5; the parent otherwise manages 1.26.0. -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.28.0</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>io.micronaut</groupId>
             <artifactId>micronaut-management</artifactId>
@@ -174,8 +191,26 @@
                 <groupId>io.micronaut.maven</groupId>
                 <artifactId>micronaut-maven-plugin</artifactId>
                 <configuration>
-                    <configFile>aot-${packaging}.properties</configFile>
+                    <configFile>aot-${project.packaging}.properties</configFile>
+                    <jvmArguments>-Dmicronaut.environments=${app.micronaut.environments}</jvmArguments>
+                    <clientTimeout>${test.resources.client.timeout}</clientTimeout>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>start-test-resources</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>start-testresources-service</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>stop-test-resources</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>stop-testresources-service</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -221,16 +256,96 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <micronaut.environments>${test.micronaut.environments}</micronaut.environments>
+                    </systemPropertyVariables>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <executions>
                     <execution>
+                        <id>postgres-integration</id>
+                        <phase>integration-test</phase>
                         <goals>
                             <goal>integration-test</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>**/*Test.java</include>
+                            </includes>
+                            <reportsDirectory>${project.build.directory}/failsafe-reports/postgres</reportsDirectory>
+                            <summaryFile>${project.build.directory}/failsafe-reports/postgres/failsafe-summary.xml</summaryFile>
+                            <systemPropertyVariables>
+                                <micronaut.environments>test,postgres</micronaut.environments>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>mysql-integration</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>**/*Test.java</include>
+                            </includes>
+                            <reportsDirectory>${project.build.directory}/failsafe-reports/mysql</reportsDirectory>
+                            <summaryFile>${project.build.directory}/failsafe-reports/mysql/failsafe-summary.xml</summaryFile>
+                            <systemPropertyVariables>
+                                <micronaut.environments>test,mysql</micronaut.environments>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>oracle-integration</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>**/*Test.java</include>
+                            </includes>
+                            <reportsDirectory>${project.build.directory}/failsafe-reports/oracle</reportsDirectory>
+                            <summaryFile>${project.build.directory}/failsafe-reports/oracle/failsafe-summary.xml</summaryFile>
+                            <systemPropertyVariables>
+                                <micronaut.environments>test,oracle</micronaut.environments>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>verify-postgres-integration</id>
+                        <phase>verify</phase>
+                        <goals>
                             <goal>verify</goal>
                         </goals>
+                        <configuration>
+                            <summaryFile>${project.build.directory}/failsafe-reports/postgres/failsafe-summary.xml</summaryFile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>verify-mysql-integration</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>verify</goal>
+                        </goals>
+                        <configuration>
+                            <summaryFile>${project.build.directory}/failsafe-reports/mysql/failsafe-summary.xml</summaryFile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>verify-oracle-integration</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>verify</goal>
+                        </goals>
+                        <configuration>
+                            <summaryFile>${project.build.directory}/failsafe-reports/oracle/failsafe-summary.xml</summaryFile>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -271,6 +386,18 @@
     </build>
     <profiles>
         <profile>
+            <id>custom-micronaut-environment</id>
+            <activation>
+                <property>
+                    <name>micronaut.environments</name>
+                </property>
+            </activation>
+            <properties>
+                <app.micronaut.environments>${micronaut.environments}</app.micronaut.environments>
+                <test.micronaut.environments>test,${micronaut.environments}</test.micronaut.environments>
+            </properties>
+        </profile>
+        <profile>
             <id>native</id>
             <build>
                 <plugins>
@@ -296,15 +423,6 @@
                         </executions>
                         <configuration>
                             <classesDirectory>${project.build.outputDirectory}</classesDirectory>
-                            <buildArgs>
-                                <buildArg>--enable-native-access=ALL-UNNAMED</buildArg>
-                                <buildArg>--exclude-config</buildArg>
-                                <buildArg>.*micronaut-http-netty-[^/]+\.jar</buildArg>
-                                <buildArg>^/META-INF/native-image/io\.micronaut\.micronaut\.http\.netty/native-image\.properties$</buildArg>
-                                <buildArg>--initialize-at-run-time=io.netty.util.internal.CleanerJava25</buildArg>
-                                <buildArg>--initialize-at-run-time=sun.security.util.Password$ConsoleHolder</buildArg>
-                                <buildArg>--initialize-at-run-time=jdk.internal.io.JdkConsoleImpl$1ConsoleHolder</buildArg>
-                            </buildArgs>
                         </configuration>
                     </plugin>
                 </plugins>

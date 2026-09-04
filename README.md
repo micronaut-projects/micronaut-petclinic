@@ -257,18 +257,33 @@ export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
 
 ## Testing
 
+`./mvnw test` runs the integration suite against the default in-memory H2 database. `./mvnw verify` runs that H2 suite first, then reruns it against disposable PostgreSQL, MySQL, and Oracle databases managed by Micronaut Test Resources.
+
 ```bash
-# Run all tests (Maven)
+# H2 integration suite
 ./mvnw test
 
-# Run integration tests (Maven)
+# H2 plus PostgreSQL, MySQL, and Oracle integration suites
 ./mvnw verify
-
-# Gradle alternatives
-./gradlew test
-./gradlew test jacocoTestReport
-./gradlew check
 ```
+
+Docker must be running for `verify`; Micronaut Test Resources provisions the disposable database containers and pulls missing images automatically. Oracle startup is typically slower than PostgreSQL and MySQL.
+
+```bash
+# Gradle equivalents
+./gradlew test                  # H2 integration suite
+./gradlew check                 # H2 plus all database integrations
+
+# Run one database integration suite
+./gradlew testPostgresIntegration
+./gradlew testMysqlIntegration
+./gradlew testOracleIntegration
+
+# Generate coverage
+./gradlew test jacocoTestReport
+```
+
+The former Maven database test profiles are no longer used.
 
 ---
 

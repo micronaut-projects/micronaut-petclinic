@@ -46,7 +46,7 @@ services:
       - mysql
 
   postgres:
-    image: postgis/postgis:18-3.6
+    image: postgis/postgis:18-3.6-alpine
     ports:
       - "5432:5432"
     environment:
