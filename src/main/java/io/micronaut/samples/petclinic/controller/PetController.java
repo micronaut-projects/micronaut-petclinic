@@ -179,8 +179,8 @@ public class PetController {
      */
     @Post(value = "/{petId}/edit", consumes = MediaType.APPLICATION_FORM_URLENCODED)
     public HttpResponse<?> processUpdateForm(@PathVariable Integer ownerId,
-                                              @PathVariable Integer petId,
-                                              @Valid @Body PetForm form) {
+                                             @PathVariable Integer petId,
+                                             @Valid @Body PetForm form) {
         Optional<Owner> owner = getOwner(ownerId);
         if (owner.isEmpty()) {
             return HttpResponse.notFound();
