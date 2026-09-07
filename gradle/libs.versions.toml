@@ -39,7 +39,6 @@ postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" 
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 snakeyaml = { module = "org.yaml:snakeyaml" }
 jte-native-resources = { module = "gg.jte:jte-native-resources", version.ref = "jte" }
-
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
