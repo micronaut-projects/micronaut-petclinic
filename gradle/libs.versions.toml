@@ -7,7 +7,7 @@ mysql = "26.7.0"
 postgresql = "42.7.13"
 h2gis = "2.2.5"
 logback = "1.6.3"
-graalvm-native = "1.1.11"
+graalvm-native = "1.1.12"
 jte = "3.2.4"
 
 [libraries]
