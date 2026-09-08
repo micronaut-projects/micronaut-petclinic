@@ -49,21 +49,8 @@ public class LocaleController {
                 .path("/")
                 .httpOnly(true);
 
-        // Get referer from HTTP header, default to home page.
-        // If a browser/referrer policy strips Referer, we can still support
-        // "stay on current page" by letting the client send a relative backUrl.
-        String redirectUrl = request.getParameters().get("backUrl", String.class).orElse(null);
-        if (redirectUrl == null || redirectUrl.isBlank()) {
-            redirectUrl = request.getHeaders().get("Referer");
-            if (redirectUrl == null || redirectUrl.isBlank()) {
-                redirectUrl = "/";
-            }
-        }
-
-        // Only allow internal redirects (relative paths only).
-        if (!isInternalUrl(redirectUrl) || redirectUrl.contains("/locale")) {
-            redirectUrl = "/";
-        }
+        Optional<String> referer = Optional.ofNullable(request.getHeaders().get("Referer"));
+        String redirectUrl = resolveRedirectUrl(referer.orElse(null));
 
         return HttpResponse.redirect(URI.create(redirectUrl))
                 .cookie(localeCookie);
@@ -76,18 +63,35 @@ public class LocaleController {
      * @param url the URL to check
      * @return true if the URL is safe for internal redirect
      */
-    private boolean isInternalUrl(String url) {
-        if (url == null || url.isBlank()) {
-            return false;
+    private String resolveRedirectUrl(String referer) {
+        if (referer == null || referer.isBlank()) {
+            return "/";
         }
-        // Relative paths are safe
-        if (url.startsWith("/") && !url.startsWith("//")) {
-            return true;
+
+        if (referer.startsWith("/") && !referer.startsWith("//")) {
+            return referer.startsWith("/locale") ? "/" : referer;
         }
-        // Reject anything that looks like an absolute URL
-        if (url.contains("://") || url.startsWith("//")) {
-            return false;
+
+        try {
+            URI uri = URI.create(referer);
+            String path = uri.getRawPath();
+            if (path == null || path.isBlank() || !path.startsWith("/")) {
+                return "/";
+            }
+            if (path.startsWith("/locale")) {
+                return "/";
+            }
+
+            StringBuilder redirect = new StringBuilder(path);
+            if (uri.getRawQuery() != null && !uri.getRawQuery().isBlank()) {
+                redirect.append('?').append(uri.getRawQuery());
+            }
+            if (uri.getRawFragment() != null && !uri.getRawFragment().isBlank()) {
+                redirect.append('#').append(uri.getRawFragment());
+            }
+            return redirect.toString();
+        } catch (IllegalArgumentException e) {
+            return "/";
         }
-        return false;
     }
 }
