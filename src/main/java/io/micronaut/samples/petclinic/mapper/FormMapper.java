@@ -1,6 +1,7 @@
 package io.micronaut.samples.petclinic.mapper;
 
 import io.micronaut.context.annotation.Mapper;
+import io.micronaut.context.annotation.Mapper.Mapping;
 import io.micronaut.samples.petclinic.dto.OwnerForm;
 import io.micronaut.samples.petclinic.dto.PetForm;
 import io.micronaut.samples.petclinic.dto.VisitForm;
@@ -20,7 +21,7 @@ import java.time.Period;
  * generates the implementations for these methods from the {@link Mapper}
  * annotations, keeping controllers free of manual field-copying logic.
  */
-@Singleton
+@Mapper
 public interface FormMapper {
 
     /**
@@ -29,7 +30,6 @@ public interface FormMapper {
      * @param form the submitted owner form
      * @return the mapped owner entity
      */
-    @Mapper
     Owner toOwner(OwnerForm form);
 
     /**
@@ -39,7 +39,6 @@ public interface FormMapper {
      * @param form the submitted owner form
      * @return an updated owner copy
      */
-    @Mapper
     Owner updateOwner(Owner owner, OwnerForm form);
 
     /**
@@ -48,7 +47,6 @@ public interface FormMapper {
      * @param owner the owner entity
      * @return the form DTO
      */
-    @Mapper
     OwnerForm toOwnerForm(Owner owner);
 
     /**
@@ -57,7 +55,6 @@ public interface FormMapper {
      * @param form the submitted pet form
      * @return the mapped pet entity
      */
-    @Mapper
     Pet toPet(PetForm form);
 
     /**
@@ -67,7 +64,6 @@ public interface FormMapper {
      * @param form the submitted pet form
      * @return an updated pet copy
      */
-    @Mapper
     Pet updatePet(Pet pet, PetForm form);
 
     /**
@@ -76,7 +72,7 @@ public interface FormMapper {
      * @param pet the pet entity
      * @return the form DTO
      */
-    @Mapper
+    @Mapping(from = "#{pet.type.id}", to = "typeId")
     PetForm toPetForm(Pet pet);
 
     /**
