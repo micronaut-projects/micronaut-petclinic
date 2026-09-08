@@ -1,10 +1,17 @@
 package io.micronaut.samples.petclinic.service;
 
 import io.micronaut.samples.petclinic.dto.VisitSearchCriteria;
-import io.micronaut.samples.petclinic.model.*;
+import io.micronaut.samples.petclinic.ClinicServiceFixtures;
+import io.micronaut.samples.petclinic.model.Owner;
+import io.micronaut.samples.petclinic.model.Pet;
+import io.micronaut.samples.petclinic.model.PetType;
+import io.micronaut.samples.petclinic.model.Speciality;
+import io.micronaut.samples.petclinic.model.Vet;
+import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Collection;
@@ -22,6 +29,9 @@ class ClinicServiceTest {
     @Inject
     ClinicService clinicService;
 
+    @Inject
+    ClinicServiceFixtures clinicServiceFixtures;
+
     @Test
     void shouldFindOwnersByLastName() {
         Collection<Owner> owners = clinicService.findOwnerByLastName("Davis");
@@ -30,9 +40,11 @@ class ClinicServiceTest {
 
     @Test
     void shouldFindOwnerById() {
-        Optional<Owner> owner = clinicService.findOwnerById(1);
-        assertThat(owner).isPresent();
-        assertThat(owner.get().getLastName()).isEqualTo("Franklin");
+        Owner owner = clinicServiceFixtures.requiredOwner("George", "Franklin");
+
+        Optional<Owner> found = clinicService.findOwnerById(owner.id());
+        assertThat(found).isPresent();
+        assertThat(found.get().getLastName()).isEqualTo("Franklin");
     }
 
     @Test
@@ -86,23 +98,21 @@ class ClinicServiceTest {
 
     @Test
     void shouldFindPetById() {
-        Optional<Pet> pet = clinicService.findPetById(1);
-        assertThat(pet).isPresent();
-        assertThat(pet.get().name()).isEqualTo("Leo");
+        Pet leo = clinicServiceFixtures.requiredPet("George", "Franklin", "Leo");
+        Optional<Pet> found = clinicService.findPetById(leo.id());
+        assertThat(found).isPresent();
+        assertThat(found.get().name()).isEqualTo("Leo");
     }
 
     @Test
     void shouldSaveNewPet() {
-        Optional<Owner> owner = clinicService.findOwnerById(1);
-        assertThat(owner).isPresent();
-        
+        Owner owner = clinicServiceFixtures.requiredOwner("George", "Franklin");
         PetType catType = clinicService.findPetTypes().stream()
                 .filter(t -> t.name().equals("cat"))
                 .findFirst()
                 .orElseThrow();
-        
-        Pet pet = new Pet("Whiskers", LocalDate.of(2023, 1, 1), catType, owner.get());
-        
+
+        Pet pet = new Pet("Whiskers", LocalDate.of(2023, 1, 1), catType, owner);
         Pet savedPet = clinicService.savePet(pet);
         
         assertThat(savedPet.id()).isNotNull();
@@ -111,21 +121,18 @@ class ClinicServiceTest {
 
     @Test
     void shouldSaveNewVisit() {
-        Optional<Pet> pet = clinicService.findPetById(1);
-        assertThat(pet).isPresent();
-        
-        Visit visit = new Visit(LocalDate.now(), "Annual checkup", pet.get());
-        
+        Pet leo = clinicServiceFixtures.requiredPet("George", "Franklin", "Leo");
+        Visit visit = new Visit(LocalDate.now(), "Annual checkup", leo);
         Visit savedVisit = clinicService.saveVisit(visit);
-        
+
         assertThat(savedVisit.id()).isNotNull();
         assertThat(savedVisit.description()).isEqualTo("Annual checkup");
     }
 
     @Test
     void shouldFindVisitsByPetId() {
-        // Pet with ID 7 (Samantha) has visits in sample data
-        Collection<Visit> visits = clinicService.findVisitsByPetId(7);
+        Pet samantha = clinicServiceFixtures.requiredPet("Jean", "Coleman", "Samantha");
+        Collection<Visit> visits = clinicService.findVisitsByPetId(samantha.id());
         assertThat(visits).isNotEmpty();
     }
 
