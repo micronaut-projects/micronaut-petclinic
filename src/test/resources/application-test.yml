@@ -11,6 +11,9 @@ micronaut:
 petclinic:
   sample-data:
     enabled: true
+  notifications:
+    enabled: true
+    provider: fake
 
 endpoints:
   info:

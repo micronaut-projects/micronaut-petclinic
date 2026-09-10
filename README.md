@@ -242,6 +242,69 @@ src/main/resources/
 - `application-mysql.yml` - MySQL settings
 - `application-postgres.yml` - PostgreSQL settings
 
+### Notifications and email
+
+The application now includes an `EmailService` abstraction used by both:
+
+- visit confirmation notifications when a visit is created
+- scheduled visit reminders
+
+By default the app is configured for offline-safe behavior:
+
+- `petclinic.notifications.provider=fake`
+- `petclinic.notifications.enabled=false`
+- `petclinic.notifications.reminders.enabled=false`
+
+When you enable notifications with the fake provider, messages are captured in-memory instead of being sent over the network. This is the default path used by tests.
+
+Because the current data model does not store owner email addresses, the demo sends notifications to a configured mailbox:
+
+- `petclinic.notifications.recipient`
+
+Example fake configuration:
+
+```yaml
+petclinic:
+  notifications:
+    enabled: true
+    provider: fake
+    recipient: inbox@example.test
+    reminders:
+      enabled: true
+      days-ahead: 1
+```
+
+Example SMTP configuration for a local fake SMTP server:
+
+```yaml
+petclinic:
+  notifications:
+    enabled: true
+    provider: smtp
+    from-address: noreply@petclinic.local
+    recipient: inbox@example.test
+    reminders:
+      enabled: true
+      days-ahead: 1
+
+javamail:
+  enabled: true
+  properties:
+    mail.smtp.host: localhost
+    mail.smtp.port: 25
+    mail.smtp.auth: false
+    mail.smtp.starttls.enable: false
+```
+
+You can test SMTP delivery locally by running a fake SMTP server and pointing the configuration above at it. One option is FakeSMTP:
+
+- Repository: https://github.com/Nilhcem/FakeSMTP
+- Typical local setup: start FakeSMTP, listen on `localhost:1025`, then create a visit and confirm the message appears in the FakeSMTP inbox view
+
+This lets you keep Micronaut Email in the application and verify Micronaut's `EmailSender` integration without sending messages to a real SMTP service.
+
+With SMTP enabled, visit creation sends a confirmation email and the scheduled reminder job reuses the same notification service for upcoming visits.
+
 To use a specific database locally:
 ```bash
 export MICRONAUT_ENVIRONMENTS=oracle   # for Oracle

@@ -40,6 +40,13 @@ public interface VisitRepository extends CrudRepository<Visit, Integer> {
     Collection<Visit> findByPetId(Integer petId);
 
     /**
+     * Find all visits for a specific visit date.
+     * @param date the visit date
+     * @return collection of visits for the supplied date
+     */
+    Collection<Visit> findByDate(LocalDate date);
+
+    /**
      * Finds visits for any of the supplied pets.
      *
      * @param petIds the pet IDs

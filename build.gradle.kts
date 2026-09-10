@@ -38,6 +38,7 @@ dependencies {
     implementation(libs.micronaut.cache.caffeine)
     implementation(libs.micronaut.sourcegen.annotations)
     implementation(libs.micronaut.managment)
+    implementation(libs.micronaut.email.javamail)
 
     runtimeOnly(libs.h2)
     runtimeOnly(libs.h2gis)
@@ -46,6 +47,7 @@ dependencies {
     runtimeOnly(libs.postgresql)
     runtimeOnly(libs.logback.classic)
     runtimeOnly(libs.snakeyaml)
+    runtimeOnly(libs.eclipse.angus.mail)
 
     annotationProcessor(libs.micronaut.inject.java)
     testAnnotationProcessor(libs.micronaut.inject.java)
@@ -107,18 +109,4 @@ tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     maxParallelForks = 1
     systemProperty("micronaut.server.port", "-1")
-}
-
-graalvmNative {
-    metadataRepository {
-        enabled = true
-    }
-    binaries {
-        all {
-            resources.autodetect()
-            if (JavaVersion.current().majorVersion == "25") {
-                buildArgs.add("-H:+SharedArenaSupport")
-            }
-        }
-    }
 }
