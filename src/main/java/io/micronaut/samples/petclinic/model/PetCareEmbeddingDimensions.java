@@ -1,7 +1,7 @@
 package io.micronaut.samples.petclinic.model;
 
 /**
- * Shared dimension for the demo embedding model and Oracle VECTOR column.
+ * Shared dimension for the precomputed pet-care vectors and Oracle VECTOR column.
  */
 public final class PetCareEmbeddingDimensions {
 

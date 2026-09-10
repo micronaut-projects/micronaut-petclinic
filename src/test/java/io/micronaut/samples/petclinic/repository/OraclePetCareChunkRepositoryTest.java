@@ -36,7 +36,7 @@ class OraclePetCareChunkRepositoryTest {
                 ScoringFunction.COSINE
         );
 
-        assertThat(results.results()).hasSize(2);
+        assertThat(results.results()).hasSize(5);
         assertThat(results.results().getFirst().entity().documentTitle()).isEqualTo("Dog preventive care");
         assertThat(results.results().getFirst().score().value())
                 .isLessThanOrEqualTo(results.results().get(1).score().value());

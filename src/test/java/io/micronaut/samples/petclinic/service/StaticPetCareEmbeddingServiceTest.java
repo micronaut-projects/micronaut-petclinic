@@ -7,15 +7,15 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests the local LangChain4j sentence embedding used by the Oracle showcase.
+ * Tests the checked-in vectors used by the Oracle showcase.
  */
-class LangChain4jPetCareEmbeddingServiceTest {
+class StaticPetCareEmbeddingServiceTest {
 
-    private final LangChain4jPetCareEmbeddingService embeddingService =
-            new LangChain4jPetCareEmbeddingService();
+    private final StaticPetCareEmbeddingService embeddingService =
+            new StaticPetCareEmbeddingService();
 
     @Test
-    void createsTheConfiguredVectorSize() {
+    void providesTheConfiguredVectorSize() {
         FloatVector vector = embeddingService.embed("What vaccinations does my puppy need?");
 
         assertThat(vector.data()).hasSize(PetCareEmbeddingDimensions.VALUE);
@@ -29,6 +29,11 @@ class LangChain4jPetCareEmbeddingServiceTest {
         for (float value : vector.data()) {
             assertThat(value).isEqualTo(0.0f);
         }
+    }
+
+    @Test
+    void returnsNoVectorForAnUnknownQuery() {
+        assertThat(embeddingService.find("an uncataloged question")).isEmpty();
     }
 
     @Test

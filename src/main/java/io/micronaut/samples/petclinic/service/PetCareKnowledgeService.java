@@ -28,7 +28,7 @@ public class PetCareKnowledgeService {
      * Creates the knowledge search service.
      *
      * @param chunkRepository repository generated for Oracle
-     * @param embeddingService local or externally-backed embedding service
+     * @param embeddingService checked-in vector catalog
      */
     public PetCareKnowledgeService(PetCareChunkRepository chunkRepository,
                                    PetCareEmbeddingService embeddingService) {
@@ -37,7 +37,7 @@ public class PetCareKnowledgeService {
     }
 
     /**
-     * Retrieves the two closest chunks for a natural-language query.
+     * Retrieves the five closest chunks for a cataloged natural-language query.
      *
      * @param query natural-language search text
      * @return ranked matching chunks
@@ -47,9 +47,14 @@ public class PetCareKnowledgeService {
             return List.of();
         }
 
+        var queryVector = embeddingService.find(query);
+        if (queryVector.isEmpty()) {
+            return List.of();
+        }
+
         SearchResults<PetCareChunk> results =
                 chunkRepository.searchTop5ByEmbeddingNear(
-                        embeddingService.embed(query),
+                        queryVector.get(),
                         MAX_COSINE_DISTANCE,
                         ScoringFunction.COSINE);
         return results.results().stream()

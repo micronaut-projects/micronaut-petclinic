@@ -17,7 +17,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Seeds a small, repeatable chunked knowledge base for the Oracle showcase.
+ * Seeds a small, repeatable chunked knowledge base with checked-in vectors for
+ * the Oracle showcase.
  */
 @Singleton
 @Requires(env = "oracle")
@@ -35,7 +36,7 @@ public class PetCareKnowledgeLoader implements ApplicationEventListener<StartupE
      *
      * @param documentRepository document repository
      * @param chunkRepository chunk repository
-     * @param embeddingService embedding service
+     * @param embeddingService checked-in vector catalog
      * @param jsonMapper mapper used to read the knowledge resource
      */
     public PetCareKnowledgeLoader(PetCareDocumentRepository documentRepository,

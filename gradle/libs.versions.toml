@@ -7,9 +7,8 @@ mysql = "26.7.0"
 postgresql = "42.7.13"
 h2gis = "2.2.5"
 logback = "1.6.3"
-graalvm-native = "1.1.11"
+graalvm-native = "1.1.12"
 jte = "3.2.4"
-langchain4j = "1.18.0-beta28"
 eclipse-angus="2.0.5"
 
 [libraries]
@@ -43,7 +42,6 @@ logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "lo
 snakeyaml = { module = "org.yaml:snakeyaml" }
 jte-native-resources = { module = "gg.jte:jte-native-resources", version.ref = "jte" }
 eclipse-angus-mail = {module  = "org.eclipse.angus:angus-mail", version.ref = "eclipse-angus" }
-langchain4j-embeddings-all-minilm-l6-v2 = { module = "dev.langchain4j:langchain4j-embeddings-all-minilm-l6-v2", version.ref = "langchain4j" }
 
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
