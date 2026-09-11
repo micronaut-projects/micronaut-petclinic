@@ -3,6 +3,8 @@ micronaut-platform = "5.1.3"
 micronaut-gradle-plugin = "5.0.2"
 micronaut-sourcegen = "2.1.0"
 ojdbc = "23.26.3.0.0"
+ojdbc-provider-azure = "1.1.0"
+azure-core-http-jdk-httpclient = "1.1.1"
 mysql = "26.7.0"
 postgresql = "42.7.13"
 h2gis = "2.2.5"
@@ -15,6 +17,11 @@ micronaut-platform-parent = { module = "io.micronaut.platform:micronaut-parent",
 
 micronaut-http-server-netty = { module = "io.micronaut:micronaut-http-server-netty" }
 micronaut-http-client = { module = "io.micronaut:micronaut-http-client" }
+micronaut-security-jwt = { module = "io.micronaut.security:micronaut-security-jwt" }
+micronaut-security-ojdbc-extensions = { module = "io.micronaut.security:micronaut-security-ojdbc-extensions" }
+micronaut-security-annotations = { module = "io.micronaut.security:micronaut-security-annotations" }
+micronaut-security-oauth2 = { module = "io.micronaut.security:micronaut-security-oauth2" }
+micronaut-security-processor = { module = "io.micronaut.security:micronaut-security-processor" }
 micronaut-serde-jackson = { module = "io.micronaut.serde:micronaut-serde-jackson" }
 micronaut-views-jte = { module = "io.micronaut.views:micronaut-views-jte" }
 micronaut-data-jdbc = { module = "io.micronaut.data:micronaut-data-jdbc" }
@@ -34,6 +41,9 @@ jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api" 
 h2 = { module = "com.h2database:h2" }
 h2gis = { module = "org.orbisgis:h2gis", version.ref = "h2gis" }
 ojdbc11 = { module = "com.oracle.database.jdbc:ojdbc11", version.ref = "ojdbc" }
+ojdbc-provider-azure = { module = "com.oracle.database.jdbc:ojdbc-provider-azure", version.ref = "ojdbc-provider-azure" }
+azure-core-http-jdk-httpclient = { module = "com.azure:azure-core-http-jdk-httpclient", version.ref = "azure-core-http-jdk-httpclient" }
+oraclepki = { module = "com.oracle.database.security:oraclepki", version.ref = "ojdbc" }
 mysql-connector-j = { module = "com.mysql:mysql-connector-j", version.ref = "mysql" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }

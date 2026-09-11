@@ -52,10 +52,58 @@ Open http://localhost:8080
 ### Oracle
 
 ```bash
+cp .env.example .env
+# Set ORACLE_DB_PASSWORD in .env, then:
+set -a && source .env && set +a
 docker-compose --profile oracle up
 ```
 
-> **Note:** The default configuration uses an ARM64 image for Apple Silicon Macs. For x86/AMD64 machines, update the image in `docker-compose.yml` to `container-registry.oracle.com/database/free:latest`.
+> **Note:** The Oracle profile uses the full Oracle AI Database 26ai Free image so it can configure TCPS. Set `ORACLE_IMAGE` if you need a different compatible image for your platform.
+
+### Oracle Deep Data Security showcase
+
+The repository also includes an opt-in Oracle Deep Data Security integration. It connects Micronaut Data JDBC through the Micronaut Security OJDBC extension, propagating the authenticated end-user access token to Oracle. Oracle maps Entra app roles to data roles and applies `DATA GRANT` policies at the row and column boundary.
+
+The showcase mirrors the reference demo's Oracle path: Micronaut OAuth2 browser login with a signed application cookie, the Micronaut Security OJDBC end-user-context extension, an Entra service-principal JDBC token, and TCPS wallet settings. It requires an Oracle AI Database 26ai / 23.26.x-compatible image, an IAM provider, and two OAuth client flows: the incoming delegated end-user access token and the application's client-credentials database-access token. The demo maps the Entra `EMPLOYEE` and `STAFF` app roles to Oracle data roles and filters/masks `OWNERS` by the signed-in user's role and email/UPN.
+
+Follow [`docker/oracle/deepsec/README.md`](docker/oracle/deepsec/README.md) for the setup sequence. The short version is:
+
+```bash
+# Start Oracle, initialize the schema/data if needed, and apply DeepSec grants.
+docker-compose --profile oracle-deepsec up -d --build
+
+# Export the generated TCPS wallet for the host-launched application.
+sh docker/oracle/export-wallet.sh
+
+# Start the application from the terminal after loading .env.
+MICRONAUT_ENVIRONMENTS=oracle-deepsec ./gradlew clean run --no-daemon
+
+# Open the application in a browser and choose the Entra login link.
+open http://localhost:8080/
+
+# After login, Micronaut redirects to the Oracle Deep Sec query.
+open http://localhost:8080/deepsec/owners
+```
+
+The normal PetClinic endpoints remain unchanged. The showcase endpoints are available only in the `oracle-deepsec` environment:
+
+- `GET /deepsec/owners` renders the owner cards and role-escalation explanation. Emma's Entra `EMPLOYEE` role produces only the owner row whose `EMAIL` matches her UPN; the `STAFF` persona sees the expanded owner set.
+- `GET /deepsec/owners.json` returns the same Oracle-filtered result as JSON.
+
+The DeepSec page logs out through `/oauth/logout`, which signs the user out of
+Microsoft Entra ID and then clears the local Micronaut cookie. Register
+`http://localhost:8080/logout` as a Web post-logout redirect URI in the PetClinic
+app registration.
+
+The support-contact demonstration uses a local Oracle `PETCLINIC_SUPPORT` data
+role. It is authorized for the application identity but disabled by default;
+the `@RunAs` repository method enables it only for that operation. It does not
+need to be assigned to an Entra user.
+
+The employee/staff row policy is generic: `EMPLOYEE` compares the owner row's
+`EMAIL` value with `ORA_END_USER_CONTEXT.username`, while `STAFF` has no row
+predicate and can see the full owner set. The two email values in `.env` are
+only used by the optional demo fixture to label sample rows.
 
 ### MySQL
 
@@ -239,6 +287,7 @@ src/main/resources/
 
 - `application.yml` - Main configuration (H2 default)
 - `application-oracle.yml` - Oracle settings
+- `application-oracle-deepsec.yml` - opt-in Oracle Deep Data Security and IAM settings
 - `application-mysql.yml` - MySQL settings
 - `application-postgres.yml` - PostgreSQL settings
 

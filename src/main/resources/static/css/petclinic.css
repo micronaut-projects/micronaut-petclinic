@@ -430,6 +430,157 @@ h1, h2, h3, h4, h5, h6 {
     margin: 0.25rem;
 }
 
+/* ===== Oracle Deep Data Security Showcase ===== */
+.deepsec-page-header {
+    background: linear-gradient(135deg, #0f766e 0%, #0e7490 48%, #2563eb 100%);
+}
+
+.deepsec-header-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.18);
+    color: white;
+}
+
+.deepsec-eyebrow {
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.deepsec-identity-card {
+    background: white;
+    border: 1px solid rgba(14, 116, 144, 0.16);
+    border-radius: 20px;
+    box-shadow: var(--shadow-md);
+    padding: 1.75rem;
+}
+
+.deepsec-status-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--success);
+    font-size: 1.25rem;
+}
+
+.deepsec-user {
+    color: var(--gray-800);
+    font-size: 1.1rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.deepsec-subject {
+    color: var(--gray-400);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.72rem;
+    margin-top: 0.3rem;
+    overflow-wrap: anywhere;
+}
+
+.deepsec-policy-box {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 14px;
+    padding: 1.15rem;
+}
+
+.deepsec-flow-card {
+    align-items: flex-start;
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    gap: 0.85rem;
+    padding: 1.15rem;
+}
+
+.deepsec-flow-number {
+    align-items: center;
+    background: var(--gradient-2);
+    border-radius: 10px;
+    color: white;
+    display: inline-flex;
+    flex: 0 0 auto;
+    font-weight: 800;
+    height: 32px;
+    justify-content: center;
+    width: 32px;
+}
+
+.deepsec-role-card {
+    background: white;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-left: 4px solid var(--primary);
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+    padding: 1.25rem;
+}
+
+.deepsec-role-card-elevated {
+    border-color: rgba(16, 185, 129, 0.2);
+    border-left-color: var(--success);
+}
+
+.deepsec-role-icon {
+    font-size: 1.5rem;
+}
+
+.deepsec-owner-card {
+    border-top: 4px solid var(--accent);
+}
+
+.deepsec-row-badge {
+    align-items: center;
+    background: rgba(16, 185, 129, 0.12);
+    border-radius: 8px;
+    color: var(--success);
+    display: inline-flex;
+    font-size: 0.75rem;
+    height: 28px;
+    justify-content: center;
+    width: 28px;
+}
+
+.deepsec-card-footer {
+    border-top: 1px solid var(--gray-100);
+    color: var(--gray-500);
+    font-size: 0.75rem;
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+}
+
+.deepsec-support-control {
+    background: var(--gray-50);
+    border: 1px dashed var(--gray-300);
+    border-radius: 12px;
+    padding: 0.75rem;
+}
+
+.deepsec-demo-note {
+    align-items: center;
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.16);
+    border-radius: 12px;
+    color: var(--gray-600);
+    display: flex;
+    font-size: 0.85rem;
+    padding: 1rem 1.15rem;
+}
+
 /* ===== Vet Cards ===== */
 .vet-card {
     background: white;
