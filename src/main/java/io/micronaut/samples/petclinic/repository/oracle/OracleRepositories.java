@@ -10,7 +10,8 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Oracle-backed Micronaut Data repository beans active in the {@code oracle} environment.
+ * Oracle-backed Micronaut Data repository beans active in the {@code oracle}
+ * and {@code oracle-deepsec} environments.
  */
 public final class OracleRepositories {
     private OracleRepositories() {
@@ -19,7 +20,7 @@ public final class OracleRepositories {
     /**
      * Oracle owner repository bean.
      */
-    @Requires(env = "oracle")
+    @Requires(env = {"oracle", "oracle-deepsec"})
     @JdbcRepository(dialect = Dialect.ORACLE)
     public interface OracleOwnerRepository extends OwnerRepository {
     }
@@ -27,7 +28,7 @@ public final class OracleRepositories {
     /**
      * Oracle clinic repository bean.
      */
-    @Requires(env = "oracle")
+    @Requires(env = {"oracle", "oracle-deepsec"})
     @JdbcRepository(dialect = Dialect.ORACLE)
     public interface OracleClinicRepository extends ClinicRepository {
     }
@@ -35,7 +36,7 @@ public final class OracleRepositories {
     /**
      * Oracle pet repository bean.
      */
-    @Requires(env = "oracle")
+    @Requires(env = {"oracle", "oracle-deepsec"})
     @JdbcRepository(dialect = Dialect.ORACLE)
     public interface OraclePetRepository extends PetRepository {
         /**
@@ -62,7 +63,7 @@ public final class OracleRepositories {
     /**
      * Oracle pet type repository bean.
      */
-    @Requires(env = "oracle")
+    @Requires(env = {"oracle", "oracle-deepsec"})
     @JdbcRepository(dialect = Dialect.ORACLE)
     public interface OraclePetTypeRepository extends PetTypeRepository {
     }
@@ -70,7 +71,7 @@ public final class OracleRepositories {
     /**
      * Oracle speciality repository bean.
      */
-    @Requires(env = "oracle")
+    @Requires(env = {"oracle", "oracle-deepsec"})
     @JdbcRepository(dialect = Dialect.ORACLE)
     public interface OracleSpecialityRepository extends SpecialityRepository {
     }
@@ -78,7 +79,7 @@ public final class OracleRepositories {
     /**
      * Oracle vet repository bean.
      */
-    @Requires(env = "oracle")
+    @Requires(env = {"oracle", "oracle-deepsec"})
     @JdbcRepository(dialect = Dialect.ORACLE)
     public interface OracleVetRepository extends VetRepository {
         /**
@@ -108,7 +109,7 @@ public final class OracleRepositories {
     /**
      * Oracle visit repository bean.
      */
-    @Requires(env = "oracle")
+    @Requires(env = {"oracle", "oracle-deepsec"})
     @JdbcRepository(dialect = Dialect.ORACLE)
     public interface OracleVisitRepository extends VisitRepository {
     }
@@ -116,7 +117,7 @@ public final class OracleRepositories {
     /**
      * Oracle vet-speciality join repository bean.
      */
-    @Requires(env = "oracle")
+    @Requires(env = {"oracle", "oracle-deepsec"})
     @JdbcRepository(dialect = Dialect.ORACLE)
     public interface OracleVetSpecialityRepository extends VetSpecialityRepository {
         /**

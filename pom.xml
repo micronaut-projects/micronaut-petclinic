@@ -43,7 +43,27 @@
         <dependency>
             <groupId>io.micronaut</groupId>
             <artifactId>micronaut-http-client</artifactId>
-            <scope>test</scope>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.security</groupId>
+            <artifactId>micronaut-security-annotations</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.security</groupId>
+            <artifactId>micronaut-security-jwt</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.security</groupId>
+            <artifactId>micronaut-security-ojdbc-extensions</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.security</groupId>
+            <artifactId>micronaut-security-oauth2</artifactId>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>io.micronaut.serde</groupId>
@@ -86,6 +106,30 @@
             <groupId>com.oracle.database.jdbc</groupId>
             <artifactId>ojdbc11</artifactId>
             <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.oracle.database.jdbc</groupId>
+            <artifactId>ojdbc-provider-azure</artifactId>
+            <version>1.1.0</version>
+            <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.azure</groupId>
+                    <artifactId>azure-core-http-netty</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-core-http-jdk-httpclient</artifactId>
+            <version>1.1.1</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.oracle.database.security</groupId>
+            <artifactId>oraclepki</artifactId>
+            <version>23.26.3.0.0</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.mysql</groupId>
@@ -210,6 +254,11 @@
                             <groupId>io.micronaut.sourcegen</groupId>
                             <artifactId>micronaut-sourcegen-generator-java</artifactId>
                             <version>${micronaut.sourcegen.version}</version>
+                        </path>
+                        <path>
+                            <groupId>io.micronaut.security</groupId>
+                            <artifactId>micronaut-security-processor</artifactId>
+                            <version>${micronaut.security.version}</version>
                         </path>
                     </annotationProcessorPaths>
                     <compilerArgs>

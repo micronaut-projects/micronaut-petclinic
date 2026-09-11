@@ -1,0 +1,93 @@
+# Opt-in Oracle Deep Data Security profile.
+#
+# Run with MICRONAUT_ENVIRONMENTS=oracle-deepsec.
+micronaut:
+  server:
+    port: 8080
+  security:
+    enabled: true
+    authentication: cookie
+    token:
+      jwt:
+        signatures:
+          secret:
+            generator:
+              secret: '${JWT_GENERATOR_SIGNATURE_SECRET:pleaseChangeThisSecretForANewOne}'
+              jws-algorithm: HS256
+    intercept-url-map:
+      - pattern: /resources/**
+        access:
+          - isAnonymous()
+    redirect:
+      # After the Entra callback, go directly to the Oracle Deep Sec query.
+      login-success: /deepsec/owners
+    endpoints:
+      logout:
+        get-allowed: true
+    oauth2:
+      openid:
+        additional-claims:
+          access-token: true
+        # /oauth/logout signs the user out at Entra first. Entra then
+        # redirects to /logout, which clears Micronaut's local cookie.
+        end-session:
+          redirect-uri: /logout
+      clients:
+        entraid:
+          client-id: ${PETCLINIC_CLIENT_ID}
+          client-secret: ${PETCLINIC_CLIENT_SECRET}
+          # Request an end-user token for PetClinic. This is the token that
+          # carries the PetClinic app roles and is later forwarded to Oracle as the
+          # end-user token.
+          scopes:
+            - openid
+            - profile
+            - email
+            - ${PETCLINIC_USER_SCOPE}
+          openid:
+            issuer: https://login.microsoftonline.com/${PETCLINIC_TENANT_ID}/v2.0/
+            end-session:
+              enabled: true
+              url: https://login.microsoftonline.com/${PETCLINIC_TENANT_ID}/oauth2/v2.0/logout
+
+datasources:
+  default:
+    username: ${DATASOURCES_DEFAULT_USERNAME:}
+    password: ${DATASOURCES_DEFAULT_PASSWORD:}
+    schema-generate: NONE
+    db-type: oracle
+    # Deep Sec sessions can expose XS$NULL as CURRENT_USER. Micronaut Data
+    # emits unqualified table names, so resolve them in the PetClinic schema.
+    # This changes name resolution only; Oracle DATA GRANTs still authorize
+    # every table operation.
+    connection-init-sql: ALTER SESSION SET CURRENT_SCHEMA = PETCLINIC
+    data-source-properties:
+      "oracle.jdbc.provider.endUserSecurityContext": ojdbc-provider-micronaut-end-user-security-context
+      "oracle.jdbc.provider.endUserSecurityContext.clientId": ${PETCLINIC_CLIENT_ID}
+      "oracle.jdbc.provider.endUserSecurityContext.clientSecret": ${PETCLINIC_CLIENT_SECRET}
+      "oracle.jdbc.provider.endUserSecurityContext.tokenUrl": https://login.microsoftonline.com/${PETCLINIC_TENANT_ID}/oauth2/v2.0/token
+      "oracle.jdbc.provider.endUserSecurityContext.scope": ${PETCLINIC_SCOPE}
+      # Entra app-role values are mapped directly by Oracle from the end-user
+      # token. Keep the prefix for the optional @RunAs application roles.
+      "oracle.jdbc.provider.endUserSecurityContext.rolePrefix": ORACLE_DATA_ROLE_
+      "oracle.net.wallet_location": ${ORACLE_WALLET_DIR}
+      "javax.net.ssl.trustStore": ${ORACLE_WALLET_TRUSTSTORE}
+      "javax.net.ssl.trustStoreType": SSO
+      "oracle.jdbc.clientId": ${PETCLINIC_CLIENT_ID}
+      "oracle.jdbc.clientSecret": ${PETCLINIC_CLIENT_SECRET}
+      "oracle.jdbc.tokenAuthentication": AZURE_SERVICE_PRINCIPAL
+      "oracle.jdbc.tenantId": ${PETCLINIC_TENANT_ID}
+      "oracle.jdbc.azureDatabaseApplicationIdUri": ${DB_APP_ID_URI}
+    url: 'jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=tcps)(HOST=${DEEPSEC_DB_HOST:localhost})(PORT=${DEEPSEC_DB_PORT:2484}))(SECURITY=(TLS_SERVER_DN_MATCH=TRUE)(TLS_SERVER_CERT_DN="${DEEPSEC_DB_TLS_SERVER_CERT_DN:CN=localhost}")(TOKEN_AUTH=AZURE_SERVICE_PRINCIPAL)(AZURE_DB_APP_ID_URI=${DB_APP_ID_URI})(TENANT_ID=${PETCLINIC_TENANT_ID}))(CONNECT_DATA=(SERVICE_NAME=${DEEPSEC_DB_SERVICE:FREEPDB1})))'
+    dialect: ORACLE
+    driver-class-name: oracle.jdbc.OracleDriver
+
+
+petclinic:
+  # A startup listener has no end-user JWT. Seed before enabling DeepSec.
+  sample-data:
+    enabled: false
+
+logger:
+  levels:
+    io.micronaut.security.ojdbc.extensions: DEBUG

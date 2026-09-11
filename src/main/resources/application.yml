@@ -1,6 +1,10 @@
 micronaut:
   application:
     name: micronaut-petclinic
+  security:
+    # Security is opt-in for this sample. The Oracle Deep Data Security
+    # environment enables bearer JWT authentication explicitly.
+    enabled: false
   server:
     port: 8080
   router:

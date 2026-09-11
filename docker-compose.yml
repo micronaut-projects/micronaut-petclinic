@@ -79,39 +79,94 @@ services:
       - postgres
 
   oracle:
-    image: container-registry.oracle.com/database/free:23.26.3.0-lite-arm64
+    image: ${ORACLE_IMAGE:-container-registry.oracle.com/database/free:latest}
     ports:
       - "1521:1521"
+      - "2484:2484"
     environment:
-      ORACLE_PWD: petclinic
+      ENABLE_TCPS: "true"
+      TCPS_HOSTNAME: localhost
+    secrets:
+      - oracle_pwd
     volumes:
       - oracle_data:/opt/oracle/oradata
       - ./docker/oracle:/opt/oracle/scripts/startup
     healthcheck:
-      test: ["CMD-SHELL", "echo 'SELECT 1 FROM DUAL;' | sqlplus -s petclinic/petclinic@localhost:1521/FREEPDB1 || exit 1"]
+      test: ["CMD-SHELL", "echo 'SELECT 1 FROM DUAL;' | sqlplus -L -s / as sysdba >/dev/null || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 20
       start_period: 300s
     profiles:
       - oracle
+      - oracle-deepsec
 
-  app-oracle:
+  # One-shot local-user bootstrap. It creates/seeds the schema without
+  # involving the end-user token required by the Deep Sec application.
+  oracle-deepsec-bootstrap:
     build:
       context: .
       target: jvm
-    ports:
-      - "8080:8080"
+    entrypoint:
+      - java
+      - -cp
+      - /app/app.jar
+      - io.micronaut.samples.petclinic.system.OracleDatabaseInitializer
     environment:
-      - MICRONAUT_ENVIRONMENTS=oracle
-      - DATASOURCES_DEFAULT_URL=jdbc:oracle:thin:@oracle:1521/FREEPDB1
+      MICRONAUT_ENVIRONMENTS: oracle
+      DATASOURCES_DEFAULT_URL: jdbc:oracle:thin:@oracle:1521/FREEPDB1
+      DATASOURCES_DEFAULT_USERNAME: petclinic
+      DATASOURCES_DEFAULT_PASSWORD: petclinic
     depends_on:
       oracle:
         condition: service_healthy
     profiles:
-      - oracle
+      - oracle-deepsec
+
+  # Deep Sec one-shot DBA configuration; it runs after schema creation.
+  oracle-deepsec-setup:
+    image: ${ORACLE_IMAGE:-container-registry.oracle.com/database/free:latest}
+    entrypoint: ["/bin/bash", "-ec"]
+    command:
+      - |
+        db_password="$$(cat /run/secrets/oracle_pwd)"
+        sqlplus -L -s /nolog <<SQL
+        connect system/"$${db_password}"@oracle:1521/FREEPDB1
+        @/opt/oracle/scripts/deepsec/01-configure-deepsec.sql $${PETCLINIC_CLIENT_ID} $${PETCLINIC_TENANT_ID} $${DB_APP_ID} $${DB_APP_ID_URI}
+        exit
+        SQL
+        if [ -n "$${DEEPSEC_TEST_USER_EMAIL:-}" ] && [ -n "$${DEEPSEC_ELEVATED_USER_EMAIL:-}" ]; then
+          sqlplus -L -s /nolog <<SQL
+        connect system/"$${db_password}"@oracle:1521/FREEPDB1
+        @/opt/oracle/scripts/deepsec/02-seed-demo-identities.sql $${DEEPSEC_TEST_USER_EMAIL} $${DEEPSEC_ELEVATED_USER_EMAIL}
+        exit
+        SQL
+        else
+          echo "DeepSec demo identity fixture skipped; both email variables are optional."
+        fi
+    environment:
+      PETCLINIC_CLIENT_ID: ${PETCLINIC_CLIENT_ID:?PETCLINIC_CLIENT_ID must be set}
+      PETCLINIC_TENANT_ID: ${PETCLINIC_TENANT_ID:?PETCLINIC_TENANT_ID must be set}
+      DB_APP_ID: ${DB_APP_ID:?DB_APP_ID must be set}
+      DB_APP_ID_URI: ${DB_APP_ID_URI:?DB_APP_ID_URI must be set}
+      DEEPSEC_TEST_USER_EMAIL: ${DEEPSEC_TEST_USER_EMAIL:-}
+      DEEPSEC_ELEVATED_USER_EMAIL: ${DEEPSEC_ELEVATED_USER_EMAIL:-}
+    volumes:
+      - ./docker/oracle/deepsec/01-configure-deepsec.sql:/opt/oracle/scripts/deepsec/01-configure-deepsec.sql:ro
+      - ./docker/oracle/deepsec/02-seed-demo-identities.sql:/opt/oracle/scripts/deepsec/02-seed-demo-identities.sql:ro
+    secrets:
+      - oracle_pwd
+    depends_on:
+      oracle-deepsec-bootstrap:
+        condition: service_completed_successfully
+    profiles:
+      - oracle-deepsec
 
 volumes:
   mysql_data:
   postgres_data:
   oracle_data:
+
+secrets:
+  oracle_pwd:
+    environment: ORACLE_DB_PASSWORD
