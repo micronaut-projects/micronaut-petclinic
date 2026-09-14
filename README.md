@@ -1,6 +1,6 @@
 # Micronaut Pet Clinic
 
-Micronaut PetClinic sample application built with Micronaut 4.
+Micronaut PetClinic sample application built with Micronaut 5.
 
 A modern **Micronaut PetClinic example** and implementation of the classic Spring PetClinic, demonstrating how to build fast, cloud-native Java applications using the Micronaut framework.
 
@@ -144,7 +144,7 @@ separate services; the Oracle Deep Data Security application is launched from
 the terminal so it can use the host's Entra credentials and exported TCPS
 wallet.
 
-> **Note:** The repository supports both Maven and Gradle for local development. The `Dockerfile` uses Maven by default, but includes commented Gradle build steps you can enable if you prefer building the image with Gradle.
+> **Note:** The repository supports both Maven and Gradle for local development. The `Dockerfile` uses Maven for the container image.
 
 To stop:
 ```bash
@@ -299,7 +299,7 @@ export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
 
 ## Key Technologies
 
-- **Micronaut 4.x** - Framework
+- **Micronaut 5.x** - Framework
 - **Java 25** - Programming language
 - **Micronaut Data JDBC** - Database access
 - **JTE** - HTML template engine
