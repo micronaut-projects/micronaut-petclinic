@@ -6,6 +6,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Transient;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.serde.annotation.Serdeable;
 import io.micronaut.sourcegen.annotations.Builder;
 import io.micronaut.sourcegen.annotations.Wither;
@@ -28,7 +29,8 @@ import static io.micronaut.data.annotation.Relation.Kind.ONE_TO_MANY;
  * @param lastName the owner's last name
  * @param address the owner's street address
  * @param city the owner's city
- * @param telephone the owner's 10-digit telephone number
+ * @param telephone the owner's 10-digit telephone number, or {@code null}
+ *                  when Oracle masks it for the current DeepSec role
  * @param pets the owner's pets
  */
 @MappedEntity("OWNERS")
@@ -56,8 +58,8 @@ public record Owner(
         @NotBlank
         String city,
 
+        @Nullable
         @MappedProperty("TELEPHONE")
-        @NotBlank
         @Digits(fraction = 0, integer = 10)
         String telephone,
 
