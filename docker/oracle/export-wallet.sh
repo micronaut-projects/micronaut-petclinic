@@ -20,4 +20,7 @@ mkdir -p "$wallet_dir"
 docker cp "$container_id:/opt/oracle/oradata/clientWallet/FREE/." "$wallet_dir/"
 
 echo "Oracle wallet exported to $wallet_dir"
-echo "Set ORACLE_WALLET_DIR to $(cd "$wallet_dir" && pwd) in your IDE run configuration."
+wallet_path="$(cd "$wallet_dir" && pwd)"
+echo "Add these variables to .env before launching the application:"
+echo "ORACLE_WALLET_DIR=\"$wallet_path\""
+echo "ORACLE_WALLET_TRUSTSTORE=\"$wallet_path/cwallet.sso\""

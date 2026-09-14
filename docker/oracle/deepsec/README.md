@@ -2,7 +2,11 @@
 
 This directory contains the DBA-run setup for the optional `oracle-deepsec` showcase. The application profile mirrors the reference implementation in [micronaut-deep-data-security-demo](https://github.com/sdelamo/micronaut-deep-data-security-demo): Micronaut OAuth2 browser login, the Micronaut Security OJDBC end-user context provider, Azure service-principal JDBC authentication, and TCPS wallet configuration.
 
-The SQL files are not mounted into the Oracle container's automatic startup directory because they need real IAM identifiers and must run after the PetClinic schema has been created. `01-configure-deepsec.sql` contains the generic database policy. `02-seed-demo-identities.sql` is an optional local fixture that associates two sample owner rows with the two test emails.
+The SQL files are kept in the DeepSec subdirectory and invoked explicitly after
+the Oracle container is healthy. They need real IAM identifiers and must run
+after the PetClinic schema has been created. `01-configure-deepsec.sql` contains
+the generic database policy. `02-seed-demo-identities.sql` is an optional local
+fixture that associates two sample owner rows with the two test emails.
 
 The default Docker image is the full Oracle AI Database 26ai Free image, `container-registry.oracle.com/database/free:latest`. The full image is used because the Free Lite image does not include the `configTcps.sh` helper required to configure the TCPS listener. Override it with `ORACLE_IMAGE` when using another compatible 26ai image. Deep Data Security also requires a matching 23.26.x JDBC driver, which this repository already provides.
 
@@ -19,7 +23,7 @@ The database password is passed to the Oracle container as a Docker Compose secr
    ```
 
    `ORACLE_DB_PASSWORD` is used only to create the Oracle `oracle_pwd` secret. The Entra values are also used by the terminal-launched application.
-   `DEEPSEC_TEST_USER_EMAIL` and `DEEPSEC_ELEVATED_USER_EMAIL` are optional
+   `DEEPSEC_PET_OWNER_EMAIL` and `DEEPSEC_CLINIC_STAFF_EMAIL` are optional
    local-demo fixture values. If either is unset, Compose applies the generic
    DeepSec policy and skips the sample-row updates.
 
@@ -48,29 +52,29 @@ The database password is passed to the Oracle container as a Docker Compose secr
    **Expose an API** page. The browser login requests this PetClinic scope, so
    the end-user access token is scoped to PetClinic and contains its application roles.
 
-   In the **PetClinic app registration**, create app roles with values `EMPLOYEE`
-   and `STAFF`. Assign `EMPLOYEE` to
+   In the **PetClinic app registration**, create app roles with values `PET_OWNER`
+   and `CLINIC_STAFF`. Assign `PET_OWNER` to
    `emma@mohamedachbani3gmail.onmicrosoft.com` under **Enterprise applications
-   → the PetClinic service principal → Users and groups**. Assign `STAFF` to
+   → the PetClinic service principal → Users and groups**. Assign `CLINIC_STAFF` to
    `mohamedachbani3@gmail.com` in the same place. The next browser login for
    Emma must produce an end-user token containing:
 
    ```json
    {
      "upn": "emma@mohamedachbani3gmail.onmicrosoft.com",
-     "roles": ["EMPLOYEE"],
+     "roles": ["PET_OWNER"],
      "scp": "access_as_user"
    }
    ```
 
-   Oracle maps the Entra `EMPLOYEE` role to the database data role
-   `PETCLINIC_EMPLOYEE`, which returns only the matching owner row with the
-   telephone column excluded. It maps `STAFF` to `PETCLINIC_STAFF`, which
+   Oracle maps the Entra `PET_OWNER` role to the database data role
+   `PETCLINIC_PET_OWNER`, which returns only the matching owner row with the
+   telephone column excluded. It maps `CLINIC_STAFF` to `PETCLINIC_CLINIC_STAFF`, which
    returns the wider owner set with telephone masking. Telephone is available
    only through the local `PETCLINIC_SUPPORT` role used by the `@RunAs` demo.
    The optional demo fixture maps the first seeded owner to
    Emma's email and the second seeded owner to Mohamed's email. Set
-   `DEEPSEC_ELEVATED_USER_EMAIL` in `.env` if the second address differs. The
+   `DEEPSEC_CLINIC_STAFF_EMAIL` in `.env` if the second address differs. The
    database-access token is obtained separately with
    `PETCLINIC_SCOPE=${DB_APP_ID_URI}/.default`.
 
@@ -82,18 +86,24 @@ The database password is passed to the Oracle container as a Docker Compose secr
 3. Start the complete DeepSec database profile. Compose starts Oracle, initializes the schema/data if needed with the local `petclinic` user, and applies the DeepSec grants. No application start/stop cycle is required:
 
    ```bash
-   docker-compose --profile oracle-deepsec up -d --build
+   docker-compose --profile oracle-deepsec up -d
    ```
 
-   The bootstrap skips an already populated schema. The terminal-launched application still uses Entra/OJDBC for DeepSec queries.
+   Compose runs `00-initialize-petclinic.sql` as the local `petclinic` user,
+   then applies `01-configure-deepsec.sql` as `SYSTEM`, and finally runs the
+   optional identity fixture. The SQL migration skips an already populated
+   schema. The terminal-launched application still uses Entra/OJDBC for
+   DeepSec queries.
 
-4. TCPS is configured automatically by the Oracle container. It creates a self-signed server/client wallet under `oracle_data`. Export it to the host for the local application:
+4. TCPS is configured automatically by the Oracle container. It creates a self-signed server/client wallet under `oracle_data`. Export it to the host for the terminal-launched application:
 
    ```bash
    sh docker/oracle/export-wallet.sh
    ```
 
-   The generated certificate uses `CN=localhost`, matching the host-side JDBC URL. The wallet export directory is ignored by Git.
+   The script prints the two wallet variables to add to `.env`. The generated
+   certificate uses `CN=localhost`, matching the host-side JDBC URL. The wallet
+   export directory is ignored by Git.
 
 5. From the repository root, load the complete `.env` and start the application:
 
@@ -128,7 +138,7 @@ The database password is passed to the Oracle container as a Docker Compose secr
 The request uses the ordinary `findAllOwners` Micronaut Data query. Emma should
 see one owner row, while Mohamed should see the expanded owner set. Oracle
 performs the row filtering and column masking; they are not implemented in the
-controller. The email values are owner data used by the generic employee
+controller. The email values are owner data used by the generic pet-owner
 predicate, not role definitions.
 
 If the application starts without IAM variables, the exported wallet, or TCPS configuration, it will fail fast. This is a proof-of-work integration and has deliberately not been validated against a live Oracle/Entra environment. A locally fabricated JWT can test Micronaut's HTTP authentication only; it does not prove Oracle Deep Data Security because Oracle must validate the end-user and database-access tokens itself.

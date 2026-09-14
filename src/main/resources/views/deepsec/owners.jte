@@ -8,20 +8,27 @@
 @param io.micronaut.samples.petclinic.system.I18nViewModelProcessor.Msg msg
 @param io.micronaut.http.HttpRequest<?> request
 @param java.util.Locale locale
+@param java.util.Set<String> activeNames
 
 @template.layout(content = @`
     <div class="page-header deepsec-page-header">
         <div class="container">
             <div class="d-flex align-items-center gap-3 mb-2">
                 <span class="deepsec-header-icon"><i class="fas fa-shield-halved"></i></span>
-                <span class="deepsec-eyebrow">Oracle Deep Data Security</span>
+                <span class="deepsec-eyebrow">${msg.text("deepsec.title")}</span>
             </div>
-            <h1>Authorized Pet Owners</h1>
-            <p>This page displays the rows returned by Oracle for the signed-in Entra identity.</p>
+            <h1>${msg.text("deepsec.authorizedOwners")}</h1>
+            <p>${msg.text("deepsec.authorizedOwnersDescription")}</p>
         </div>
     </div>
 
-    <main class="container flex-grow-1 py-4">
+    <main class="container flex-grow-1 py-4"
+          data-support-applying="${msg.text("deepsec.supportApplying")}"
+          data-support-no-telephone="${msg.text("deepsec.noTelephoneAvailable")}"
+          data-support-applied="${msg.text("deepsec.supportApplied")}"
+          data-contact-returned="${msg.text("deepsec.contactReturned")}"
+          data-support-failed="${msg.text("deepsec.supportFailed")}"
+          data-retry-support="${msg.text("deepsec.retrySupport")}">
         <section class="deepsec-identity-card mb-4 animate-fade-in-up">
             <div class="row align-items-center g-4">
                 <div class="col-lg-7">
@@ -31,14 +38,14 @@
                         </div>
                         <div>
                             <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
-                                <h2 class="h4 mb-0">Microsoft Entra ID verified</h2>
-                                <span class="badge rounded-pill text-bg-success">Connected</span>
+                                <h2 class="h4 mb-0">${msg.text("deepsec.entraVerified")}</h2>
+                                <span class="badge rounded-pill text-bg-success">${msg.text("deepsec.connected")}</span>
                             </div>
-                            <p class="mb-1 text-muted">Signed in as</p>
+                            <p class="mb-1 text-muted">${msg.text("deepsec.signedInAs")}</p>
                             <div class="deepsec-user">${user}</div>
-                            <div class="deepsec-subject">Subject: ${subject}</div>
+                            <div class="deepsec-subject">${msg.text("deepsec.subject")}: ${subject}</div>
                             <a href="/oauth/logout" class="btn btn-sm btn-outline-danger mt-3">
-                                <i class="fas fa-right-from-bracket me-1"></i>Log out
+                                <i class="fas fa-right-from-bracket me-1"></i>${msg.text("deepsec.logout")}
                             </a>
                         </div>
                     </div>
@@ -48,31 +55,31 @@
 
         <section class="mb-5">
             <div class="mb-3">
-                <h2 class="h3 mb-1">Role escalation demo</h2>
+                <h2 class="h3 mb-1">${msg.text("deepsec.roleEscalationDemo")}</h2>
             </div>
             <div class="row g-3">
                 <div class="col-md-6">
                     <div class="deepsec-role-card h-100">
                         <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
                             <div>
-                                <span class="badge rounded-pill text-bg-primary mb-2">EMPLOYEE</span>
-                                <h3 class="h5 mb-1">Restricted owner scope</h3>
+                                <span class="badge rounded-pill text-bg-primary mb-2">${msg.text("deepsec.petOwnerRole")}</span>
+                                <h3 class="h5 mb-1">${msg.text("deepsec.restrictedOwnerScope")}</h3>
                             </div>
                             <i class="fas fa-user-lock deepsec-role-icon text-primary"></i>
                         </div>
-                        <p class="small text-muted mb-0">Oracle matches the end-user email and returns only that user's owner row and related pets.</p>
+                        <p class="small text-muted mb-0">${msg.text("deepsec.restrictedOwnerDescription")}</p>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="deepsec-role-card deepsec-role-card-elevated h-100">
                         <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
                             <div>
-                                <span class="badge rounded-pill text-bg-success mb-2">STAFF</span>
-                                <h3 class="h5 mb-1">Expanded clinic scope</h3>
+                                <span class="badge rounded-pill text-bg-success mb-2">${msg.text("deepsec.clinicStaffRole")}</span>
+                                <h3 class="h5 mb-1">${msg.text("deepsec.expandedClinicScope")}</h3>
                             </div>
                             <i class="fas fa-users-gear deepsec-role-icon text-success"></i>
                         </div>
-                        <p class="small text-muted mb-0">Oracle returns all owner rows for staff. Staff can use the support action below to demonstrate method-scoped elevation.</p>
+                        <p class="small text-muted mb-0">${msg.text("deepsec.expandedClinicDescription")}</p>
                     </div>
                 </div>
             </div>
@@ -80,10 +87,10 @@
 
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
             <div>
-                <h2 class="h3 mb-1">Pet owners visible to this user</h2>
+                <h2 class="h3 mb-1">${msg.text("deepsec.visibleOwners")}</h2>
             </div>
             <a href="/deepsec/owners.json" class="btn btn-outline-primary" target="_blank" rel="noopener noreferrer">
-                <i class="fas fa-code me-2"></i>View JSON response
+                <i class="fas fa-code me-2"></i>${msg.text("deepsec.viewJson")}
             </a>
         </div>
 
@@ -92,8 +99,8 @@
                 <div class="empty-state-icon">
                     <i class="fas fa-shield-halved"></i>
                 </div>
-                <h3>No authorized owners</h3>
-                <p>No owner rows were returned for this Entra identity.</p>
+                <h3>${msg.text("deepsec.noAuthorizedOwners")}</h3>
+                <p>${msg.text("deepsec.noAuthorizedOwnersDescription")}</p>
             </div>
         @else
             <div class="row g-4">
@@ -128,19 +135,19 @@
                                     </p>
                                 @else
                                     <p id="telephone-${owner.id()}" class="mb-0 small text-muted">
-                                        <i class="fas fa-eye-slash me-2"></i>Telephone protected by Oracle
+                                        <i class="fas fa-eye-slash me-2"></i>${msg.text("deepsec.telephoneProtected")}
                                     </p>
                                 @endif
                             </div>
 
-                            @if(roles != null && roles.contains("STAFF"))
+                            @if(roles != null && roles.contains("CLINIC_STAFF"))
                                 <div class="deepsec-support-control">
                                     <div id="support-status-${owner.id()}" class="small text-muted mb-2">
-                                        <i class="fas fa-lock me-1"></i>Normal query result
+                                        <i class="fas fa-lock me-1"></i>${msg.text("deepsec.normalQueryResult")}
                                     </div>
                                     <button type="button" class="btn btn-sm btn-outline-secondary w-100"
                                             onclick="revealSupportContact(${owner.id()}, this)">
-                                        <i class="fas fa-key me-2"></i>RunAs support demo
+                                        <i class="fas fa-key me-2"></i>${msg.text("deepsec.runAsSupportDemo")}
                                     </button>
                                 </div>
                             @endif
@@ -157,7 +164,7 @@
                                 </div>
                             @else
                                 <div class="mb-2">
-                                    <span class="text-muted small"><i class="fas fa-info-circle me-1"></i>No pets returned</span>
+                                    <span class="text-muted small"><i class="fas fa-info-circle me-1"></i>${msg.text("deepsec.noPetsReturned")}</span>
                                 </div>
                             @endif
                         </div>
@@ -170,8 +177,9 @@
             async function revealSupportContact(ownerId, button) {
                 const status = document.getElementById("support-status-" + ownerId);
                 const telephone = document.getElementById("telephone-" + ownerId);
+                const labels = document.querySelector("main[data-support-applying]").dataset;
                 button.disabled = true;
-                button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Applying support role...';
+                button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' + labels.supportApplying;
 
                 try {
                     const response = await fetch("/deepsec/owners/" + ownerId + "/support-contact", {
@@ -186,19 +194,19 @@
                     telephone.replaceChildren();
                     const icon = document.createElement("i");
                     icon.className = "fas fa-phone me-2";
-                    telephone.append(icon, owner.telephone || "No telephone available");
+                    telephone.append(icon, owner.telephone || labels.supportNoTelephone);
                     status.className = "small text-success mb-2";
-                    status.innerHTML = '<i class="fas fa-shield-halved me-1"></i>Support role applied for this method only';
+                    status.innerHTML = '<i class="fas fa-shield-halved me-1"></i>' + labels.supportApplied;
                     button.className = "btn btn-sm btn-success w-100";
-                    button.innerHTML = '<i class="fas fa-check me-2"></i>Contact returned by Oracle';
+                    button.innerHTML = '<i class="fas fa-check me-2"></i>' + labels.contactReturned;
                 } catch (error) {
                     status.className = "small text-danger mb-2";
-                    status.textContent = "Support lookup failed. Check the application logs.";
+                    status.textContent = labels.supportFailed;
                     button.disabled = false;
-                    button.innerHTML = '<i class="fas fa-key me-2"></i>Retry RunAs demo';
+                    button.innerHTML = '<i class="fas fa-key me-2"></i>' + labels.retrySupport;
                 }
             }
         </script>
 
     </main>
-`, msg = msg, request = request, locale = locale)
+`, msg = msg, request = request, locale = locale, activeNames = activeNames)

@@ -29,16 +29,12 @@ CREATE OR REPLACE PUBLIC SYNONYM SPECIALTIES FOR petclinic.SPECIALTIES;
 CREATE OR REPLACE PUBLIC SYNONYM VET_SPECIALTIES FOR petclinic.VET_SPECIALTIES;
 CREATE OR REPLACE PUBLIC SYNONYM CLINICS FOR petclinic.CLINICS;
 
-CREATE OR REPLACE DATA ROLE PETCLINIC_EMPLOYEE
-  MAPPED TO 'AZURE_ROLE=EMPLOYEE';
-CREATE OR REPLACE DATA ROLE PETCLINIC_STAFF
-  MAPPED TO 'AZURE_ROLE=STAFF';
+CREATE OR REPLACE DATA ROLE PETCLINIC_PET_OWNER
+  MAPPED TO 'AZURE_ROLE=PET_OWNER';
+CREATE OR REPLACE DATA ROLE PETCLINIC_CLINIC_STAFF
+  MAPPED TO 'AZURE_ROLE=CLINIC_STAFF';
 
--- Keep the locally managed roles used by the optional @RunAs demonstration.
-CREATE DATA ROLE IF NOT EXISTS PETCLINIC_RECEPTIONIST;
-CREATE DATA ROLE IF NOT EXISTS PETCLINIC_VET;
-CREATE DATA ROLE IF NOT EXISTS PETCLINIC_ADMIN;
--- This role is authorized for the application but disabled by default. It
+-- This local role is authorized for the application but disabled by default. It
 -- becomes active only when @RunAs explicitly requests it for one method.
 -- IF NOT EXISTS keeps reruns safe after the role has been granted to the app.
 CREATE DATA ROLE IF NOT EXISTS PETCLINIC_SUPPORT DISABLED;
@@ -73,14 +69,12 @@ GRANT DATA ROLE PETCLINIC_APP_LOGON TO petclinic_app_identity;
 -- support-contact repository method.
 GRANT DATA ROLE PETCLINIC_SUPPORT TO petclinic_app_identity;
 
--- The employee/staff roles come from the end-user token. Do not grant them
+-- The pet-owner/clinic-staff roles come from the end-user token. Do not grant them
 -- to the application identity, otherwise they would become application-wide.
 DECLARE
   role_names SYS.ODCIVARCHAR2LIST := SYS.ODCIVARCHAR2LIST(
-    'PETCLINIC_OWNER',
-    'PETCLINIC_RECEPTIONIST',
-    'PETCLINIC_VET',
-    'PETCLINIC_ADMIN'
+    'PETCLINIC_PET_OWNER',
+    'PETCLINIC_CLINIC_STAFF'
   );
 BEGIN
   FOR i IN 1..role_names.COUNT LOOP
@@ -95,7 +89,7 @@ BEGIN
 END;
 /
 
--- The employee policy uses the EMAIL business attribute to match the current
+-- The pet-owner policy uses the EMAIL business attribute to match the current
 -- end-user identity. Production data should populate this column as part of
 -- the normal owner lifecycle; the optional demo seed script can populate two
 -- sample rows for local testing.
@@ -109,33 +103,18 @@ EXCEPTION
 END;
 /
 
--- Owners: employees see their own row and staff see all rows, but both roles
+-- Owners: pet owners see their own row and clinic staff see all rows, but both roles
 -- have telephone excluded. Support reveals all columns only for @RunAs.
-CREATE OR REPLACE DATA GRANT petclinic.employee_owners_read
+CREATE OR REPLACE DATA GRANT petclinic.pet_owner_owners_read
   AS SELECT (ALL COLUMNS EXCEPT TELEPHONE)
   ON petclinic.OWNERS
   WHERE LOWER(EMAIL) = LOWER(ORA_END_USER_CONTEXT.username)
-  TO PETCLINIC_EMPLOYEE;
+  TO PETCLINIC_PET_OWNER;
 
-CREATE OR REPLACE DATA GRANT petclinic.receptionist_owners_read
+CREATE OR REPLACE DATA GRANT petclinic.clinic_staff_owners_read
   AS SELECT (ALL COLUMNS EXCEPT TELEPHONE)
   ON petclinic.OWNERS
-  TO PETCLINIC_RECEPTIONIST, PETCLINIC_STAFF;
-
-CREATE OR REPLACE DATA GRANT petclinic.vet_owners_read
-  AS SELECT (ALL COLUMNS EXCEPT TELEPHONE)
-  ON petclinic.OWNERS
-  TO PETCLINIC_VET, PETCLINIC_STAFF;
-
--- Keep telephone outside every ordinary role. Data grants are additive, so
--- STAFF must not be included in a full-column CRUD grant intended for ADMIN.
-CREATE OR REPLACE DATA GRANT petclinic.admin_owners_crud
-  AS SELECT (ALL COLUMNS EXCEPT TELEPHONE),
-     INSERT (ALL COLUMNS EXCEPT TELEPHONE),
-     UPDATE (ALL COLUMNS EXCEPT TELEPHONE),
-     DELETE
-  ON petclinic.OWNERS
-  TO PETCLINIC_ADMIN;
+  TO PETCLINIC_CLINIC_STAFF;
 
 CREATE OR REPLACE DATA GRANT petclinic.support_owners_read
   AS SELECT
@@ -150,12 +129,12 @@ CREATE OR REPLACE DATA GRANT petclinic.owner_pets_read
     FROM petclinic.OWNERS
     WHERE LOWER(EMAIL) = LOWER(ORA_END_USER_CONTEXT.username)
   )
-  TO PETCLINIC_EMPLOYEE;
+  TO PETCLINIC_PET_OWNER;
 
-CREATE OR REPLACE DATA GRANT petclinic.staff_pets_read
+CREATE OR REPLACE DATA GRANT petclinic.clinic_staff_pets_read
   AS SELECT
   ON petclinic.PETS
-  TO PETCLINIC_RECEPTIONIST, PETCLINIC_VET, PETCLINIC_ADMIN, PETCLINIC_STAFF;
+  TO PETCLINIC_CLINIC_STAFF;
 
 CREATE OR REPLACE DATA GRANT petclinic.owner_visits_read
   AS SELECT
@@ -169,36 +148,55 @@ CREATE OR REPLACE DATA GRANT petclinic.owner_visits_read
       WHERE LOWER(o.EMAIL) = LOWER(ORA_END_USER_CONTEXT.username)
     )
   )
-  TO PETCLINIC_EMPLOYEE;
+  TO PETCLINIC_PET_OWNER;
 
-CREATE OR REPLACE DATA GRANT petclinic.staff_visits_read
+CREATE OR REPLACE DATA GRANT petclinic.clinic_staff_visits_read
   AS SELECT
   ON petclinic.VISITS
-  TO PETCLINIC_RECEPTIONIST, PETCLINIC_VET, PETCLINIC_ADMIN, PETCLINIC_STAFF;
+  TO PETCLINIC_CLINIC_STAFF;
 
 CREATE OR REPLACE DATA GRANT petclinic.owner_pet_types_read
   AS SELECT
   ON petclinic.TYPES
-  TO PETCLINIC_EMPLOYEE;
+  TO PETCLINIC_PET_OWNER;
 
-CREATE OR REPLACE DATA GRANT petclinic.staff_pet_types_read
+CREATE OR REPLACE DATA GRANT petclinic.clinic_staff_pet_types_read
   AS SELECT
   ON petclinic.TYPES
-  TO PETCLINIC_RECEPTIONIST, PETCLINIC_VET, PETCLINIC_ADMIN, PETCLINIC_STAFF;
+  TO PETCLINIC_CLINIC_STAFF;
 
--- Keep the rest of the application usable for staff personas in this demo.
-CREATE OR REPLACE DATA GRANT petclinic.staff_vets_read
+CREATE OR REPLACE DATA GRANT petclinic.clinic_staff_vets_read
   AS SELECT ON petclinic.VETS
-  TO PETCLINIC_RECEPTIONIST, PETCLINIC_VET, PETCLINIC_ADMIN, PETCLINIC_STAFF;
-CREATE OR REPLACE DATA GRANT petclinic.staff_specialties_read
+  TO PETCLINIC_CLINIC_STAFF;
+CREATE OR REPLACE DATA GRANT petclinic.clinic_staff_specialties_read
   AS SELECT ON petclinic.SPECIALTIES
-  TO PETCLINIC_RECEPTIONIST, PETCLINIC_VET, PETCLINIC_ADMIN, PETCLINIC_STAFF;
-CREATE OR REPLACE DATA GRANT petclinic.staff_vet_specialties_read
+  TO PETCLINIC_CLINIC_STAFF;
+CREATE OR REPLACE DATA GRANT petclinic.clinic_staff_vet_specialties_read
   AS SELECT ON petclinic.VET_SPECIALTIES
-  TO PETCLINIC_RECEPTIONIST, PETCLINIC_VET, PETCLINIC_ADMIN, PETCLINIC_STAFF;
-CREATE OR REPLACE DATA GRANT petclinic.staff_clinics_read
+  TO PETCLINIC_CLINIC_STAFF;
+CREATE OR REPLACE DATA GRANT petclinic.clinic_staff_clinics_read
   AS SELECT ON petclinic.CLINICS
-  TO PETCLINIC_RECEPTIONIST, PETCLINIC_VET, PETCLINIC_ADMIN, PETCLINIC_STAFF;
+  TO PETCLINIC_CLINIC_STAFF;
+
+-- Remove data grants left by older versions of this showcase.
+DROP DATA GRANT IF EXISTS petclinic.employee_owners_read;
+DROP DATA GRANT IF EXISTS petclinic.receptionist_owners_read;
+DROP DATA GRANT IF EXISTS petclinic.vet_owners_read;
+DROP DATA GRANT IF EXISTS petclinic.admin_owners_crud;
+DROP DATA GRANT IF EXISTS petclinic.staff_pets_read;
+DROP DATA GRANT IF EXISTS petclinic.staff_visits_read;
+DROP DATA GRANT IF EXISTS petclinic.staff_pet_types_read;
+DROP DATA GRANT IF EXISTS petclinic.staff_vets_read;
+DROP DATA GRANT IF EXISTS petclinic.staff_specialties_read;
+DROP DATA GRANT IF EXISTS petclinic.staff_vet_specialties_read;
+DROP DATA GRANT IF EXISTS petclinic.staff_clinics_read;
+
+-- Remove roles left by older versions of this showcase.
+DROP DATA ROLE IF EXISTS PETCLINIC_EMPLOYEE;
+DROP DATA ROLE IF EXISTS PETCLINIC_STAFF;
+DROP DATA ROLE IF EXISTS PETCLINIC_RECEPTIONIST;
+DROP DATA ROLE IF EXISTS PETCLINIC_VET;
+DROP DATA ROLE IF EXISTS PETCLINIC_ADMIN;
 
 SET USE DATA GRANTS ONLY ON petclinic.OWNERS ENABLED;
 SET USE DATA GRANTS ONLY ON petclinic.PETS ENABLED;

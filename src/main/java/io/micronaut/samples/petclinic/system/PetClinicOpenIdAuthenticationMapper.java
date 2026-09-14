@@ -24,7 +24,7 @@ import java.util.Set;
  * <p>Micronaut's default OpenID mapper creates a new application
  * authentication and does not infer roles from the provider access token.
  * DeepSec still needs the original token for Oracle, but the application also
- * needs the mapped {@code STAFF} role to protect the support endpoint and its
+ * needs the mapped {@code CLINIC_STAFF} role to protect the support endpoint and its
  * UI control.</p>
  */
 @Requires(env = "oracle-deepsec")
