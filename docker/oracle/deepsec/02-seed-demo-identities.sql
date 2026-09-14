@@ -2,14 +2,14 @@
 --
 -- This file contains demo data, not the DeepSec policy. The policy in
 -- 01-configure-deepsec.sql is generic and matches any owner's EMAIL to the
--- current Entra identity for the EMPLOYEE role.
+-- current Entra identity for the PET_OWNER role.
 
 WHENEVER SQLERROR EXIT SQL.SQLCODE
 SET DEFINE ON
 SET VERIFY OFF
 
-DEFINE deepsec_employee_email = '&1'
-DEFINE deepsec_staff_email = '&2'
+DEFINE deepsec_pet_owner_email = '&1'
+DEFINE deepsec_clinic_staff_email = '&2'
 
 ALTER SESSION SET CONTAINER = FREEPDB1;
 
@@ -17,11 +17,11 @@ ALTER SESSION SET CONTAINER = FREEPDB1;
 -- Real applications should write EMAIL when an owner is created or linked to
 -- an identity, rather than relying on this fixture.
 UPDATE petclinic.OWNERS
-SET EMAIL = LOWER('&deepsec_employee_email')
+SET EMAIL = LOWER('&deepsec_pet_owner_email')
 WHERE ID = (SELECT MIN(ID) FROM petclinic.OWNERS);
 
 UPDATE petclinic.OWNERS
-SET EMAIL = LOWER('&deepsec_staff_email')
+SET EMAIL = LOWER('&deepsec_clinic_staff_email')
 WHERE ID = (
   SELECT MIN(ID)
   FROM petclinic.OWNERS
