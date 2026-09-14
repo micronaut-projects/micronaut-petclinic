@@ -47,10 +47,10 @@ The database password is passed to the Oracle container as a Docker Compose secr
    JDBC provider to obtain the separate database-access token.
 
    PetClinic must also expose a delegated user scope, normally
-   `api://<PETCLINIC_CLIENT_ID>/access_as_user`. Set `PETCLINIC_APP_ID_URI` and
-   `PETCLINIC_USER_SCOPE` in `.env` to match the values shown under PetClinic's
-   **Expose an API** page. The browser login requests this PetClinic scope, so
-   the end-user access token is scoped to PetClinic and contains its application roles.
+   `api://<PETCLINIC_CLIENT_ID>/access_as_user`. Set `PETCLINIC_USER_SCOPE` in
+   `.env` to match the value shown under PetClinic's **Expose an API** page.
+   The browser login requests this PetClinic scope, so the end-user access token
+   is scoped to PetClinic and contains its application roles.
 
    In the **PetClinic app registration**, create app roles with values `PET_OWNER`
    and `CLINIC_STAFF`. Assign `PET_OWNER` to

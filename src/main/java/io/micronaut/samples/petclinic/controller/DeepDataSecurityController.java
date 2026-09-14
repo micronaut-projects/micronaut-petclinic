@@ -145,7 +145,7 @@ public class DeepDataSecurityController {
      * @param city owner city
      * @param address owner address
      * @param telephone owner telephone, possibly masked by Oracle
-     * @param pets names of pets returned by the same secured que2ry graph
+     * @param pets names of pets returned by the same secured query graph
      */
     @Serdeable
     public record OwnerData(Integer id,
