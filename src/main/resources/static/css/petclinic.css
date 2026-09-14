@@ -490,37 +490,6 @@ h1, h2, h3, h4, h5, h6 {
     overflow-wrap: anywhere;
 }
 
-.deepsec-policy-box {
-    background: var(--gray-50);
-    border: 1px solid var(--gray-200);
-    border-radius: 14px;
-    padding: 1.15rem;
-}
-
-.deepsec-flow-card {
-    align-items: flex-start;
-    background: white;
-    border: 1px solid var(--gray-200);
-    border-radius: 16px;
-    box-shadow: var(--shadow-sm);
-    display: flex;
-    gap: 0.85rem;
-    padding: 1.15rem;
-}
-
-.deepsec-flow-number {
-    align-items: center;
-    background: var(--gradient-2);
-    border-radius: 10px;
-    color: white;
-    display: inline-flex;
-    flex: 0 0 auto;
-    font-weight: 800;
-    height: 32px;
-    justify-content: center;
-    width: 32px;
-}
-
 .deepsec-role-card {
     background: white;
     border: 1px solid rgba(59, 130, 246, 0.2);
@@ -555,30 +524,11 @@ h1, h2, h3, h4, h5, h6 {
     width: 28px;
 }
 
-.deepsec-card-footer {
-    border-top: 1px solid var(--gray-100);
-    color: var(--gray-500);
-    font-size: 0.75rem;
-    margin-top: 1rem;
-    padding-top: 0.85rem;
-}
-
 .deepsec-support-control {
     background: var(--gray-50);
     border: 1px dashed var(--gray-300);
     border-radius: 12px;
     padding: 0.75rem;
-}
-
-.deepsec-demo-note {
-    align-items: center;
-    background: rgba(59, 130, 246, 0.08);
-    border: 1px solid rgba(59, 130, 246, 0.16);
-    border-radius: 12px;
-    color: var(--gray-600);
-    display: flex;
-    font-size: 0.85rem;
-    padding: 1rem 1.15rem;
 }
 
 /* ===== Vet Cards ===== */

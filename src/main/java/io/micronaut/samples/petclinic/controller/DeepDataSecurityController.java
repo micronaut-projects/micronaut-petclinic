@@ -115,7 +115,7 @@ public class DeepDataSecurityController {
     */
     @Get("/owners/{ownerId}/support-contact")
     @ExecuteOn(TaskExecutors.BLOCKING)
-    @Secured("STAFF")
+    @Secured("CLINIC_STAFF")
     @Produces(MediaType.APPLICATION_JSON)
     public HttpResponse<OwnerData> supportContact(@PathVariable Integer ownerId) {
         return deepSecOwnerRepository.findByIdWithSupport(ownerId)

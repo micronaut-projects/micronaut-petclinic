@@ -101,44 +101,26 @@ services:
       - oracle
       - oracle-deepsec
 
-  # One-shot local-user bootstrap. It creates/seeds the schema without
-  # involving the end-user token required by the Deep Sec application.
-  oracle-deepsec-bootstrap:
-    build:
-      context: .
-      target: jvm
-    entrypoint:
-      - java
-      - -cp
-      - /app/app.jar
-      - io.micronaut.samples.petclinic.system.OracleDatabaseInitializer
-    environment:
-      MICRONAUT_ENVIRONMENTS: oracle
-      DATASOURCES_DEFAULT_URL: jdbc:oracle:thin:@oracle:1521/FREEPDB1
-      DATASOURCES_DEFAULT_USERNAME: petclinic
-      DATASOURCES_DEFAULT_PASSWORD: petclinic
-    depends_on:
-      oracle:
-        condition: service_healthy
-    profiles:
-      - oracle-deepsec
-
-  # Deep Sec one-shot DBA configuration; it runs after schema creation.
+  # Deep Sec one-shot database initialization and DBA configuration.
   oracle-deepsec-setup:
     image: ${ORACLE_IMAGE:-container-registry.oracle.com/database/free:latest}
     entrypoint: ["/bin/bash", "-ec"]
     command:
       - |
+        sqlplus -L -s petclinic/petclinic@oracle:1521/FREEPDB1 <<SQL
+        @/opt/oracle/scripts/deepsec/00-initialize-petclinic.sql
+        exit
+        SQL
         db_password="$$(cat /run/secrets/oracle_pwd)"
         sqlplus -L -s /nolog <<SQL
         connect system/"$${db_password}"@oracle:1521/FREEPDB1
         @/opt/oracle/scripts/deepsec/01-configure-deepsec.sql $${PETCLINIC_CLIENT_ID} $${PETCLINIC_TENANT_ID} $${DB_APP_ID} $${DB_APP_ID_URI}
         exit
         SQL
-        if [ -n "$${DEEPSEC_TEST_USER_EMAIL:-}" ] && [ -n "$${DEEPSEC_ELEVATED_USER_EMAIL:-}" ]; then
+        if [ -n "$${DEEPSEC_PET_OWNER_EMAIL:-}" ] && [ -n "$${DEEPSEC_CLINIC_STAFF_EMAIL:-}" ]; then
           sqlplus -L -s /nolog <<SQL
         connect system/"$${db_password}"@oracle:1521/FREEPDB1
-        @/opt/oracle/scripts/deepsec/02-seed-demo-identities.sql $${DEEPSEC_TEST_USER_EMAIL} $${DEEPSEC_ELEVATED_USER_EMAIL}
+        @/opt/oracle/scripts/deepsec/02-seed-demo-identities.sql $${DEEPSEC_PET_OWNER_EMAIL} $${DEEPSEC_CLINIC_STAFF_EMAIL}
         exit
         SQL
         else
@@ -149,16 +131,17 @@ services:
       PETCLINIC_TENANT_ID: ${PETCLINIC_TENANT_ID:?PETCLINIC_TENANT_ID must be set}
       DB_APP_ID: ${DB_APP_ID:?DB_APP_ID must be set}
       DB_APP_ID_URI: ${DB_APP_ID_URI:?DB_APP_ID_URI must be set}
-      DEEPSEC_TEST_USER_EMAIL: ${DEEPSEC_TEST_USER_EMAIL:-}
-      DEEPSEC_ELEVATED_USER_EMAIL: ${DEEPSEC_ELEVATED_USER_EMAIL:-}
+      DEEPSEC_PET_OWNER_EMAIL: ${DEEPSEC_PET_OWNER_EMAIL:-}
+      DEEPSEC_CLINIC_STAFF_EMAIL: ${DEEPSEC_CLINIC_STAFF_EMAIL:-}
     volumes:
+      - ./docker/oracle/deepsec/00-initialize-petclinic.sql:/opt/oracle/scripts/deepsec/00-initialize-petclinic.sql:ro
       - ./docker/oracle/deepsec/01-configure-deepsec.sql:/opt/oracle/scripts/deepsec/01-configure-deepsec.sql:ro
       - ./docker/oracle/deepsec/02-seed-demo-identities.sql:/opt/oracle/scripts/deepsec/02-seed-demo-identities.sql:ro
     secrets:
       - oracle_pwd
     depends_on:
-      oracle-deepsec-bootstrap:
-        condition: service_completed_successfully
+      oracle:
+        condition: service_healthy
     profiles:
       - oracle-deepsec
 

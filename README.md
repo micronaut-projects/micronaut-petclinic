@@ -23,7 +23,7 @@ This Micronaut PetClinic app allows you to:
 
 ## Requirements
 
-- Java 21 or higher
+- Java 25 or higher
 - Maven 3.9+ (or use the included wrapper)
 - Gradle 9+ (or use the included wrapper)
 - Docker (optional, for databases)
@@ -64,13 +64,13 @@ docker-compose --profile oracle up
 
 The repository also includes an opt-in Oracle Deep Data Security integration. It connects Micronaut Data JDBC through the Micronaut Security OJDBC extension, propagating the authenticated end-user access token to Oracle. Oracle maps Entra app roles to data roles and applies `DATA GRANT` policies at the row and column boundary.
 
-The showcase mirrors the reference demo's Oracle path: Micronaut OAuth2 browser login with a signed application cookie, the Micronaut Security OJDBC end-user-context extension, an Entra service-principal JDBC token, and TCPS wallet settings. It requires an Oracle AI Database 26ai / 23.26.x-compatible image, an IAM provider, and two OAuth client flows: the incoming delegated end-user access token and the application's client-credentials database-access token. The demo maps the Entra `EMPLOYEE` and `STAFF` app roles to Oracle data roles and filters/masks `OWNERS` by the signed-in user's role and email/UPN.
+The showcase mirrors the reference demo's Oracle path: Micronaut OAuth2 browser login with a signed application cookie, the Micronaut Security OJDBC end-user-context extension, an Entra service-principal JDBC token, and TCPS wallet settings. It requires an Oracle AI Database 26ai / 23.26.x-compatible image, an IAM provider, and two OAuth client flows: the incoming delegated end-user access token and the application's client-credentials database-access token. The demo maps the Entra `PET_OWNER` and `CLINIC_STAFF` app roles to Oracle data roles and filters/masks `OWNERS` by the signed-in user's role and email/UPN.
 
 Follow [`docker/oracle/deepsec/README.md`](docker/oracle/deepsec/README.md) for the setup sequence. The short version is:
 
 ```bash
 # Start Oracle, initialize the schema/data if needed, and apply DeepSec grants.
-docker-compose --profile oracle-deepsec up -d --build
+docker-compose --profile oracle-deepsec up -d
 
 # Export the generated TCPS wallet for the host-launched application.
 sh docker/oracle/export-wallet.sh
@@ -85,9 +85,13 @@ open http://localhost:8080/
 open http://localhost:8080/deepsec/owners
 ```
 
-The normal PetClinic endpoints remain unchanged. The showcase endpoints are available only in the `oracle-deepsec` environment:
+The DeepSec Compose setup runs the SQL migration in
+[`docker/oracle/deepsec/00-initialize-petclinic.sql`](docker/oracle/deepsec/00-initialize-petclinic.sql)
+before applying the Oracle security policy and optional identity fixture. The
+normal PetClinic endpoints remain unchanged. The showcase endpoints are
+available only in the `oracle-deepsec` environment:
 
-- `GET /deepsec/owners` renders the owner cards and role-escalation explanation. Emma's Entra `EMPLOYEE` role produces only the owner row whose `EMAIL` matches her UPN; the `STAFF` persona sees the expanded owner set.
+- `GET /deepsec/owners` renders the owner cards and role-escalation explanation. A user with the Entra `PET_OWNER` role sees only the owner row whose `EMAIL` matches their UPN; the `CLINIC_STAFF` persona sees the expanded owner set.
 - `GET /deepsec/owners.json` returns the same Oracle-filtered result as JSON.
 
 The DeepSec page logs out through `/oauth/logout`, which signs the user out of
@@ -100,10 +104,11 @@ role. It is authorized for the application identity but disabled by default;
 the `@RunAs` repository method enables it only for that operation. It does not
 need to be assigned to an Entra user.
 
-The employee/staff row policy is generic: `EMPLOYEE` compares the owner row's
-`EMAIL` value with `ORA_END_USER_CONTEXT.username`, while `STAFF` has no row
-predicate and can see the full owner set. The two email values in `.env` are
-only used by the optional demo fixture to label sample rows.
+The pet-owner/clinic-staff row policy is generic: `PET_OWNER` compares the
+owner row's `EMAIL` value with `ORA_END_USER_CONTEXT.username`, while
+`CLINIC_STAFF` has no row predicate and can see the full owner set. The two
+email values in `.env` are only used by the optional demo fixture to associate
+sample rows with the two test identities.
 
 ### MySQL
 
@@ -133,11 +138,11 @@ No setup needed. Data is lost when you stop the application.
 
 ## Docker Compose
 
-The `docker-compose.yml` file handles everything automatically:
-- Starts the database
-- Waits for it to be ready
-- Starts the application
-- Connects them together
+The `docker-compose.yml` file manages the database containers and waits for
+their health checks. The standard application profiles can be started as
+separate services; the Oracle Deep Data Security application is launched from
+the terminal so it can use the host's Entra credentials and exported TCPS
+wallet.
 
 > **Note:** The repository supports both Maven and Gradle for local development. The `Dockerfile` uses Maven by default, but includes commented Gradle build steps you can enable if you prefer building the image with Gradle.
 
@@ -295,7 +300,7 @@ export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
 ## Key Technologies
 
 - **Micronaut 4.x** - Framework
-- **Java 21** - Programming language
+- **Java 25** - Programming language
 - **Micronaut Data JDBC** - Database access
 - **JTE** - HTML template engine
 - **HikariCP** - JDBC connection pooling

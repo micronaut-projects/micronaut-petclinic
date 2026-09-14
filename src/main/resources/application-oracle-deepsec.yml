@@ -84,7 +84,8 @@ datasources:
 
 
 petclinic:
-  # A startup listener has no end-user JWT. Seed before enabling DeepSec.
+  # DeepSec schema/data are initialized by the Compose SQL migration before
+  # the terminal-launched application starts.
   sample-data:
     enabled: false
 
