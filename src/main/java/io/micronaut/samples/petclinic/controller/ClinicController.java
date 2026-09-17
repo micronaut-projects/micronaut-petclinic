@@ -11,6 +11,8 @@ import io.micronaut.samples.petclinic.dto.ClinicDto;
 import io.micronaut.samples.petclinic.dto.ClinicNearbyRequest;
 import io.micronaut.samples.petclinic.model.Clinic;
 import io.micronaut.samples.petclinic.service.ClinicService;
+import io.micronaut.security.annotation.Secured;
+import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
 
 import java.util.List;
@@ -20,6 +22,7 @@ import java.util.Map;
  * Controller for clinic geospatial lookup examples.
  */
 @Controller("/clinics")
+@Secured(SecurityRule.IS_ANONYMOUS)
 public class ClinicController {
 
     private final ClinicService clinicService;

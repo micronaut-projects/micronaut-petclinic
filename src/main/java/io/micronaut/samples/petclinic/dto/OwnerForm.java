@@ -16,7 +16,6 @@ import jakarta.validation.constraints.Size;
  * @param city the submitted city
  * @param telephone the submitted 10-digit telephone number
  */
-@Introspected
 @Serdeable
 public record OwnerForm(
         Integer id,
