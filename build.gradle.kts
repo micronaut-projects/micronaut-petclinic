@@ -29,6 +29,13 @@ dependencies {
     testAnnotationProcessor(platform(libs.micronaut.platform.parent))
 
     implementation(libs.micronaut.http.server.netty)
+    implementation(libs.micronaut.http.client)
+    // The Deep Data Security profile follows the reference demo's OAuth2
+    // login and Azure-backed Oracle JDBC connection setup.
+    implementation(libs.micronaut.security.annotations)
+    implementation(libs.micronaut.security.jwt)
+    implementation(libs.micronaut.security.ojdbc.extensions)
+    implementation(libs.micronaut.security.oauth2)
     implementation(libs.micronaut.serde.jackson)
     implementation(libs.micronaut.views.jte)
     implementation(libs.micronaut.data.jdbc)
@@ -42,12 +49,16 @@ dependencies {
     runtimeOnly(libs.h2)
     runtimeOnly(libs.h2gis)
     runtimeOnly(libs.ojdbc11)
+    implementation(libs.ojdbc.provider.azure)
+    implementation(libs.azure.core.http.jdk.httpclient)
+    implementation(libs.oraclepki)
     runtimeOnly(libs.mysql.connector.j)
     runtimeOnly(libs.postgresql)
     runtimeOnly(libs.logback.classic)
     runtimeOnly(libs.snakeyaml)
 
     annotationProcessor(libs.micronaut.inject.java)
+    annotationProcessor(libs.micronaut.security.processor)
     testAnnotationProcessor(libs.micronaut.inject.java)
     annotationProcessor(libs.micronaut.data.processor)
     annotationProcessor(libs.micronaut.validation.processor)
@@ -59,7 +70,6 @@ dependencies {
     testAnnotationProcessor(libs.micronaut.sourcegen.generator.java)
 
     testImplementation(libs.micronaut.test.junit5)
-    testImplementation(libs.micronaut.http.client)
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
@@ -74,6 +84,14 @@ jte {
     jteExtension("gg.jte.nativeimage.NativeResourcesExtension")
     generate()
 }
+
+// The reference demo uses the JDK HTTP transport for the Azure JDBC provider.
+// Keep Azure Netty transport off the runtime classpath to avoid competing
+// HTTP implementations in the Deep Data Security profile.
+configurations.configureEach {
+    exclude(group = "com.azure", module = "azure-core-http-netty")
+}
+
 
 tasks.withType<JavaCompile>().configureEach {
     options.release.set(25)
