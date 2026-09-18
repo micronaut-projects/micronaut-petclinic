@@ -6,6 +6,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.samples.petclinic.model.*;
 import io.micronaut.samples.petclinic.repository.*;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 
@@ -112,6 +113,10 @@ public final class MySqlRepositories {
         @Override
         @Query(value = "SELECT v.* FROM VISITS v WHERE v.PET_ID = :petId ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
         Collection<Visit> findByPetId(Integer petId);
+
+        @Override
+        @Query(value = "SELECT v.* FROM VISITS v WHERE v.VISIT_DATE = :date ORDER BY v.PET_ID, v.id", nativeQuery = true)
+        Collection<Visit> findByDate(LocalDate date);
     }
 
     /**

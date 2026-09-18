@@ -45,7 +45,7 @@ public class ErrorController {
      * @param throwable the exception that occurred
      * @return the error view
      */
-    @Error(global = true)
+    @Error(status = HttpStatus.INTERNAL_SERVER_ERROR, global = true)
     @View("error/error")
     public Map<String, Object> handleError(HttpRequest<?> request, Throwable throwable) {
         LOG.error("Error :", throwable);

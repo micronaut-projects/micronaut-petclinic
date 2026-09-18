@@ -37,12 +37,33 @@ datasources:
 petclinic:
   sample-data:
     enabled: true
+  notifications:
+    enabled: true
+    provider: smtp
+    from-address: noreply@petclinic.local
+    from-name: Micronaut PetClinic
+    recipient: notifications@petclinic.local
+    reminders:
+      enabled: true
+      days-ahead: 1
+      fixed-delay: 1h
+      initial-delay: 10s
 
 # Logging configuration
 logger:
   levels:
     io.micronaut.samples.petclinic: DEBUG
     io.micronaut.data: DEBUG
+
+
+javamail:
+  enabled: true
+  properties:
+     mail.transport.protocol: smtp
+     mail.smtp.host: 'localhost'
+     mail.from: noreply@petclinic.local
+  authentication:
+    enabled: false
 
 endpoints:
   info:
