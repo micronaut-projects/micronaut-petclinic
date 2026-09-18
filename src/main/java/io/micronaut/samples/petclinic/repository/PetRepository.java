@@ -15,6 +15,12 @@ import java.util.Optional;
  * Dialect-specific {@code @JdbcRepository} beans extend this interface.
  */
 public interface PetRepository extends CrudRepository<Pet, Integer> {
+    /**
+     * Find all pets.
+     * @return collection of pets.
+     */
+    @Join(value = "type", type = LEFT_FETCH)
+    List<Pet> findAll();
 
     /**
      * Find a pet by ID, eagerly fetching visits.
