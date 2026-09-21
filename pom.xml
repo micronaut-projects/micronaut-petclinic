@@ -23,14 +23,14 @@
         <jdk.version>25</jdk.version>
         <release.version>25</release.version>
         <micronaut.version>5.1.0</micronaut.version>
-        <micronaut.sourcegen.version>2.2.0</micronaut.sourcegen.version>
+        <micronaut.sourcegen.version>2.2.1</micronaut.sourcegen.version>
         <micronaut.runtime>netty</micronaut.runtime>
         <micronaut.aot.enabled>false</micronaut.aot.enabled>
         <exec.mainClass>io.micronaut.samples.petclinic.Application</exec.mainClass>
         <jte.version>3.2.4</jte.version>
         <h2gis.version>2.2.5</h2gis.version>
         <maven.native.plugin.version>1.1.10</maven.native.plugin.version>
-        <maven.native.plugin.version>1.1.13</maven.native.plugin.version>
+        <maven.native.plugin.version>1.1.14</maven.native.plugin.version>
         <maven.shared.utils.version>3.4.2</maven.shared.utils.version>
     </properties>
 
