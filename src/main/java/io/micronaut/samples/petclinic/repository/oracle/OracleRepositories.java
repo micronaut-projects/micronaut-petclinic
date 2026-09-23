@@ -6,8 +6,11 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.samples.petclinic.model.*;
 import io.micronaut.samples.petclinic.repository.*;
+import org.jspecify.annotations.NonNull;
+
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Oracle-backed Micronaut Data repository beans active in the {@code oracle} environment.
@@ -127,6 +130,28 @@ public final class OracleRepositories {
     @Requires(env = "oracle")
     @JdbcRepository(dialect = Dialect.ORACLE)
     public interface OracleVisitRepository extends VisitRepository {
+    }
+
+    /**
+     * Oracle appointment repository used by the transaction-priority showcase.
+     */
+    @Requires(env = "oracle")
+    @JdbcRepository(dialect = Dialect.ORACLE)
+    public interface OracleAppointmentRepository extends AppointmentRepository {
+
+        /** Waits up to ten seconds to acquire the row lock, not to hold it. */
+        @NonNull
+        @Override
+        @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE a.ID = :appointmentId FOR UPDATE WAIT 10", nativeQuery = true)
+        Optional<Appointment> findById(Integer appointmentId);
+
+        @Override
+        @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE DEMO_KEY IN ('PRIORITY_CURRENT', 'PRIORITY_FALLBACK') ORDER BY DISPLAY_ORDER", nativeQuery = true)
+        List<Appointment> findDemoAppointments();
+
+        @Override
+        @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE DEMO_KEY IN ('PRIORITY_CURRENT', 'PRIORITY_FALLBACK') ORDER BY DISPLAY_ORDER FOR UPDATE NOWAIT", nativeQuery = true)
+        List<Appointment> lockDemoAppointments();
     }
 
     /**

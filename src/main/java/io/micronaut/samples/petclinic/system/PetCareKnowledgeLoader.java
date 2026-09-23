@@ -22,6 +22,7 @@ import java.io.InputStream;
  */
 @Singleton
 @Requires(env = "oracle")
+@Requires(property = "petclinic.sample-data.enabled", value = "true", defaultValue = "true")
 public class PetCareKnowledgeLoader implements ApplicationEventListener<StartupEvent> {
 
     private static final String KNOWLEDGE_RESOURCE = "/knowledge/pet-care-knowledge.json";

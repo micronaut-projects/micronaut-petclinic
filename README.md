@@ -1,6 +1,6 @@
 # Micronaut Pet Clinic
 
-Micronaut PetClinic sample application built with Micronaut 4.
+Micronaut PetClinic sample application built with Micronaut 5.
 
 A modern **Micronaut PetClinic example** and implementation of the classic Spring PetClinic, demonstrating how to build fast, cloud-native Java applications using the Micronaut framework.
 
@@ -23,7 +23,7 @@ This Micronaut PetClinic app allows you to:
 
 ## Requirements
 
-- Java 21 or higher
+- JDK 25
 - Maven 3.9+ (or use the included wrapper)
 - Gradle 9+ (or use the included wrapper)
 - Docker (optional, for databases)
@@ -44,6 +44,10 @@ cd micronaut-petclinic
 ```
 
 Open http://localhost:8080
+
+Use a disposable database: the default `schema-generate: CREATE_DROP` setting
+recreates the schema and drops it on application shutdown, including with external
+database profiles unless overridden.
 
 ---
 
@@ -214,6 +218,63 @@ curl -X POST http://localhost:8080/knowledge/search \
 
 The vector service is intentionally an interface, making it straightforward to replace the checked-in catalog with another vector source while keeping Oracle retrieval unchanged. The sample query vectors are cataloged alongside the chunk vectors, so queries outside the demo catalog return no matches.
 
+### Oracle transaction priority
+
+With the Oracle profile running, open http://localhost:8080/oracle/transaction-priority.
+The demo uses two ordered appointments, without calendar or time-slot management.
+
+1. Choose an available appointment and start **regular booking (LOW)**. It locks
+   the row and pauses for 15 seconds to simulate checkout.
+2. Start **emergency booking (HIGH)** during that pause. With the Docker settings,
+   Oracle can roll back LOW after HIGH waits about 3 seconds, letting HIGH commit.
+3. LOW reports the rollback when its pause ends and it tries to save again.
+   The booked appointment disappears from the choices; retry with the remaining one.
+   Without HIGH, LOW commits normally after its pause.
+
+Each button sends an independent request to an `@OracleTransactional` method.
+`SELECT … FOR UPDATE` acquires the lock; `save()` persists changes inside that
+transaction, without committing it. `WAIT 10` limits lock acquisition to 10 seconds,
+not how long the lock is held. Both transactions have a 30-second timeout.
+The countdown is approximate; the pause is demo-only, not a production booking pattern.
+
+Only `ORA-63300` / `ORA-63302` confirm priority rollback. HIGH arriving before LOW
+locks the row, or too late to displace LOW, does not demonstrate it. A timeout is
+not proof of priority rollback, and a committed booking cannot be displaced.
+
+[The Oracle startup script](docker/oracle/01-init-user.sql) sets
+`PRIORITY_TXNS_MODE=ROLLBACK` and the HIGH/MEDIUM wait targets to 3 seconds.
+To apply script changes to an existing container, restart it without deleting volumes:
+
+```bash
+docker compose --profile oracle restart oracle
+docker compose --profile oracle logs oracle
+```
+
+Check for `Oracle Priority Transactions enabled`; unsupported images and setup
+errors are reported in the startup logs.
+
+Use one browser and a disposable database. **Reset currently makes every appointment
+available**, not just the two demo rows. The UI disables reset while its requests run.
+
+#### Testing the showcase
+
+With the Oracle schema initialized and the demo idle, run:
+
+```bash
+./gradlew test --tests '*OracleTransactionPriorityIntegrationTest' --rerun
+```
+
+This test uses `application-oracle.yml` and its datasource overrides—no separate
+database user is needed. It disables schema generation and sample seeders.
+`--rerun` forces execution even when the sources have not changed.
+Do not restart or stop the application during the tests. Two worker-level tests
+check a regular booking committing alone and an emergency displacing it with a real
+Oracle priority rollback. Tests override `petclinic.transaction-priority.reservation-seconds`
+to 0 for the regular booking and 5 for the priority race (above Oracle's 3-second
+HIGH wait target); the demo still defaults to 15 seconds. Together the tests take
+roughly 5 seconds, excluding startup. Each test creates
+and deletes its own appointment; neither calls reset nor changes the demo fixtures.
+
 ## Project Structure
 
 ```
@@ -259,8 +320,8 @@ export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
 
 ## Key Technologies
 
-- **Micronaut 4.x** - Framework
-- **Java 21** - Programming language
+- **Micronaut 5.x** - Framework
+- **Java 25** - Programming language
 - **Micronaut Data JDBC** - Database access
 - **JTE** - HTML template engine
 - **HikariCP** - JDBC connection pooling
@@ -270,6 +331,11 @@ export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
 ---
 
 ## Testing
+
+The normal suite currently includes `AppointmentRepositoryTest` with the Oracle
+environment enabled. It inherits `CREATE_DROP`, so it requires a **disposable Oracle
+database**; do not point it at data you need to keep. The priority integration test
+also runs in the full suite, or can be selected with `--tests` as described above.
 
 ```bash
 # Run all tests (Maven)
@@ -293,7 +359,7 @@ Main differences you'll encounter:
 1. **Dependency Injection**: Use constructor injection, not `@Autowired`
 2. **Form Binding**: Add `@Body` annotation to form parameters in controllers
 3. **MessageSource**: Must configure manually (not auto-configured)
-4. **Templates**: Use OGNL expressions instead of SpEL
+4. **Templates**: Use JTE templates with Java expressions instead of Thymeleaf/SpEL
 5. **Configuration**: Use YAML format, different property names
 
 See [migration-guide.md](migration-guide.md) for detailed comparisons and examples.
