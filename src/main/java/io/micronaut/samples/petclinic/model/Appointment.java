@@ -1,6 +1,5 @@
 package io.micronaut.samples.petclinic.model;
 
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
@@ -16,15 +15,14 @@ import static io.micronaut.samples.petclinic.model.Appointment.Status.AVAILABLE;
  * A small appointment resource used by the Oracle transaction-priority showcase.
  *
  * <p>The showcase uses two ordered appointments instead of managing dates,
- * calendars or visit durations. A nullable demo key identifies only its seeded
- * rows so reset cannot modify future real appointments. A production scheduler
- * can extend this model; the long-lived booking transactions remain demo-only.</p>
+ * calendars or visit durations. Availability is determined by status and choices
+ * are ordered by display order. A production scheduler can extend this model;
+ * the long-lived booking transactions remain demo-only.</p>
  *
  * @param id the database identifier
  * @param label the human-readable appointment label
  * @param displayOrder the order used to choose the current and fallback appointments
  * @param status the current booking state
- * @param demoKey reserved fixture key, or null for an ordinary appointment
  */
 @MappedEntity("APPOINTMENTS")
 @Serdeable
@@ -44,11 +42,7 @@ public record Appointment(
 
         @MappedProperty("STATUS")
         @NotNull
-        Status status,
-
-        @Nullable
-        @MappedProperty("DEMO_KEY")
-        String demoKey
+        Status status
 ) implements BaseEntity, AppointmentWither {
 
     public enum Status {
@@ -66,7 +60,7 @@ public record Appointment(
      * Creates an empty appointment for framework binding.
      */
     public Appointment() {
-        this(null, null, null, AVAILABLE, null);
+        this(null, null, null, AVAILABLE);
     }
 
     /**
@@ -76,6 +70,6 @@ public record Appointment(
      * @param displayOrder order used by the showcase when finding the next resource
      */
     public Appointment(String label, Integer displayOrder) {
-        this(null, label, displayOrder, AVAILABLE, null);
+        this(null, label, displayOrder, AVAILABLE);
     }
 }

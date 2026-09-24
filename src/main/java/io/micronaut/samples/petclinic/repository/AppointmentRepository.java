@@ -23,13 +23,6 @@ public interface AppointmentRepository extends CrudRepository<Appointment, Integ
     @NonNull
     Optional<Appointment> findById(Integer id);
 
-    /** Returns only the two marked showcase appointments, in display order. */
-    List<Appointment> findDemoAppointments();
-
-    /**
-     * Locks the showcase rows in the caller's transaction, failing immediately
-     * on a conflicting row lock. Call before resetting within the same transaction.
-     */
-    List<Appointment> lockDemoAppointments();
-
+    /** Returns available appointments ordered by display order, then id. */
+    List<Appointment> findAvailableAppointments();
 }

@@ -2,6 +2,7 @@ package io.micronaut.samples.petclinic.service;
 
 import com.zaxxer.hikari.HikariDataSource;
 import io.micronaut.context.annotation.Property;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.samples.petclinic.model.Appointment;
 import io.micronaut.samples.petclinic.repository.AppointmentRepository;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -16,59 +17,63 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static io.micronaut.samples.petclinic.model.Appointment.Status.*;
+import static io.micronaut.samples.petclinic.model.Appointment.Status.BOOKED_FOR_EMERGENCY;
+import static io.micronaut.samples.petclinic.model.Appointment.Status.BOOKED_FOR_REGULAR;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-/** Uses the configured Oracle database and an existing schema; only test-created rows are changed. */
-@MicronautTest(environments = "oracle", transactional = false, startApplication = false, rebuildContext = true)
-@Property(name = "datasources.default.schema-generate", value = "NONE")
-@Property(name = "petclinic.sample-data.enabled", value = "false")
-@Property(name = "petclinic.transaction-priority.reservation-seconds", value = "5")
+/**
+ * Uses the existing schema and sample data without running seeders.
+ * Each test reuses an available appointment and restores it afterward.
+ * Keep the demo idle during this test; other sample data, including visits, is untouched.
+ */
+@MicronautTest
+@Requires(env = "oracle")
+@Property(name = "petclinic.transaction-priority.reservation-seconds", value = "0")
 class OracleTransactionPriorityIntegrationTest {
-    @Inject OracleTransactionPriorityWorker worker;
+    @Inject OracleTransactionPriorityService service;
     @Inject AppointmentRepository appointments;
     @Inject DataSource dataSource;
 
-    private Integer appointmentId;
+    private Appointment originalAppointment;
 
     @BeforeEach
-    void createAppointment() {
-        appointmentId = appointments.save(new Appointment("Priority test appointment", 99)).id();
+    void useExistingAppointment() {
+        originalAppointment = appointments.findAvailableAppointments().stream()
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "An available sample appointment is required; this test does not seed or reset the database."));
     }
 
     @AfterEach
-    void deleteAppointment() {
-        if (appointmentId != null) appointments.deleteById(appointmentId);
+    void restoreAppointment() {
+        if (originalAppointment != null) appointments.save(originalAppointment);
     }
 
     @Test
-    @Property(name = "petclinic.transaction-priority.reservation-seconds", value = "0")
     void regularBookingCommitsWithoutAnEmergency() {
-        assertThat(worker.getReservationSeconds()).isZero();
-        worker.bookRegular(appointmentId);
-
-        assertThat(appointments.findById(appointmentId).orElseThrow().status()).isEqualTo(BOOKED_FOR_REGULAR);
+        assertThat(service.getReservationSeconds()).isZero();
+        service.bookRegular(originalAppointment.id());
+        assertThat(appointments.findById(originalAppointment.id()).orElseThrow().status()).isEqualTo(BOOKED_FOR_REGULAR);
     }
 
     @Test
+    @Property(name = "petclinic.transaction-priority.reservation-seconds", value = "5")
     void emergencyCommitsAndOracleRollsBackRegularBooking() throws Exception {
-        assertThat(worker.getReservationSeconds()).isEqualTo(5); // Exceeds Oracle's 3-second HIGH wait target.
-        // Closing the executor waits for LOW before @AfterEach removes the appointment.
+        assertThat(service.getReservationSeconds()).isEqualTo(5); // Exceeds Oracle's 3-second HIGH wait target.
+        // Closing the executor waits for LOW before @AfterEach restores the appointment.
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            var regular = executor.submit(() -> worker.bookRegular(appointmentId));
+            var regular = executor.submit(() -> service.bookRegular(originalAppointment.id()));
             awaitRegularLock();
-
-            worker.bookEmergency(appointmentId);
+            service.bookEmergency(originalAppointment.id());
             assertThat(regular.isDone()).as("HIGH commits while LOW is still paused").isFalse();
-
             Throwable failure = assertThrows(ExecutionException.class, () -> regular.get(30, TimeUnit.SECONDS));
             while (!(failure instanceof SQLException) && failure.getCause() != null) {
                 failure = failure.getCause();
             }
             assertThat(failure).isInstanceOfSatisfying(SQLException.class,
                     sql -> assertThat(sql.getErrorCode()).isIn(63300, 63302));
-            assertThat(appointments.findById(appointmentId).orElseThrow().status()).isEqualTo(BOOKED_FOR_EMERGENCY);
+            assertThat(appointments.findById(originalAppointment.id()).orElseThrow().status()).isEqualTo(BOOKED_FOR_EMERGENCY);
         }
     }
 
@@ -78,7 +83,7 @@ class OracleTransactionPriorityIntegrationTest {
         try (var connection = dataSource.unwrap(HikariDataSource.class).getConnection();
              var statement = connection.prepareStatement("SELECT ID FROM APPOINTMENTS WHERE ID = ? FOR UPDATE NOWAIT")) {
             connection.setAutoCommit(false);
-            statement.setInt(1, appointmentId);
+            statement.setInt(1, originalAppointment.id());
             while (System.nanoTime() < deadline) {
                 try (var rows = statement.executeQuery()) {
                     assertThat(rows.next()).isTrue();

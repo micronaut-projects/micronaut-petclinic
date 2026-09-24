@@ -57,7 +57,8 @@ if (root) {
     }
 
     async function book(kind) {
-        const result = await request("/" + kind + "?appointmentId=" + encodeURIComponent(appointmentId));
+        const result = await request("/book?appointmentId=" + encodeURIComponent(appointmentId)
+            + "&type=" + encodeURIComponent(kind));
         if (!result.outcome) throw new Error(text("error"));
         element("database-status").textContent = result.databaseStatus;
         updateAppointments(result.availableAppointments);

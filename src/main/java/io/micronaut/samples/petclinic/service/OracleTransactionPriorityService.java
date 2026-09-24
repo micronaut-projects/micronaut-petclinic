@@ -30,12 +30,12 @@ import static io.micronaut.samples.petclinic.model.Appointment.Status.*;
  */
 @Singleton
 @Requires(env = "oracle")
-public class OracleTransactionPriorityWorker {
+public class OracleTransactionPriorityService {
     private final AppointmentRepository appointments;
     private final int reservationSeconds;
 
-    public OracleTransactionPriorityWorker(AppointmentRepository appointments,
-            @Value("${petclinic.transaction-priority.reservation-seconds:15}") int reservationSeconds) {
+    public OracleTransactionPriorityService(AppointmentRepository appointments,
+                                            @Value("${petclinic.transaction-priority.reservation-seconds:15}") int reservationSeconds) {
         this.appointments = appointments;
         this.reservationSeconds = reservationSeconds;
     }

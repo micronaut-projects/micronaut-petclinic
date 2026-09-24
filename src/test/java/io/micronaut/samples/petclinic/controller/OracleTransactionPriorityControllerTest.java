@@ -1,6 +1,6 @@
 package io.micronaut.samples.petclinic.controller;
 
-import io.micronaut.samples.petclinic.service.OracleTransactionPriorityWorker;
+import io.micronaut.samples.petclinic.service.OracleTransactionPriorityService;
 import org.junit.jupiter.api.Test;
 import java.sql.SQLException;
 
@@ -24,7 +24,7 @@ class OracleTransactionPriorityControllerTest {
             assertThat(OracleTransactionPriorityController.outcomeOf(new SQLException("lock timeout", "72000", code)))
                     .isEqualTo(TIMED_OUT);
         }
-        assertThat(OracleTransactionPriorityController.outcomeOf(new OracleTransactionPriorityWorker.BookingTaken()))
+        assertThat(OracleTransactionPriorityController.outcomeOf(new OracleTransactionPriorityService.BookingTaken()))
                 .isEqualTo(TAKEN);
         assertThat(OracleTransactionPriorityController.outcomeOf(new IllegalStateException("unexpected failure")))
                 .isEqualTo(FAILED);

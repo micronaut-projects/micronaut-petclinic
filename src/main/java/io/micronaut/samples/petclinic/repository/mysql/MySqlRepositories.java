@@ -4,8 +4,20 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.samples.petclinic.model.*;
-import io.micronaut.samples.petclinic.repository.*;
+import io.micronaut.samples.petclinic.model.Appointment;
+import io.micronaut.samples.petclinic.model.Pet;
+import io.micronaut.samples.petclinic.model.Speciality;
+import io.micronaut.samples.petclinic.model.VetWithSpecialities;
+import io.micronaut.samples.petclinic.model.Visit;
+import io.micronaut.samples.petclinic.repository.AppointmentRepository;
+import io.micronaut.samples.petclinic.repository.ClinicRepository;
+import io.micronaut.samples.petclinic.repository.OwnerRepository;
+import io.micronaut.samples.petclinic.repository.PetRepository;
+import io.micronaut.samples.petclinic.repository.PetTypeRepository;
+import io.micronaut.samples.petclinic.repository.SpecialityRepository;
+import io.micronaut.samples.petclinic.repository.VetRepository;
+import io.micronaut.samples.petclinic.repository.VetSpecialityRepository;
+import io.micronaut.samples.petclinic.repository.VisitRepository;
 import org.jspecify.annotations.NonNull;
 
 import java.util.Collection;
@@ -153,12 +165,8 @@ public final class MySqlRepositories {
         Optional<Appointment> findById(Integer appointmentId);
 
         @Override
-        @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE DEMO_KEY IN ('PRIORITY_CURRENT', 'PRIORITY_FALLBACK') ORDER BY DISPLAY_ORDER", nativeQuery = true)
-        List<Appointment> findDemoAppointments();
-
-        @Override
-        @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE DEMO_KEY IN ('PRIORITY_CURRENT', 'PRIORITY_FALLBACK') ORDER BY DISPLAY_ORDER FOR UPDATE NOWAIT", nativeQuery = true)
-        List<Appointment> lockDemoAppointments();
+        @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE STATUS = 'AVAILABLE' ORDER BY DISPLAY_ORDER, ID", nativeQuery = true)
+        List<Appointment> findAvailableAppointments();
 
     }
 }

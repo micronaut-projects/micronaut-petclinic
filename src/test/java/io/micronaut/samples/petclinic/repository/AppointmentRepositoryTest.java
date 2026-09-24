@@ -1,26 +1,34 @@
 package io.micronaut.samples.petclinic.repository;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.samples.petclinic.model.Appointment;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import static io.micronaut.samples.petclinic.model.Appointment.Status.*;
+import static io.micronaut.samples.petclinic.model.Appointment.Status.AVAILABLE;
+import static io.micronaut.samples.petclinic.model.Appointment.Status.BOOKED_FOR_EMERGENCY;
+import static io.micronaut.samples.petclinic.model.Appointment.Status.BOOKED_FOR_REGULAR;
+import static io.micronaut.samples.petclinic.model.Appointment.Status.HELD_BY_REGULAR;
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Exercises the shared repository contract using the Oracle implementation. */
-@MicronautTest(environments = "oracle")
+/** Uses the existing Oracle schema; each test's data changes are rolled back. */
+@MicronautTest
+@Requires(env = "oracle")
 class AppointmentRepositoryTest {
     @Inject AppointmentRepository appointments;
 
     @Test
-    void findsOnlyDemoAppointmentsInDisplayOrder() {
-        appointments.save(new Appointment("Ordinary appointment", 0));
+    void findsAvailableAppointmentsInDisplayOrder() {
+        var later = appointments.save(new Appointment("Later appointment", 100));
+        var earlier = appointments.save(new Appointment("Earlier appointment", 99));
+        var booked = appointments.save(new Appointment(null, "Booked appointment", 98, BOOKED_FOR_REGULAR));
 
-        var demo = appointments.findDemoAppointments();
-        assertThat(demo).extracting(Appointment::demoKey)
-                .containsExactly("PRIORITY_CURRENT", "PRIORITY_FALLBACK");
-        assertThat(demo).extracting(Appointment::displayOrder).containsExactly(1, 2);
+        var available = appointments.findAvailableAppointments();
+        assertThat(available).allMatch(a -> a.status() == AVAILABLE);
+        assertThat(available).extracting(Appointment::displayOrder).isSorted();
+        assertThat(available).extracting(Appointment::id)
+                .containsSubsequence(earlier.id(), later.id()).doesNotContain(booked.id());
     }
 
     @Test
@@ -39,20 +47,12 @@ class AppointmentRepositoryTest {
     }
 
     @Test
-    void locksAndResetsOnlyDemoAppointments() {
-        var ordinary = appointments.save(new Appointment(null, "Ordinary appointment", 0,
-                BOOKED_FOR_REGULAR, null));
-        var demo = appointments.lockDemoAppointments();
-        assertThat(demo).extracting(Appointment::demoKey)
-                .containsExactly("PRIORITY_CURRENT", "PRIORITY_FALLBACK");
-        for (var appointment : demo) {
-            appointments.save(appointment.withStatus(BOOKED_FOR_EMERGENCY));
-        }
+    void bookedAppointmentRemainsFindableButIsNoLongerAvailable() {
+        var appointment = appointments.save(new Appointment("Appointment to book", 99));
+        var booked = appointments.save(appointment.withStatus(BOOKED_FOR_EMERGENCY));
 
-        for (var appointment : appointments.lockDemoAppointments()) {
-            appointments.save(appointment.withStatus(AVAILABLE));
-        }
-        assertThat(appointments.findDemoAppointments()).allMatch(a -> a.status() == AVAILABLE);
-        assertThat(appointments.findById(ordinary.id()).orElseThrow().status()).isEqualTo(BOOKED_FOR_REGULAR);
+        assertThat(appointments.existsById(booked.id())).isTrue();
+        assertThat(appointments.findById(booked.id())).contains(booked);
+        assertThat(appointments.findAvailableAppointments()).extracting(Appointment::id).doesNotContain(booked.id());
     }
 }

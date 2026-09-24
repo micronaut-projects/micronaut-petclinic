@@ -221,7 +221,8 @@ The vector service is intentionally an interface, making it straightforward to r
 ### Oracle transaction priority
 
 With the Oracle profile running, open http://localhost:8080/oracle/transaction-priority.
-The demo uses two ordered appointments, without calendar or time-slot management.
+Sample data provides two appointments, without calendar or time-slot management.
+The page lists all available appointments in display order.
 
 1. Choose an available appointment and start **regular booking (LOW)**. It locks
    the row and pauses for 15 seconds to simulate checkout.
@@ -236,6 +237,7 @@ Each button sends an independent request to an `@OracleTransactional` method.
 transaction, without committing it. `WAIT 10` limits lock acquisition to 10 seconds,
 not how long the lock is held. Both transactions have a 30-second timeout.
 The countdown is approximate; the pause is demo-only, not a production booking pattern.
+The booking request is `POST /oracle/transaction-priority/book?appointmentId=ID&type=regular|emergency`.
 
 Only `ORA-63300` / `ORA-63302` confirm priority rollback. HIGH arriving before LOW
 locks the row, or too late to displace LOW, does not demonstrate it. A timeout is
@@ -258,22 +260,25 @@ available**, not just the two demo rows. The UI disables reset while its request
 
 #### Testing the showcase
 
-With the Oracle schema initialized and the demo idle, run:
+With the Oracle schema and sample data already present, at least one
+appointment available, and the demo idle, run:
 
 ```bash
 ./gradlew test --tests '*OracleTransactionPriorityIntegrationTest' --rerun
 ```
 
 This test uses `application-oracle.yml` and its datasource overrides—no separate
-database user is needed. It disables schema generation and sample seeders.
+database user is needed. It disables schema generation and sample seeders,
+preserving existing data rather than loading it again.
 `--rerun` forces execution even when the sources have not changed.
-Do not restart or stop the application during the tests. Two worker-level tests
+Do not restart or stop the application during the tests. Two transaction-level tests
 check a regular booking committing alone and an emergency displacing it with a real
 Oracle priority rollback. Tests override `petclinic.transaction-priority.reservation-seconds`
 to 0 for the regular booking and 5 for the priority race (above Oracle's 3-second
 HIGH wait target); the demo still defaults to 15 seconds. Together the tests take
-roughly 5 seconds, excluding startup. Each test creates
-and deletes its own appointment; neither calls reset nor changes the demo fixtures.
+roughly 5 seconds, excluding startup. Each test reuses an available sample appointment
+and restores it afterward; no appointments are inserted or deleted. Visits and other
+sample data are untouched. Missing sample appointments cause a clear setup failure.
 
 ## Project Structure
 
@@ -332,10 +337,11 @@ export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
 
 ## Testing
 
-The normal suite currently includes `AppointmentRepositoryTest` with the Oracle
-environment enabled. It inherits `CREATE_DROP`, so it requires a **disposable Oracle
-database**; do not point it at data you need to keep. The priority integration test
-also runs in the full suite, or can be selected with `--tests` as described above.
+The normal suite includes Oracle appointment and priority tests, which require an
+existing Oracle schema. These tests disable schema generation and sample loading;
+repository-test changes are rolled back, and the priority test restores its selected
+appointment. Other tests still inherit the default `CREATE_DROP` configuration,
+so use a disposable database when running the entire suite with Oracle enabled.
 
 ```bash
 # Run all tests (Maven)
