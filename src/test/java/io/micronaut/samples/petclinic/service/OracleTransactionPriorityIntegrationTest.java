@@ -22,14 +22,9 @@ import static io.micronaut.samples.petclinic.model.Appointment.Status.BOOKED_FOR
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-/**
- * Uses the existing schema and sample data without running seeders.
- * Each test reuses an available appointment and restores it afterward.
- * Keep the demo idle during this test; other sample data, including visits, is untouched.
- */
 @MicronautTest
 @Requires(env = "oracle")
-@Property(name = "petclinic.transaction-priority.reservation-seconds", value = "0")
+@Property(name = "petclinic.transaction-priority.reservation-seconds", value = "5")
 class OracleTransactionPriorityIntegrationTest {
     @Inject OracleTransactionPriorityService service;
     @Inject AppointmentRepository appointments;
@@ -52,13 +47,12 @@ class OracleTransactionPriorityIntegrationTest {
 
     @Test
     void regularBookingCommitsWithoutAnEmergency() {
-        assertThat(service.getReservationSeconds()).isZero();
+        assertThat(service.getReservationSeconds()).isEqualTo(5);
         service.bookRegular(originalAppointment.id());
         assertThat(appointments.findById(originalAppointment.id()).orElseThrow().status()).isEqualTo(BOOKED_FOR_REGULAR);
     }
 
     @Test
-    @Property(name = "petclinic.transaction-priority.reservation-seconds", value = "5")
     void emergencyCommitsAndOracleRollsBackRegularBooking() throws Exception {
         assertThat(service.getReservationSeconds()).isEqualTo(5); // Exceeds Oracle's 3-second HIGH wait target.
         // Closing the executor waits for LOW before @AfterEach restores the appointment.
