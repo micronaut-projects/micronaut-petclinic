@@ -14,7 +14,7 @@
     </div>
     <main id="transaction-priority-page" class="container flex-grow-1 py-4" data-reservation-seconds="${reservationSeconds}">
         <div hidden>
-            @for(var key : java.util.List.of("error", "noAvailable", "confirmed", "emergencyPending", "regularWon", "taken", "working", "timedOut", "countdown", "completing", "finished", "outcome.NOT_STARTED", "outcome.RUNNING"))
+            @for(var key : java.util.List.of("error", "noAvailable", "ready", "confirmed", "emergencyPending", "emergencyWon", "regularWon", "taken", "working", "timedOut", "countdown", "completing", "finished", "outcome.NOT_STARTED", "outcome.RUNNING"))
                 <span data-key="${key}">${msg.text("transactionPriority." + key)}</span>
             @endfor
             @for(var outcome : io.micronaut.samples.petclinic.dto.OracleBookingResult.Outcome.values())

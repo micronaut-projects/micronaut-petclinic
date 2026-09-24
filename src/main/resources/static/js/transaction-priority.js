@@ -15,7 +15,7 @@ if (root) {
 
     function render() {
         element("start-low").disabled = lowPending || highPending || !select.value;
-        element("start-high").disabled = !lowPending || highOutcome !== "NOT_STARTED";
+        element("start-high").disabled = highPending || !select.value;
         element("reset").disabled = lowPending || highPending;
         select.disabled = lowPending || highPending;
         element("low").textContent = text("outcome." + lowOutcome);
@@ -27,18 +27,26 @@ if (root) {
         else if (lowOutcome === "COMMITTED") summary = "regularWon";
         else if (lowOutcome === "TAKEN") summary = "taken";
         else if (lowOutcome === "TIMED_OUT" || highOutcome === "TIMED_OUT") summary = "timedOut";
+        else if (highOutcome === "COMMITTED" && lowOutcome === "NOT_STARTED") summary = "emergencyWon";
         else if (highOutcome === "COMMITTED") summary = "emergencyPending";
         element("summary").textContent = text(summary);
     }
 
     function updateAppointments(appointments) {
+        appointments = Array.isArray(appointments) ? appointments : [];
         const previous = select.value;
+        const previousStillAvailable = appointments.some(a => String(a.id) === previous);
         select.replaceChildren();
-        for (const appointment of appointments) {
-            select.add(new Option(appointment.displayOrder + ". " + appointment.label, appointment.id));
+        if (appointments.length) {
+            select.add(new Option(text("ready"), ""));
+            for (const appointment of appointments) {
+                select.add(new Option(appointment.displayOrder + ". " + appointment.label, appointment.id));
+            }
+            // Selecting the next appointment does not book it; the user must start a new request.
+            select.value = previousStillAvailable ? previous : String(appointments[0].id);
+        } else {
+            select.add(new Option(text("noAvailable"), ""));
         }
-        if (appointments.some(a => String(a.id) === previous)) select.value = previous;
-        if (!appointments.length) select.add(new Option(text("noAvailable"), ""));
         element("suggestion").textContent = appointments[0]?.label ?? text("noAvailable");
     }
 
@@ -102,7 +110,16 @@ if (root) {
     });
 
     element("start-high").addEventListener("click", async () => {
-        if (!lowPending || highOutcome !== "NOT_STARTED") return;
+        if (highPending || !select.value) return;
+        if (!lowPending) {
+            appointmentId = select.value;
+            element("appointment").textContent = select.selectedOptions[0].textContent;
+            element("state").classList.remove("d-none");
+            element("error").classList.add("d-none");
+            element("database-status").textContent = "—";
+            element("suggestion").textContent = "—";
+            lowOutcome = "NOT_STARTED";
+        }
         highPending = true;
         highOutcome = "RUNNING";
         render();
