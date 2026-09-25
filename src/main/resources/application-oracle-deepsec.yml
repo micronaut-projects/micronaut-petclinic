@@ -75,7 +75,6 @@ datasources:
     dialect: ORACLE
     driver-class-name: oracle.jdbc.OracleDriver
 
-
 petclinic:
   # DeepSec schema/data are initialized by the Compose SQL migration before
   # the terminal-launched application starts.

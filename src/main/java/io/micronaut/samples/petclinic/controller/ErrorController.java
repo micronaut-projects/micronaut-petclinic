@@ -4,6 +4,8 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Error;
+import io.micronaut.security.annotation.Secured;
+import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +17,7 @@ import java.util.Map;
  * Provides custom error pages for different HTTP status codes.
  */
 @Controller("/error")
+@Secured(SecurityRule.IS_ANONYMOUS)
 public class ErrorController {
 
     private final static Logger LOG = LoggerFactory.getLogger(ErrorController.class);
