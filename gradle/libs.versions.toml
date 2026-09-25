@@ -19,7 +19,6 @@ micronaut-http-server-netty = { module = "io.micronaut:micronaut-http-server-net
 micronaut-http-client = { module = "io.micronaut:micronaut-http-client" }
 micronaut-security-jwt = { module = "io.micronaut.security:micronaut-security-jwt" }
 micronaut-security-ojdbc-extensions = { module = "io.micronaut.security:micronaut-security-ojdbc-extensions" }
-micronaut-security-annotations = { module = "io.micronaut.security:micronaut-security-annotations" }
 micronaut-security-oauth2 = { module = "io.micronaut.security:micronaut-security-oauth2" }
 micronaut-security-processor = { module = "io.micronaut.security:micronaut-security-processor" }
 micronaut-serde-jackson = { module = "io.micronaut.serde:micronaut-serde-jackson" }
