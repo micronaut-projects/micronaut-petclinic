@@ -40,6 +40,14 @@ public interface VisitRepository extends CrudRepository<Visit, Integer> {
     Collection<Visit> findByPetId(Integer petId);
 
     /**
+     * Find all visits for a specific pet.
+     * @param petId the pet ID
+     * @return collection of visits for the pet
+     */
+    Collection<Visit> findByPetName(String perName);
+
+
+    /**
      * Finds visits for any of the supplied pets.
      *
      * @param petIds the pet IDs

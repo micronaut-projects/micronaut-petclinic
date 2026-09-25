@@ -1,12 +1,17 @@
+# Oracle Configuration Profile
 datasources:
   default:
-    url: jdbc:oracle:thin:@localhost:1521/FREEPDB1
-    username: petclinic
-    password: petclinic
-    driver-class-name: oracle.jdbc.OracleDriver
+    db-type: oracle
+    schema-generate: CREATE_DROP
     dialect: ORACLE
     initialization-fail-timeout: 60000
     connection-timeout: 30000
     maximum-pool-size: 10
     minimum-idle: 2
 
+# We used this image because the default version that ships with test resources doesn't support geospatial features.
+# If you're not using geospatial features the default option should be sufficient & the following section can be removed.
+test-resources:
+  containers:
+    oracle:
+      image-name: gvenzl/oracle-free:23.26.2-faststart

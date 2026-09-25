@@ -1,7 +1,9 @@
 import gg.jte.ContentType
+import org.graalvm.buildtools.gradle.tasks.NativeRunTask
 
 plugins {
     alias(libs.plugins.micronaut.application)
+    alias(libs.plugins.micronaut.test.resources)
     jacoco
     alias(libs.plugins.graalvm.native)
     alias(libs.plugins.jte)
@@ -18,9 +20,39 @@ application {
     mainClass.set("io.micronaut.samples.petclinic.Application")
 }
 
+data class DatabaseIntegration(
+    val testTaskName: String,
+    val environment: String,
+    val descriptionName: String,
+)
+
+val databaseIntegrations = listOf(
+    DatabaseIntegration(
+        testTaskName = "testMysqlIntegration",
+        environment = "mysql",
+        descriptionName = "MySQL",
+    ),
+    DatabaseIntegration(
+        testTaskName = "testPostgresIntegration",
+        environment = "postgres",
+        descriptionName = "PostgreSQL",
+    ),
+    DatabaseIntegration(
+        testTaskName = "testOracleIntegration",
+        environment = "oracle",
+        descriptionName = "Oracle DB",
+    )
+)
+
+val testResourcesClientTimeoutSeconds = 180
+
 micronaut {
     runtime("netty")
     testRuntime("junit5")
+    testResources {
+        enabled = true
+        clientTimeout.set(testResourcesClientTimeoutSeconds)
+    }
 }
 
 dependencies {
@@ -89,8 +121,47 @@ tasks.named("inspectRuntimeClasspath") {
     dependsOn(tasks.named("generateJte"))
 }
 
+tasks.named("check").configure {
+    databaseIntegrations.forEach { integration ->
+        dependsOn(tasks.named(integration.testTaskName))
+    }
+}
+
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     maxParallelForks = 1
     systemProperty("micronaut.server.port", "-1")
+    applyDefaultEnvironment()
 }
+
+tasks.named<NativeRunTask>("nativeTest") {
+    if (defaultMicronautEnvironment()) {
+        environment.put("MICRONAUT_ENVIRONMENTS", "test,h2")
+    }
+}
+
+databaseIntegrations.forEach { integration ->
+    tasks.register<Test>(integration.testTaskName) {
+        group = "verification"
+        description =
+            "Runs tests against a disposable ${integration.descriptionName} database from Micronaut Test Resources."
+        testClassesDirs = sourceSets.test.get().output.classesDirs
+        classpath = sourceSets.test.get().runtimeClasspath
+        systemProperty("micronaut.environments", "test,${integration.environment}")
+    }
+}
+
+tasks.named<JavaExec>("run") {
+    applyDefaultEnvironment()
+}
+
+fun defaultMicronautEnvironment(): Boolean =
+    System.getProperty("micronaut.environments").isNullOrBlank() &&
+            System.getenv("MICRONAUT_ENVIRONMENTS").isNullOrBlank()
+
+fun JavaForkOptions.applyDefaultEnvironment(environment: String = "h2") {
+    if (defaultMicronautEnvironment()) {
+        systemProperty("micronaut.environments", environment)
+    }
+}
+

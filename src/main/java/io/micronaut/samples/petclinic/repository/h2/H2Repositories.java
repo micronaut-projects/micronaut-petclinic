@@ -123,6 +123,16 @@ public final class H2Repositories {
         @Override
         @Query(value = "SELECT v.* FROM VISITS v WHERE v.PET_ID = :petId ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
         Collection<Visit> findByPetId(Integer petId);
+
+        /**
+         * Finds visits for a pet using H2 SQL.
+         *
+         * @param petName the pet name
+         * @return visits for the pet
+         */
+        @Override
+        @Query(value = "SELECT v.* FROM VISITS v LEFT JOIN PETS p ON v.PET_ID = p.ID WHERE p.NAME = :petName  ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
+        Collection<Visit> findByPetName(String petName);
     }
 
     /**

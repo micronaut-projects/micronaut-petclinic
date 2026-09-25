@@ -4,8 +4,21 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.samples.petclinic.model.*;
-import io.micronaut.samples.petclinic.repository.*;
+import io.micronaut.samples.petclinic.model.Pet;
+import io.micronaut.samples.petclinic.model.Speciality;
+import io.micronaut.samples.petclinic.model.VetWithSpecialities;
+import io.micronaut.samples.petclinic.model.Visit;
+import io.micronaut.samples.petclinic.repository.ClinicRepository;
+import io.micronaut.samples.petclinic.repository.OwnerRepository;
+import io.micronaut.samples.petclinic.repository.PetCareChunkRepository;
+import io.micronaut.samples.petclinic.repository.PetCareDocumentRepository;
+import io.micronaut.samples.petclinic.repository.PetRepository;
+import io.micronaut.samples.petclinic.repository.PetTypeRepository;
+import io.micronaut.samples.petclinic.repository.SpecialityRepository;
+import io.micronaut.samples.petclinic.repository.VetRepository;
+import io.micronaut.samples.petclinic.repository.VetSpecialityRepository;
+import io.micronaut.samples.petclinic.repository.VisitRepository;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -127,6 +140,25 @@ public final class OracleRepositories {
     @Requires(env = "oracle")
     @JdbcRepository(dialect = Dialect.ORACLE)
     public interface OracleVisitRepository extends VisitRepository {
+        /**
+         * Finds visits for a pet using Oracle SQL.
+         *
+         * @param petId the pet id
+         * @return visits for the pet
+         */
+        @Override
+        @Query(value = "SELECT v.* FROM VISITS v WHERE v.PET_ID = :petId ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
+        Collection<Visit> findByPetId(Integer petId);
+
+        /**
+         * Finds visits for a pet using Oracle SQL.
+         *
+         * @param petName the pet name
+         * @return visits for the pet
+         */
+        @Override
+        @Query(value = "SELECT v.* FROM VISITS v LEFT JOIN PETS p ON v.PET_ID = p.ID WHERE p.NAME = :petName  ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
+        Collection<Visit> findByPetName(String petName);
     }
 
     /**
