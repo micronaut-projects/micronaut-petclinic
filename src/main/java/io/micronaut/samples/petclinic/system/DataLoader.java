@@ -4,6 +4,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.samples.petclinic.model.Clinic;
+import io.micronaut.samples.petclinic.model.ClinicServiceOffering;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.PetType;
@@ -12,6 +13,7 @@ import io.micronaut.samples.petclinic.model.Vet;
 import io.micronaut.samples.petclinic.model.VetSpeciality;
 import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.samples.petclinic.repository.ClinicRepository;
+import io.micronaut.samples.petclinic.repository.ClinicServiceOfferingRepository;
 import io.micronaut.samples.petclinic.repository.OwnerRepository;
 import io.micronaut.samples.petclinic.repository.PetRepository;
 import io.micronaut.samples.petclinic.repository.PetTypeRepository;
@@ -27,9 +29,11 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.Period;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -49,6 +53,92 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
     private final VisitRepository visitRepository;
     private final VetSpecialityRepository vetSpecialityRepository;
     private final ClinicRepository clinicRepository;
+    private final ClinicServiceOfferingRepository clinicServiceOfferingRepository;
+
+    private static final Map<String, List<ClinicOfferingSeed>> CLINIC_OFFERINGS = Map.ofEntries(
+            Map.entry("Downtown Madison Pet Clinic", List.of(
+                    offering("WELLNESS_CHECK", "Wellness check", "Annual physical examination and preventive care review.", "45.00", 30),
+                    offering("SENIOR_PET_SCREENING", "Senior pet screening", "A focused health screen for aging companions.", "72.00", 45),
+                    offering("SAME_DAY_SICK_VISIT", "Same-day sick visit", "Fast evaluation for sudden illness and minor injuries.", "58.00", 30),
+                    offering("DENTAL_SPARKLE", "Dental sparkle clean", "Professional cleaning with an oral health review.", "95.00", 60))),
+            Map.entry("Capitol Square Pet Clinic", List.of(
+                    offering("RABIES_EXPRESS", "Rabies express", "A quick vaccination appointment for busy city pets.", "30.00", 20),
+                    offering("APARTMENT_PET_BEHAVIOR", "Apartment pet behavior consult", "Practical guidance for barking, anxiety, and shared walls.", "68.00", 45),
+                    offering("PUPPY_SOCIAL_START", "Puppy social start", "Early-care guidance for confident city puppies.", "55.00", 30))),
+            Map.entry("University Pet Clinic", List.of(
+                    offering("STUDENT_PET_WELLNESS", "Student pet wellness", "Affordable preventive care for student households.", "38.00", 30),
+                    offering("NEW_PET_ORIENTATION", "New pet orientation", "A first-visit roadmap for newly adopted companions.", "42.00", 30),
+                    offering("EXAM_SEASON_CHECK", "Exam-season check", "A convenient health check before a busy semester.", "35.00", 20))),
+            Map.entry("East Madison Pet Clinic", List.of(
+                    offering("ALLERGY_SKIN_CONSULT", "Allergy and skin consult", "Investigate itching, hot spots, and seasonal allergies.", "78.00", 45),
+                    offering("WEIGHT_WATCH_PLAN", "Healthy weight plan", "A measured nutrition and activity plan for long-term health.", "52.00", 30),
+                    offering("MICROCHIP_ID_CLINIC", "Microchip and ID clinic", "Microchipping and personalized identification review.", "36.00", 20))),
+            Map.entry("South Madison Pet Clinic", List.of(
+                    offering("PUPPY_FIRST_YEAR", "Puppy first-year plan", "A staged wellness plan for growing puppies.", "125.00", 60),
+                    offering("KITTEN_FIRST_YEAR", "Kitten first-year plan", "A preventive-care starter plan for kittens.", "115.00", 60),
+                    offering("PARASITE_PREVENTION", "Parasite prevention consult", "A prevention plan for fleas, ticks, and intestinal parasites.", "48.00", 30))),
+            Map.entry("West Madison Pet Clinic", List.of(
+                    offering("CANINE_REHAB_ASSESSMENT", "Canine rehab assessment", "Mobility assessment for active or recovering dogs.", "88.00", 60),
+                    offering("CALM_COMPANION_VISIT", "Calm companion visit", "A low-stress appointment for anxious pets.", "62.00", 45),
+                    offering("SPORT_DOG_CONDITIONING", "Sport dog conditioning", "Fitness guidance for working and performance dogs.", "84.00", 45))),
+            Map.entry("Middleton Pet Clinic", List.of(
+                    offering("LAKE_COUNTRY_CHECK", "Lake country adventure check", "Pre-adventure exam for pets who love the outdoors.", "56.00", 30),
+                    offering("SENIOR_MOBILITY_SCREEN", "Senior mobility screen", "Early support for stiffness and changing mobility.", "74.00", 45),
+                    offering("GROOMING_READY_EXAM", "Grooming-ready exam", "Health check before a major grooming appointment.", "44.00", 30))),
+            Map.entry("Fitchburg Pet Clinic", List.of(
+                    offering("TRAIL_READY_CHECK", "Trail-ready pet check", "Preventive visit for pets joining hikes and long walks.", "58.00", 30),
+                    offering("TICK_BORNE_SCREEN", "Tick-borne disease screen", "Seasonal screening and prevention planning.", "66.00", 30),
+                    offering("RESCUE_INTRO_CHECK", "Rescue introduction check", "A thorough first exam for newly rescued pets.", "70.00", 45))),
+            Map.entry("Monona Pet Clinic", List.of(
+                    offering("LAKE_SIDE_WATER_SAFETY", "Lakeside water safety", "A seasonal check for swimming and boating companions.", "51.00", 30),
+                    offering("CAT_COMFORT_EXAM", "Cat comfort exam", "A quiet, feline-friendly examination experience.", "49.00", 30),
+                    offering("FELINE_DENTAL_PLAN", "Feline dental plan", "Targeted dental assessment and home-care guidance.", "82.00", 45))),
+            Map.entry("McFarland Pet Clinic", List.of(
+                    offering("RURAL_COMPANION_CHECK", "Rural companion check", "Wellness care for pets with more room to roam.", "53.00", 30),
+                    offering("BARN_CAT_WELLNESS", "Barn cat wellness", "Preventive care for working and semi-outdoor cats.", "47.00", 30),
+                    offering("FIELD_DOG_FITNESS", "Field dog fitness", "Conditioning and injury prevention for active dogs.", "79.00", 45))),
+            Map.entry("Sun Prairie Pet Clinic", List.of(
+                    offering("FAMILY_PUPPY_PLAN", "Family puppy plan", "A practical care plan for a puppy joining a busy family.", "61.00", 40),
+                    offering("MULTI_PET_WELLNESS", "Multi-pet wellness visit", "Coordinated preventive care for households with several pets.", "48.00", 30),
+                    offering("HOMECARE_NAIL_TRIM", "Home-care nail trim", "A quick trim plus techniques for easier future care.", "24.00", 20))),
+            Map.entry("Waunakee Pet Clinic", List.of(
+                    offering("COUNTRY_COMPANION_CHECK", "Country companion check", "A complete wellness visit for country-living pets.", "54.00", 30),
+                    offering("GERIATRIC_CARE_PLAN", "Geriatric care plan", "Personalized monitoring for senior companions.", "86.00", 60),
+                    offering("RABBIT_SMALL_PET_EXAM", "Rabbit and small-pet exam", "Specialized preventive care for small companion animals.", "63.00", 40))),
+            Map.entry("Verona Pet Clinic", List.of(
+                    offering("HIKER_PET_PREP", "Hiker pet preparation", "Health and prevention planning for trail companions.", "59.00", 35),
+                    offering("ALLERGY_RELIEF_CONSULT", "Allergy relief consult", "A seasonal plan for itchy pets and sensitive skin.", "76.00", 45),
+                    offering("ACTIVE_DOG_RECOVERY", "Active dog recovery", "Recovery guidance after intense activity or minor strain.", "81.00", 45))),
+            Map.entry("Stoughton Pet Clinic", List.of(
+                    offering("SMALL_TOWN_WELLNESS", "Small-town wellness", "Friendly, thorough preventive care for every life stage.", "43.00", 30),
+                    offering("FAMILY_VACCINE_BUNDLE", "Family vaccine bundle", "Streamlined vaccination visits for multi-pet families.", "92.00", 45),
+                    offering("BEHAVIOR_STARTER", "Behavior starter consult", "A first step for common behavior concerns at home.", "64.00", 45))),
+            Map.entry("Oregon Pet Clinic", List.of(
+                    offering("OUTDOOR_PET_FIRST_AID", "Outdoor pet first aid", "Practical first-aid planning for outdoor adventures.", "57.00", 35),
+                    offering("FELINE_DENTAL_SCREEN", "Feline dental screen", "Early detection and prevention for cat dental disease.", "69.00", 40),
+                    offering("PARASITE_CONTROL_PLAN", "Parasite control plan", "Seasonal parasite protection tailored to outdoor exposure.", "50.00", 30))),
+            Map.entry("DeForest Pet Clinic", List.of(
+                    offering("PUPPY_KITTEN_START", "Puppy and kitten start", "A combined starter visit for young household pets.", "58.00", 35),
+                    offering("SENIOR_BLOODWORK_REVIEW", "Senior bloodwork review", "A focused review of screening results and next steps.", "91.00", 45),
+                    offering("QUICK_VACCINE_VISIT", "Quick vaccine visit", "An efficient appointment for routine boosters.", "31.00", 20))),
+            Map.entry("Mount Horeb Pet Clinic", List.of(
+                    offering("COUNTRY_TRAIL_CHECK", "Country trail check", "A preventive exam for pets exploring rural trails.", "55.00", 30),
+                    offering("FARM_CAT_WELLNESS", "Farm cat wellness", "Practical care for cats living and working around the farm.", "46.00", 30),
+                    offering("HERDING_DOG_ASSESSMENT", "Herding dog assessment", "Joint, muscle, and conditioning review for working dogs.", "83.00", 50))),
+            Map.entry("Portage Pet Clinic", List.of(
+                    offering("TRAVEL_HEALTH_CERT", "Travel health certificate", "Documentation and exam support for pet travel.", "73.00", 40),
+                    offering("WATER_DOG_CHECK", "Water dog check", "Seasonal health review for swimming companions.", "52.00", 30),
+                    offering("FISHING_CAMP_PET_CHECK", "Fishing-camp pet check", "A practical check before a weekend away outdoors.", "49.00", 30))),
+            Map.entry("Janesville Pet Clinic", List.of(
+                    offering("COMPREHENSIVE_WELLNESS", "Comprehensive wellness", "A full preventive visit with lifestyle planning.", "60.00", 40),
+                    offering("RESCUE_PET_INTAKE", "Rescue pet intake", "A welcoming first examination for adopted pets.", "71.00", 45),
+                    offering("SENIOR_PET_PLAN", "Senior pet plan", "A practical monitoring plan for aging pets.", "84.00", 50))),
+            Map.entry("Milwaukee Pet Clinic", List.of(
+                    offering("CITY_PET_WELLNESS", "City pet wellness", "Preventive care designed for urban companion animals.", "57.00", 30),
+                    offering("CONDO_BEHAVIOR_CONSULT", "Condo behavior consult", "Behavior support for compact city living.", "72.00", 45),
+                    offering("EXPRESS_VACCINATION", "Express vaccination", "A focused booster appointment for busy schedules.", "34.00", 20),
+                    offering("URBAN_DENTAL_CARE", "Urban dental care", "Professional cleaning and city-pet dental advice.", "98.00", 60)))
+    );
 
     /**
      * Creates the data loader with the repositories used to seed sample data.
@@ -61,6 +151,7 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
      * @param visitRepository repository for visits
      * @param vetSpecialityRepository repository for vet-speciality join rows
      * @param clinicRepository repository for clinic locations
+     * @param clinicServiceOfferingRepository repository for clinic service offerings
      */
     public DataLoader(VetRepository vetRepository,
                       SpecialityRepository specialityRepository,
@@ -69,7 +160,8 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
                       PetRepository petRepository,
                       VisitRepository visitRepository,
                       VetSpecialityRepository vetSpecialityRepository,
-                      ClinicRepository clinicRepository) {
+                      ClinicRepository clinicRepository,
+                      ClinicServiceOfferingRepository clinicServiceOfferingRepository) {
         this.vetRepository = vetRepository;
         this.specialityRepository = specialityRepository;
         this.petTypeRepository = petTypeRepository;
@@ -78,6 +170,7 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
         this.visitRepository = visitRepository;
         this.vetSpecialityRepository = vetSpecialityRepository;
         this.clinicRepository = clinicRepository;
+        this.clinicServiceOfferingRepository = clinicServiceOfferingRepository;
     }
 
     /**
@@ -228,6 +321,39 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
         clinics.add(new Clinic("Portage Pet Clinic", "117 W Cook St.", "Portage", -89.4626, 43.5391));
         clinics.add(new Clinic("Janesville Pet Clinic", "20 S Main St.", "Janesville", -89.0187, 42.6828));
         clinics.add(new Clinic("Milwaukee Pet Clinic", "200 E Wells St.", "Milwaukee", -87.9065, 43.0410));
-        clinicRepository.saveAll(clinics);
+        for (Clinic clinic : clinicRepository.saveAll(clinics)) {
+            seedClinicOfferings(clinic);
+        }
+    }
+
+    private void seedClinicOfferings(Clinic clinic) {
+        List<ClinicOfferingSeed> offerings = CLINIC_OFFERINGS.get(clinic.name());
+        if (offerings == null) {
+            throw new IllegalStateException("No service catalog configured for clinic: " + clinic.name());
+        }
+        for (ClinicOfferingSeed offering : offerings) {
+            clinicServiceOfferingRepository.upsert(new ClinicServiceOffering(
+                    clinic,
+                    offering.serviceCode(),
+                    offering.name(),
+                    offering.description(),
+                    offering.price(),
+                    offering.durationMinutes()));
+        }
+    }
+
+    private static ClinicOfferingSeed offering(String serviceCode,
+                                               String name,
+                                               String description,
+                                               String price,
+                                               int durationMinutes) {
+        return new ClinicOfferingSeed(serviceCode, name, description, new BigDecimal(price), durationMinutes);
+    }
+
+    private record ClinicOfferingSeed(String serviceCode,
+                                      String name,
+                                      String description,
+                                      BigDecimal price,
+                                      Integer durationMinutes) {
     }
 }

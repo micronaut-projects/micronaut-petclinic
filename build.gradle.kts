@@ -11,6 +11,7 @@ group = providers.gradleProperty("projectGroup").orElse("io.micronaut.samples").
 version = providers.gradleProperty("projectVersion").orElse("1.0.0-SNAPSHOT").get()
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 

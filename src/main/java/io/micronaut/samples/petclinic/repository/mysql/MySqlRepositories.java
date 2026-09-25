@@ -135,4 +135,12 @@ public final class MySqlRepositories {
     @JdbcRepository(dialect = Dialect.MYSQL)
     public interface MySqlClinicRepository extends ClinicRepository {
     }
+
+    /**
+     * MySQL clinic service offering repository bean.
+     */
+    @Requires(env = "mysql")
+    @JdbcRepository(dialect = Dialect.MYSQL)
+    public interface MySqlClinicServiceOfferingRepository extends ClinicServiceOfferingRepository {
+    }
 }
