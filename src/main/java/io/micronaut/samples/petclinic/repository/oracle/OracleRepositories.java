@@ -6,6 +6,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.samples.petclinic.model.*;
 import io.micronaut.samples.petclinic.repository.*;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 
@@ -127,6 +128,24 @@ public final class OracleRepositories {
     @Requires(env = "oracle")
     @JdbcRepository(dialect = Dialect.ORACLE)
     public interface OracleVisitRepository extends VisitRepository {
+        /**
+         * Finds visits for a pet using Oracle SQL.
+         *
+         * @param petId the pet id
+         * @return visits for the pet
+         */
+        @Override
+        @Query(value = "SELECT v.* FROM VISITS v WHERE v.PET_ID = :petId ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
+        Collection<Visit> findByPetId(Integer petId);
+
+        /**
+         * Find visits by visit date.
+         * @param date the visit date
+         * @return visits with the provided date
+         */
+        @Override
+        @Query(value = "SELECT v.* FROM VISITS v WHERE v.VISIT_DATE = :date ORDER BY v.PET_ID, v.id", nativeQuery = true)
+        Collection<Visit> findByDate(LocalDate date);
     }
 
     /**
