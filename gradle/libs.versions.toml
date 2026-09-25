@@ -2,8 +2,10 @@
 micronaut-platform = "5.1.5"
 micronaut-gradle-plugin = "5.0.2"
 micronaut-sourcegen = "2.2.1"
-ojdbc = "23.26.3.0.0"
+# Azure provider 1.1.0 uses configuration-cache APIs removed in later drivers.
+ojdbc = { strictly = "23.26.1.0.0" }
 ojdbc-provider-azure = "1.1.0"
+azure-core = "1.59.1"
 azure-core-http-jdk-httpclient = "1.1.1"
 mysql = "26.7.0"
 postgresql = "42.7.13"
@@ -41,6 +43,7 @@ h2 = { module = "com.h2database:h2" }
 h2gis = { module = "org.orbisgis:h2gis", version.ref = "h2gis" }
 ojdbc11 = { module = "com.oracle.database.jdbc:ojdbc11", version.ref = "ojdbc" }
 ojdbc-provider-azure = { module = "com.oracle.database.jdbc:ojdbc-provider-azure", version.ref = "ojdbc-provider-azure" }
+azure-core = { module = "com.azure:azure-core", version.ref = "azure-core" }
 azure-core-http-jdk-httpclient = { module = "com.azure:azure-core-http-jdk-httpclient", version.ref = "azure-core-http-jdk-httpclient" }
 oraclepki = { module = "com.oracle.database.security:oraclepki", version.ref = "ojdbc" }
 mysql-connector-j = { module = "com.mysql:mysql-connector-j", version.ref = "mysql" }

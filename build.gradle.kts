@@ -27,6 +27,12 @@ dependencies {
     implementation(platform(libs.micronaut.platform.parent))
     annotationProcessor(platform(libs.micronaut.platform.parent))
     testAnnotationProcessor(platform(libs.micronaut.platform.parent))
+    //TODO: Remove once the ojdbc-provider-azure is released with the transitive azure core dependency v1.59.1
+    constraints {
+        implementation(libs.azure.core) {
+            because("Azure Core 1.59.0+ fixes SLF4J native-image initialization")
+        }
+    }
 
     implementation(libs.micronaut.http.server.netty)
     implementation(libs.micronaut.http.client)
@@ -71,6 +77,7 @@ dependencies {
     testRuntimeOnly(libs.junit.jupiter.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.assertj.core)
+    testImplementation(libs.ojdbc11)
     jteGenerate(libs.jte.native.resources)
 }
 

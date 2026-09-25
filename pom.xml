@@ -29,6 +29,9 @@
         <exec.mainClass>io.micronaut.samples.petclinic.Application</exec.mainClass>
         <jte.version>3.2.4</jte.version>
         <h2gis.version>2.2.5</h2gis.version>
+        <!-- Azure provider 1.1.0 uses configuration-cache APIs removed in later drivers. -->
+        <oracle-jdbc.version>23.26.1.0.0</oracle-jdbc.version>
+        <azure-core.version>1.59.1</azure-core.version>
         <maven.native.plugin.version>1.1.10</maven.native.plugin.version>
         <maven.native.plugin.version>1.1.14</maven.native.plugin.version>
         <maven.shared.utils.version>3.4.2</maven.shared.utils.version>
@@ -101,6 +104,7 @@
         <dependency>
             <groupId>com.oracle.database.jdbc</groupId>
             <artifactId>ojdbc11</artifactId>
+            <version>${oracle-jdbc.version}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -117,6 +121,11 @@
         </dependency>
         <dependency>
             <groupId>com.azure</groupId>
+            <artifactId>azure-core</artifactId>
+            <version>${azure-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
             <artifactId>azure-core-http-jdk-httpclient</artifactId>
             <version>1.1.1</version>
             <scope>compile</scope>
@@ -124,7 +133,7 @@
         <dependency>
             <groupId>com.oracle.database.security</groupId>
             <artifactId>oraclepki</artifactId>
-            <version>23.26.3.0.0</version>
+            <version>${oracle-jdbc.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
