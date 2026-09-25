@@ -1,4 +1,4 @@
-@import io.micronaut.samples.petclinic.controller.DeepDataSecurityController.OwnerData
+@import io.micronaut.samples.petclinic.dto.OwnerData
 @import java.util.List
 
 @param String user

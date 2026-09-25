@@ -30,9 +30,6 @@ dependencies {
 
     implementation(libs.micronaut.http.server.netty)
     implementation(libs.micronaut.http.client)
-    // The Deep Data Security profile follows the reference demo's OAuth2
-    // login and Azure-backed Oracle JDBC connection setup.
-    implementation(libs.micronaut.security.annotations)
     implementation(libs.micronaut.security.jwt)
     implementation(libs.micronaut.security.ojdbc.extensions)
     implementation(libs.micronaut.security.oauth2)

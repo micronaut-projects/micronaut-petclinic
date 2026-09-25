@@ -2,15 +2,8 @@
 #
 # Run with MICRONAUT_ENVIRONMENTS=oracle-deepsec.
 micronaut:
-  server:
-    port: 8080
   security:
-    enabled: true
     authentication: idtoken
-    intercept-url-map:
-      - pattern: /resources/**
-        access:
-          - isAnonymous()
     redirect:
       # After the Entra callback, go directly to the Oracle Deep Sec query.
       login-success: /deepsec/owners

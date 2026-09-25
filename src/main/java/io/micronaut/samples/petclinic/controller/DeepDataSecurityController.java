@@ -7,7 +7,7 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Produces;
-import io.micronaut.serde.annotation.Serdeable;
+import io.micronaut.samples.petclinic.dto.OwnerData;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.repository.oracle.DeepSecOwnerRepository;
 import io.micronaut.samples.petclinic.service.ClinicService;
@@ -16,12 +16,12 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.rules.SecurityRule;
+import io.micronaut.serde.annotation.Serdeable;
 import io.micronaut.views.View;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Browser and JSON surfaces for demonstrating database-enforced authorization.
@@ -33,7 +33,7 @@ import java.util.Objects;
 @Requires(env = "oracle-deepsec")
 @Controller("/deepsec")
 @Secured(SecurityRule.IS_AUTHENTICATED)
-public class DeepDataSecurityController {
+class DeepDataSecurityController {
 
     private final ClinicService clinicService;
     private final DeepSecOwnerRepository deepSecOwnerRepository;
@@ -41,10 +41,10 @@ public class DeepDataSecurityController {
     /**
      * Creates the Deep Data Security demo controller.
      *
-     * @param clinicService the normal application service
+     * @param clinicService t@he normal application service
      * @param deepSecOwnerRepository the Oracle-only elevated repository
      */
-    public DeepDataSecurityController(ClinicService clinicService,
+    DeepDataSecurityController(ClinicService clinicService,
                                       DeepSecOwnerRepository deepSecOwnerRepository) {
         this.clinicService = clinicService;
         this.deepSecOwnerRepository = deepSecOwnerRepository;
@@ -81,7 +81,6 @@ public class DeepDataSecurityController {
      */
     @Get("/owners.json")
     @ExecuteOn(TaskExecutors.BLOCKING)
-    @Produces(MediaType.APPLICATION_JSON)
     public OwnerDataResponse ownersJson(Authentication authentication) {
         return loadOwners(authentication);
     }
@@ -116,7 +115,6 @@ public class DeepDataSecurityController {
     @Get("/owners/{ownerId}/support-contact")
     @ExecuteOn(TaskExecutors.BLOCKING)
     @Secured("CLINIC_STAFF")
-    @Produces(MediaType.APPLICATION_JSON)
     public HttpResponse<OwnerData> supportContact(@PathVariable Integer ownerId) {
         return deepSecOwnerRepository.findByIdWithSupport(ownerId)
                 .map(owner -> HttpResponse.ok(OwnerData.from(owner)))
@@ -132,46 +130,5 @@ public class DeepDataSecurityController {
      */
     @Serdeable
     public record OwnerDataResponse(String user, List<String> roles, List<OwnerData> owners) {
-    }
-
-    /**
-     * A non-cyclic representation of an owner suitable for the demo API.
-     * A protected Oracle column remains visible as {@code null}, making column
-     * masking obvious without serializing the complete entity graph.
-     *
-     * @param id owner id
-     * @param firstName owner first name
-     * @param lastName owner last name
-     * @param city owner city
-     * @param address owner address
-     * @param telephone owner telephone, possibly masked by Oracle
-     * @param pets names of pets returned by the same secured query graph
-     */
-    @Serdeable
-    public record OwnerData(Integer id,
-                            String firstName,
-                            String lastName,
-                            String city,
-                            String address,
-                            String telephone,
-                            List<String> pets) {
-
-        private static OwnerData from(Owner owner) {
-            List<String> petNames = owner.pets() == null
-                    ? List.of()
-                    : owner.pets().stream()
-                    .map(pet -> pet != null ? pet.name() : null)
-                    .filter(Objects::nonNull)
-                    .toList();
-            return new OwnerData(
-                    owner.id(),
-                    owner.firstName(),
-                    owner.lastName(),
-                    owner.city(),
-                    owner.address(),
-                    owner.telephone(),
-                    petNames
-            );
-        }
     }
 }
