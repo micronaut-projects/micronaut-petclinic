@@ -579,6 +579,9 @@
                             '<i class="fas fa-circle-check"></i>',
                             escapeHtml(modeLabel),
                             '</span>',
+                            '<a href="/clinics/' + encodeURIComponent(clinic.id) + '/services" class="btn btn-outline-primary btn-sm w-100 mt-3">',
+                            '<i class="fas fa-hand-holding-medical me-2"></i>${msg.text("clinic.services")}',
+                            '</a>',
                             '</div>',
                             '</div>'
                         ].join('');

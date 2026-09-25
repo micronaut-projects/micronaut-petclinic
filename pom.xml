@@ -23,6 +23,11 @@
         <jdk.version>25</jdk.version>
         <release.version>25</release.version>
         <micronaut.version>5.1.0</micronaut.version>
+        <!-- Upsert is available in the locally installed, unreleased Data build. -->
+        <micronaut.data.version>5.2.0</micronaut.data.version>
+        <!-- Data 5.2.0 is compiled against these locally available platform modules. -->
+        <micronaut.core.version>5.2.6</micronaut.core.version>
+        <micronaut.sql.version>7.2.0</micronaut.sql.version>
         <micronaut.sourcegen.version>2.2.1</micronaut.sourcegen.version>
         <micronaut.runtime>netty</micronaut.runtime>
         <micronaut.aot.enabled>false</micronaut.aot.enabled>
