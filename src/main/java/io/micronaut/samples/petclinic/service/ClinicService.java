@@ -1,7 +1,6 @@
 package io.micronaut.samples.petclinic.service;
 
 import io.micronaut.cache.annotation.Cacheable;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.geo.LineString;
 import io.micronaut.data.model.geo.Point;
@@ -65,7 +64,6 @@ public class ClinicService {
      * @param specialityRepository repository for specialities
      * @param vetSpecialityRepository repository for vet-speciality join rows
      * @param clinicRepository repository for clinic locations
-     * @param visitIntervalRepository repository for Oracle interval queries
      */
     public ClinicService(OwnerRepository ownerRepository,
                          PetRepository petRepository,

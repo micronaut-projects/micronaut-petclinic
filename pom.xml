@@ -29,6 +29,9 @@
         <exec.mainClass>io.micronaut.samples.petclinic.Application</exec.mainClass>
         <jte.version>3.2.4</jte.version>
         <h2gis.version>2.2.5</h2gis.version>
+        <!-- Azure provider 1.1.0 uses configuration-cache APIs removed in later drivers. -->
+        <oracle-jdbc.version>23.26.1.0.0</oracle-jdbc.version>
+        <azure-core.version>1.59.1</azure-core.version>
         <maven.native.plugin.version>1.1.10</maven.native.plugin.version>
         <maven.native.plugin.version>1.1.14</maven.native.plugin.version>
         <maven.shared.utils.version>3.4.2</maven.shared.utils.version>
@@ -44,7 +47,22 @@
         <dependency>
             <groupId>io.micronaut</groupId>
             <artifactId>micronaut-http-client</artifactId>
-            <scope>test</scope>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.security</groupId>
+            <artifactId>micronaut-security-jwt</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.security</groupId>
+            <artifactId>micronaut-security-ojdbc-extensions</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.security</groupId>
+            <artifactId>micronaut-security-oauth2</artifactId>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>io.micronaut.serde</groupId>
@@ -86,7 +104,37 @@
         <dependency>
             <groupId>com.oracle.database.jdbc</groupId>
             <artifactId>ojdbc11</artifactId>
+            <version>${oracle-jdbc.version}</version>
             <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.oracle.database.jdbc</groupId>
+            <artifactId>ojdbc-provider-azure</artifactId>
+            <version>1.1.0</version>
+            <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.azure</groupId>
+                    <artifactId>azure-core-http-netty</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-core</artifactId>
+            <version>${azure-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-core-http-jdk-httpclient</artifactId>
+            <version>1.1.1</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.oracle.database.security</groupId>
+            <artifactId>oraclepki</artifactId>
+            <version>${oracle-jdbc.version}</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.mysql</groupId>
@@ -211,6 +259,11 @@
                             <groupId>io.micronaut.sourcegen</groupId>
                             <artifactId>micronaut-sourcegen-generator-java</artifactId>
                             <version>${micronaut.sourcegen.version}</version>
+                        </path>
+                        <path>
+                            <groupId>io.micronaut.security</groupId>
+                            <artifactId>micronaut-security-processor</artifactId>
+                            <version>${micronaut.security.version}</version>
                         </path>
                     </annotationProcessorPaths>
                     <compilerArgs>

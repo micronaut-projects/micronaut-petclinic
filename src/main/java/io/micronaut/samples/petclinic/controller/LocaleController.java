@@ -6,6 +6,8 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.cookie.Cookie;
+import io.micronaut.security.annotation.Secured;
+import io.micronaut.security.rules.SecurityRule;
 
 import java.net.URI;
 import java.time.Duration;
@@ -16,6 +18,7 @@ import java.util.Optional;
  * Stores the user's language preference in a cookie.
  */
 @Controller("/locale")
+@Secured(SecurityRule.IS_ANONYMOUS)
 public class LocaleController {
 
     private static final String LOCALE_COOKIE_NAME = "locale";

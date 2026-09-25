@@ -12,6 +12,8 @@ import io.micronaut.samples.petclinic.dto.PetCareSearchRequest;
 import io.micronaut.samples.petclinic.dto.PetCareSearchResult;
 import io.micronaut.samples.petclinic.model.PetCareEmbeddingDimensions;
 import io.micronaut.samples.petclinic.service.PetCareKnowledgeService;
+import io.micronaut.security.annotation.Secured;
+import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
 
 import java.util.List;
@@ -22,6 +24,7 @@ import java.util.Map;
  */
 @Controller("/knowledge")
 @Requires(env = "oracle")
+@Secured(SecurityRule.IS_ANONYMOUS)
 public class PetCareKnowledgeController {
 
     private final PetCareKnowledgeService knowledgeService;

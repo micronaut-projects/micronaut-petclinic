@@ -20,6 +20,13 @@ micronaut:
   messages:
     basename: i18n/messages
 
+  security:
+    intercept-url-map:
+      - pattern: /resources/**
+        access:
+          - isAnonymous()
+
+
 # Default datasource configuration (H2 in-memory)
 datasources:
   default:

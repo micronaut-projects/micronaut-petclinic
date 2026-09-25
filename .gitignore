@@ -24,9 +24,12 @@ bin/
 .gradle/
 gradle/*
 !gradle/wrapper/
+!gradle/libs.versions.toml
+# Keep only the checked-in Gradle wrapper files; local wrapper caches and
+# daemon/build output must not appear as repository changes.
+gradle/wrapper/*
 !gradle/wrapper/gradle-wrapper.jar
 !gradle/wrapper/gradle-wrapper.properties
-!gradle/libs.versions.toml
 
 # OS files
 .DS_Store
