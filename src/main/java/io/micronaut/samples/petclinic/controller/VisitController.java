@@ -16,6 +16,8 @@ import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.samples.petclinic.service.ClinicService;
+import io.micronaut.security.annotation.Secured;
+import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
@@ -98,6 +100,7 @@ public class VisitController {
      */
     @Get("/new")
     @View("pets/createOrUpdateVisitForm")
+    @Secured(SecurityRule.IS_ANONYMOUS)
     public Map<String, Object> initNewVisitForm(@PathVariable Integer ownerId, @PathVariable Integer petId) {
         Pet pet = clinicService.findPetById(petId).orElseThrow(NotFoundException::new);
         return Map.of("visit", new VisitForm(),
@@ -115,6 +118,7 @@ public class VisitController {
      * @param form    the visit form data
      * @return redirect to owner details
      */
+    @Secured(SecurityRule.IS_AUTHENTICATED)
     @Post(value = "/new", consumes = MediaType.APPLICATION_JSON)
     public HttpResponse<?> processNewVisitForm(@PathVariable Integer ownerId,
                                                 @PathVariable Integer petId,

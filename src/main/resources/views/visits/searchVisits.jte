@@ -179,6 +179,9 @@
                     const response = await fetch(form.action + (query ? "?" + query : ""), {
                         headers: {Accept: "application/json"}
                     });
+                    if (response.status === 401) {
+                        return;
+                    }
                     if (!response.ok) {
                         throw new Error("Search request failed");
                     }

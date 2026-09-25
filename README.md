@@ -16,6 +16,7 @@ This Micronaut PetClinic app allows you to:
 - Register pets for owners
 - Schedule veterinary visits
 - View veterinarians and their specialities
+- Sign in with session-based authentication
 - Switch between English, Spanish, and German
 
 
@@ -145,6 +146,29 @@ If you have GraalVM installed:
 
 ## How to Use
 
+### Authentication
+
+The application uses Micronaut Security with session authentication.
+
+Seed data creates two users when sample data is enabled:
+
+| User                | Password      | Role         |
+|---------------------|---------------|--------------|
+| `admin@example.com` | `password123` | `ROLE_ADMIN` |
+| `staff@example.com` | `password123` | `ROLE_STAFF` |
+
+Relevant routes:
+
+- `GET /user/auth` renders the login page.
+- `POST /login` is handled by Micronaut Security.
+- `GET /user/signUp` renders the sign-up page.
+- `POST /user/signUp` registers a new user with a BCrypt-encoded password.
+- Anonymous requests to protected pages return `401` because `micronaut.security.redirect.unauthorized.enabled` is set
+  to `false`.
+
+The custom authentication provider loads users from the `USER` table, verifies the submitted password with BCrypt, and
+exposes authorities from the `USER_ROLE` join table.
+
 ### Managing Owners
 
 1. Click "FIND OWNERS" in the navigation
@@ -223,7 +247,9 @@ src/main/java/
       ├── repository/      # Data access interfaces
       ├── service/         # Business logic
       ├── dto/             # Form objects
-      ├── controller/      #
+      ├── security/        # Micronaut Security authentication provider
+      ├── utils/           # Password encoding helpers
+      ├── controller/      # HTTP controllers
       └── system/          #
 
 src/main/resources/
@@ -261,10 +287,12 @@ export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
 
 - **Micronaut 4.x** - Framework
 - **Java 21** - Programming language
+- **Micronaut Security** - Session login and authorization
 - **Micronaut Data JDBC** - Database access
 - **JTE** - HTML template engine
 - **HikariCP** - JDBC connection pooling
 - **Caffeine** - Caching
+- **Spring Security Crypto** - BCrypt password hashing
 - **Bootstrap 5** - CSS framework
 
 ---
@@ -283,6 +311,9 @@ export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
 ./gradlew test jacocoTestReport
 ./gradlew check
 ```
+
+Authentication coverage includes login success and failure, session access to protected pages, anonymous 401 handling,
+registration, duplicate user rejection, password encoding, and role assignment.
 
 ---
 
