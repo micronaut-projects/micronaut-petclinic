@@ -6,7 +6,7 @@ ojdbc = "23.26.3.0.0"
 mysql = "26.7.0"
 postgresql = "42.7.13"
 h2gis = "2.2.5"
-logback = "1.6.3"
+logback = "1.6.4"
 graalvm-native = "1.1.14"
 jte = "3.2.4"
 
