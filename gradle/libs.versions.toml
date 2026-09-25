@@ -1,5 +1,6 @@
 [versions]
 micronaut-platform = "5.1.5"
+micronaut-data = "5.2.0"
 micronaut-gradle-plugin = "5.0.2"
 micronaut-sourcegen = "2.2.1"
 ojdbc = "23.26.3.0.0"
@@ -17,12 +18,12 @@ micronaut-http-server-netty = { module = "io.micronaut:micronaut-http-server-net
 micronaut-http-client = { module = "io.micronaut:micronaut-http-client" }
 micronaut-serde-jackson = { module = "io.micronaut.serde:micronaut-serde-jackson" }
 micronaut-views-jte = { module = "io.micronaut.views:micronaut-views-jte" }
-micronaut-data-jdbc = { module = "io.micronaut.data:micronaut-data-jdbc" }
+micronaut-data-jdbc = { module = "io.micronaut.data:micronaut-data-jdbc", version.ref = "micronaut-data" }
 micronaut-jdbc-hikari = { module = "io.micronaut.sql:micronaut-jdbc-hikari" }
 micronaut-validation = { module = "io.micronaut.validation:micronaut-validation" }
 micronaut-cache-caffeine = { module = "io.micronaut.cache:micronaut-cache-caffeine" }
 micronaut-inject-java = { module = "io.micronaut:micronaut-inject-java" }
-micronaut-data-processor = { module = "io.micronaut.data:micronaut-data-processor" }
+micronaut-data-processor = { module = "io.micronaut.data:micronaut-data-processor", version.ref = "micronaut-data" }
 micronaut-validation-processor = { module = "io.micronaut.validation:micronaut-validation-processor" }
 micronaut-serde-processor = { module = "io.micronaut.serde:micronaut-serde-processor" }
 micronaut-sourcegen-annotations = { module = "io.micronaut.sourcegen:micronaut-sourcegen-annotations", version.ref = "micronaut-sourcegen" }
