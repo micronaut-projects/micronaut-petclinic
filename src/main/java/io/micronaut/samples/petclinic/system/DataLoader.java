@@ -3,6 +3,7 @@ package io.micronaut.samples.petclinic.system;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.context.event.StartupEvent;
+import io.micronaut.samples.petclinic.model.Appointment;
 import io.micronaut.samples.petclinic.model.Clinic;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
@@ -11,6 +12,7 @@ import io.micronaut.samples.petclinic.model.Speciality;
 import io.micronaut.samples.petclinic.model.Vet;
 import io.micronaut.samples.petclinic.model.VetSpeciality;
 import io.micronaut.samples.petclinic.model.Visit;
+import io.micronaut.samples.petclinic.repository.AppointmentRepository;
 import io.micronaut.samples.petclinic.repository.ClinicRepository;
 import io.micronaut.samples.petclinic.repository.OwnerRepository;
 import io.micronaut.samples.petclinic.repository.PetRepository;
@@ -49,6 +51,7 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
     private final VisitRepository visitRepository;
     private final VetSpecialityRepository vetSpecialityRepository;
     private final ClinicRepository clinicRepository;
+    private final AppointmentRepository appointmentRepository;
 
     /**
      * Creates the data loader with the repositories used to seed sample data.
@@ -61,6 +64,7 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
      * @param visitRepository repository for visits
      * @param vetSpecialityRepository repository for vet-speciality join rows
      * @param clinicRepository repository for clinic locations
+     * @param appointmentRepository optional appointment repository for the active database
      */
     public DataLoader(VetRepository vetRepository,
                       SpecialityRepository specialityRepository,
@@ -69,7 +73,8 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
                       PetRepository petRepository,
                       VisitRepository visitRepository,
                       VetSpecialityRepository vetSpecialityRepository,
-                      ClinicRepository clinicRepository) {
+                      ClinicRepository clinicRepository,
+                      AppointmentRepository appointmentRepository) {
         this.vetRepository = vetRepository;
         this.specialityRepository = specialityRepository;
         this.petTypeRepository = petTypeRepository;
@@ -78,6 +83,7 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
         this.visitRepository = visitRepository;
         this.vetSpecialityRepository = vetSpecialityRepository;
         this.clinicRepository = clinicRepository;
+        this.appointmentRepository = appointmentRepository;
     }
 
     /**
@@ -170,6 +176,7 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
         createVisit(max, LocalDate.of(2026, 8, 25), "allergy consultation", Duration.ofMinutes(45), Period.ofMonths(6));
 
         loadClinicData();
+        loadAppointments();
     }
 
     private Speciality createSpeciality(String name) {
@@ -229,5 +236,13 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
         clinics.add(new Clinic("Janesville Pet Clinic", "20 S Main St.", "Janesville", -89.0187, 42.6828));
         clinics.add(new Clinic("Milwaukee Pet Clinic", "200 E Wells St.", "Milwaukee", -87.9065, 43.0410));
         clinicRepository.saveAll(clinics);
+    }
+
+    /**
+     * Seeds the two appointment resources used by the Oracle transaction-priority showcase.
+     */
+    private void loadAppointments() {
+        appointmentRepository.save(new Appointment("Next available appointment", 1));
+        appointmentRepository.save(new Appointment("Following available appointment", 2));
     }
 }

@@ -4,10 +4,12 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.samples.petclinic.model.Appointment;
 import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.Speciality;
 import io.micronaut.samples.petclinic.model.VetWithSpecialities;
 import io.micronaut.samples.petclinic.model.Visit;
+import io.micronaut.samples.petclinic.repository.AppointmentRepository;
 import io.micronaut.samples.petclinic.repository.ClinicRepository;
 import io.micronaut.samples.petclinic.repository.OwnerRepository;
 import io.micronaut.samples.petclinic.repository.PetRepository;
@@ -16,9 +18,11 @@ import io.micronaut.samples.petclinic.repository.SpecialityRepository;
 import io.micronaut.samples.petclinic.repository.VetRepository;
 import io.micronaut.samples.petclinic.repository.VetSpecialityRepository;
 import io.micronaut.samples.petclinic.repository.VisitRepository;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * PostgreSQL-backed Micronaut Data repository beans active in the {@code postgres} environment.
@@ -145,5 +149,22 @@ public final class PostgresRepositories {
     @Requires(env = "postgres")
     @JdbcRepository(dialect = Dialect.POSTGRES)
     public interface PostgresClinicRepository extends ClinicRepository {
+    }
+
+    /**
+     * Postgres appointment repository used by the transaction-priority showcase.
+     */
+    @Requires(env = {"postgres"})
+    @JdbcRepository(dialect = Dialect.POSTGRES)
+    public interface PostgresAppointmentRepository extends AppointmentRepository {
+        /** Waits up to ten seconds to acquire the row lock, not to hold it. */
+        @NonNull
+        @Override
+        @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE a.ID = :appointmentId FOR UPDATE WAIT 10", nativeQuery = true)
+        Optional<Appointment> findById(Integer appointmentId);
+
+        @Override
+        @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE STATUS = 'AVAILABLE' ORDER BY DISPLAY_ORDER, ID", nativeQuery = true)
+        List<Appointment> findAvailableAppointments();
     }
 }

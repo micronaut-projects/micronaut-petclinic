@@ -10,3 +10,7 @@ datasources:
     maximum-pool-size: 10
     minimum-idle: 2
 
+logger:
+  levels:
+    io.micronaut.samples.petclinic: INFO
+    io.micronaut.data: INFO
