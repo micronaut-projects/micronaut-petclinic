@@ -8,10 +8,12 @@ import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.cookie.Cookie;
+import io.micronaut.samples.petclinic.repository.ClinicRepository;
 import io.micronaut.samples.petclinic.repository.ClinicServiceOfferingRepository;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,29 +32,47 @@ class ClinicServiceOfferingControllerTest {
     @Inject
     ClinicServiceOfferingRepository offeringRepository;
 
+    @Inject
+    ClinicRepository clinicRepository;
+
+    private Integer downtownClinicId;
+    private Integer capitolClinicId;
+
+    @BeforeEach
+    void findSampleClinics() {
+        downtownClinicId = clinicId("Downtown Madison Pet Clinic");
+        capitolClinicId = clinicId("Capitol Square Pet Clinic");
+    }
+
+    private Integer clinicId(String name) {
+        for (var clinic : clinicRepository.findAll()) {
+            if (clinic.name().equals(name)) return clinic.id();
+        }
+        throw new IllegalStateException("Sample clinic not found: " + name);
+    }
+
     @AfterEach
     void removeDemoOffering() {
-        offeringRepository.findByClinicIdAndServiceCode(1, "HTTP_DEMO")
+        offeringRepository.findByClinicIdAndServiceCode(downtownClinicId, "HTTP_DEMO")
                 .ifPresent(offering -> offeringRepository.deleteById(offering.id()));
     }
 
     @Test
     void shouldRenderTheServiceCatalogForOneClinic() {
         HttpResponse<String> response = client.toBlocking()
-                .exchange(HttpRequest.GET("/clinics/1/services"), String.class);
+                .exchange(HttpRequest.GET("/clinics/" + downtownClinicId + "/services"), String.class);
 
         assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
         assertThat(response.body()).contains("Services at Downtown Madison Pet Clinic");
-        assertThat(response.body()).contains("How this example uses upsert");
         assertThat(response.body()).contains("New service offering");
-        assertThat(response.body()).contains("/clinics/1/services/new");
+        assertThat(response.body()).contains("/clinics/" + downtownClinicId + "/services/new");
         assertThat(response.body()).contains("WELLNESS_CHECK");
     }
 
     @Test
     void shouldRenderTheClinicScopedCreateForm() {
         HttpResponse<String> response = client.toBlocking()
-                .exchange(HttpRequest.GET("/clinics/2/services/new"), String.class);
+                .exchange(HttpRequest.GET("/clinics/" + capitolClinicId + "/services/new"), String.class);
 
         assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
         assertThat(response.body()).contains("New service offering");
@@ -61,9 +81,20 @@ class ClinicServiceOfferingControllerTest {
     }
 
     @Test
+    void shouldUseTheSameSaveEndpointForAnEditForm() {
+        HttpResponse<String> response = client.toBlocking()
+                .exchange(HttpRequest.GET("/clinics/" + downtownClinicId + "/services/WELLNESS_CHECK/edit"), String.class);
+
+        assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
+        assertThat(response.body())
+                .contains("action=\"/clinics/" + downtownClinicId + "/services\"")
+                .doesNotContain("readonly");
+    }
+
+    @Test
     void shouldRenderTheServiceCatalogInSpanish() {
         HttpResponse<String> response = client.toBlocking()
-                .exchange(HttpRequest.GET("/clinics/1/services")
+                .exchange(HttpRequest.GET("/clinics/" + downtownClinicId + "/services")
                         .cookie(Cookie.of("locale", "es")), String.class);
 
         assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
@@ -71,7 +102,6 @@ class ClinicServiceOfferingControllerTest {
                 .contains("Servicios en Downtown Madison Pet Clinic")
                 .contains("Nuevo servicio")
                 .contains("Código del servicio")
-                .contains("Cómo utiliza este ejemplo upsert")
                 .doesNotContain("New service offering");
     }
 
@@ -97,12 +127,12 @@ class ClinicServiceOfferingControllerTest {
                 """;
 
         HttpResponse<String> firstResponse = client.toBlocking().exchange(
-                HttpRequest.POST("/clinics/1/services", firstSubmission)
+                HttpRequest.POST("/clinics/" + downtownClinicId + "/services", firstSubmission)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON),
                 String.class);
         HttpResponse<String> secondResponse = client.toBlocking().exchange(
-                HttpRequest.POST("/clinics/1/services", secondSubmission)
+                HttpRequest.POST("/clinics/" + downtownClinicId + "/services", secondSubmission)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON),
                 String.class);
@@ -111,7 +141,7 @@ class ClinicServiceOfferingControllerTest {
         assertThat((CharSequence) secondResponse.status()).isEqualTo(HttpStatus.OK);
         assertThat(firstResponse.body()).contains("\"serviceCode\":\"HTTP_DEMO\"");
         assertThat(secondResponse.body()).contains("\"name\":\"Updated service\"");
-        assertThat(offeringRepository.findByClinicIdAndServiceCode(1, "HTTP_DEMO"))
+        assertThat(offeringRepository.findByClinicIdAndServiceCode(downtownClinicId, "HTTP_DEMO"))
                 .get()
                 .satisfies(offering -> {
                     assertThat(offering.name()).isEqualTo("Updated service");
@@ -121,10 +151,30 @@ class ClinicServiceOfferingControllerTest {
     }
 
     @Test
+    void shouldAcceptClinicSpecificServiceCodesUpToFortyCharacters() {
+        HttpResponse<String> response = client.toBlocking().exchange(
+                HttpRequest.POST("/clinics/" + capitolClinicId + "/services", """
+                        {
+                          "serviceCode": "APARTMENT_PET_BEHAVIOR",
+                          "name": "Apartment pet behavior",
+                          "description": "Practical guidance for barking, anxiety, and shared walls.",
+                          "price": 68.00,
+                          "durationMinutes": 45
+                        }
+                        """)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON),
+                String.class);
+
+        assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
+        assertThat(response.body()).contains("\"serviceCode\":\"APARTMENT_PET_BEHAVIOR\"");
+    }
+
+    @Test
     void shouldReturnJsonValidationErrorsForJsonRequests() {
         HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
                 client.toBlocking().exchange(
-                        HttpRequest.POST("/clinics/1/services", """
+                        HttpRequest.POST("/clinics/" + downtownClinicId + "/services", """
                                 {
                                   "serviceCode": "",
                                   "name": "",

@@ -29,13 +29,6 @@
             </a>
         </div>
 
-        <div class="card border-primary mb-4">
-            <div class="card-body">
-                <h5 class="card-title"><i class="fas fa-arrows-rotate me-2 text-primary"></i>${msg.text("clinic.servicesUpsertTitle")}</h5>
-                <p class="card-text mb-0">${msg.text("clinic.servicesUpsertDescription")}</p>
-            </div>
-        </div>
-
         @if(services == null || services.isEmpty())
             <div class="empty-state">
                 <div class="empty-state-icon"><i class="fas fa-hand-holding-medical"></i></div>

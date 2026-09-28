@@ -35,7 +35,7 @@
                     @endif
 
                     <form id="clinic-service-form"
-                          action="${isNew ? "/clinics/" + clinic.id() + "/services" : "/clinics/" + clinic.id() + "/services/" + service.serviceCode()}"
+                          action="/clinics/${clinic.id()}/services"
                           data-catalog-url="/clinics/${clinic.id()}/services"
                           data-submit-failed-message="${msg.text("clinic.servicesSaveFailed")}"
                           novalidate>
@@ -43,13 +43,8 @@
 
                         <div class="mb-4">
                             <label for="serviceCode" class="form-label"><i class="fas fa-key me-2 text-primary"></i>${msg.text("clinic.servicesCode")}</label>
-                            @if(isNew)
-                                <input type="text" class="form-control ${validationErrors.containsKey("serviceCode") ? "is-invalid" : ""}" id="serviceCode" name="serviceCode"
-                                       value="${service.serviceCode() != null ? service.serviceCode() : ""}" pattern="[A-Z][A-Z0-9_]*" maxlength="40" required>
-                            @else
-                                <input type="text" class="form-control ${validationErrors.containsKey("serviceCode") ? "is-invalid" : ""}" id="serviceCode" name="serviceCode"
-                                       value="${service.serviceCode() != null ? service.serviceCode() : ""}" readonly required>
-                            @endif
+                            <input type="text" class="form-control ${validationErrors.containsKey("serviceCode") ? "is-invalid" : ""}" id="serviceCode" name="serviceCode"
+                                   value="${service.serviceCode() != null ? service.serviceCode() : ""}" pattern="[A-Z][A-Z0-9_]*" maxlength="40" required>
                             <div class="form-text">${msg.text("clinic.servicesCodeHelp")}</div>
                             @if(validationErrors.containsKey("serviceCode"))
                                 <div class="invalid-feedback">${validationErrors.get("serviceCode")}</div>

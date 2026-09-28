@@ -30,7 +30,7 @@ import java.math.BigDecimal;
 @Serdeable
 public record ClinicServiceOfferingForm(
         @NotBlank(message = "Service code is required")
-        @Size(max = 20, message = "Service code must be at most 40 characters")
+        @Size(max = 40, message = "Service code must be at most 40 characters")
         String serviceCode,
 
         @NotBlank(message = "Service name is required")

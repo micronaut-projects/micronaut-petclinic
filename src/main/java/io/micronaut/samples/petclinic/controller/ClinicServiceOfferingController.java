@@ -89,7 +89,7 @@ class ClinicServiceOfferingController {
     }
 
     /**
-     * Creates an offering or updates the same clinic/code combination.
+     * Saves an offering, inserting or updating the same clinic/code combination.
      *
      * @param clinicId the clinic branch
      * @param form validated form values
@@ -97,28 +97,8 @@ class ClinicServiceOfferingController {
      */
     @Post(consumes = MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public HttpResponse<ClinicServiceOfferingResponse> create(@PathVariable Integer clinicId,
-                                                              @Valid @Body ClinicServiceOfferingForm form) {
-        return HttpResponse.ok(ClinicServiceOfferingResponse.from(catalogService.upsert(clinicId, form)));
-    }
-
-    /**
-     * Updates an existing catalog entry using the same upsert operation.
-     *
-     * @param clinicId the clinic branch
-     * @param serviceCode path code used to guard against changing the key
-     * @param form validated form values
-     * @return the persisted offering as JSON
-     */
-    @Post(value = "/{serviceCode}", consumes = MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public HttpResponse<?> update(@PathVariable Integer clinicId,
-                                  @PathVariable String serviceCode,
-                                  @Valid @Body ClinicServiceOfferingForm form) {
-        if (!serviceCode.equals(form.serviceCode())) {
-            return HttpResponse.badRequest(Map.of(
-                    "message", "The service code cannot be changed while editing an offering"));
-        }
+    public HttpResponse<ClinicServiceOfferingResponse> save(@PathVariable Integer clinicId,
+                                                            @Valid @Body ClinicServiceOfferingForm form) {
         return HttpResponse.ok(ClinicServiceOfferingResponse.from(catalogService.upsert(clinicId, form)));
     }
 
@@ -131,7 +111,7 @@ class ClinicServiceOfferingController {
      */
     @Error(exception = ConstraintViolationException.class)
     public Object onValidationError(HttpRequest<?> request,
-                                    ConstraintViolationException exception) {
+                                    ConstraintViolationException exception, @PathVariable Integer clinicId) {
         Map<String, String> errors = new LinkedHashMap<>();
         for (var violation : exception.getConstraintViolations()) {
             String field = violation.getPropertyPath() == null ? "" : violation.getPropertyPath().toString();
@@ -153,16 +133,9 @@ class ClinicServiceOfferingController {
                     "errors", errors));
         }
 
-        Integer clinicId = request.getParameters().get("clinicId", Integer.class).orElse(null);
-        if (clinicId == null) {
-            throw new NotFoundException();
-        }
-
-        ClinicServiceOfferingForm form = request.getBody(ClinicServiceOfferingForm.class)
-                .orElseGet(ClinicServiceOfferingForm::new);
+        ClinicServiceOfferingForm form = request.getBody(ClinicServiceOfferingForm.class).orElseGet(ClinicServiceOfferingForm::new);
         boolean isNew = request.getPath().equals("/clinics/" + clinicId + "/services");
-        return new ModelAndView<>("clinics/createOrUpdateServiceForm",
-                formModel(clinicId, form, isNew, errors));
+        return new ModelAndView<>("clinics/createOrUpdateServiceForm", formModel(clinicId, form, isNew, errors));
     }
 
     private Map<String, Object> formModel(Integer clinicId,
