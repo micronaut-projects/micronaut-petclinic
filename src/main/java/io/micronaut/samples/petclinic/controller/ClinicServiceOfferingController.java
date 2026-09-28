@@ -17,6 +17,8 @@ import io.micronaut.samples.petclinic.model.Clinic;
 import io.micronaut.samples.petclinic.model.ClinicServiceOffering;
 import io.micronaut.samples.petclinic.service.ClinicService;
 import io.micronaut.samples.petclinic.service.ClinicServiceOfferingCatalogService;
+import io.micronaut.security.annotation.Secured;
+import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.ModelAndView;
 import io.micronaut.views.View;
 import jakarta.validation.ConstraintViolationException;
@@ -29,6 +31,7 @@ import java.util.Map;
  * Web UI for maintaining the offerings owned by one clinic branch.
  */
 @Controller("/clinics/{clinicId}/services")
+@Secured(SecurityRule.IS_ANONYMOUS)
 class ClinicServiceOfferingController {
 
     private final ClinicServiceOfferingCatalogService catalogService;
@@ -111,7 +114,8 @@ class ClinicServiceOfferingController {
      */
     @Error(exception = ConstraintViolationException.class)
     public Object onValidationError(HttpRequest<?> request,
-                                    ConstraintViolationException exception, @PathVariable Integer clinicId) {
+                                    ConstraintViolationException exception) {
+        Integer clinicId = clinicIdFrom(request);
         Map<String, String> errors = new LinkedHashMap<>();
         for (var violation : exception.getConstraintViolations()) {
             String field = violation.getPropertyPath() == null ? "" : violation.getPropertyPath().toString();
@@ -136,6 +140,15 @@ class ClinicServiceOfferingController {
         ClinicServiceOfferingForm form = request.getBody(ClinicServiceOfferingForm.class).orElseGet(ClinicServiceOfferingForm::new);
         boolean isNew = request.getPath().equals("/clinics/" + clinicId + "/services");
         return new ModelAndView<>("clinics/createOrUpdateServiceForm", formModel(clinicId, form, isNew, errors));
+    }
+
+    private Integer clinicIdFrom(HttpRequest<?> request) {
+        String path = request.getPath();
+        String prefix = "/clinics/";
+        int idStart = prefix.length();
+        int idEnd = path.indexOf('/', idStart);
+        String id = idEnd < 0 ? path.substring(idStart) : path.substring(idStart, idEnd);
+        return Integer.valueOf(id);
     }
 
     private Map<String, Object> formModel(Integer clinicId,
