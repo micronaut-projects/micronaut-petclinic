@@ -25,7 +25,7 @@ class OwnerControllerTest {
     void shouldShowFindOwnersForm() {
         HttpResponse<String> response = client.toBlocking()
                 .exchange(HttpRequest.GET("/owners/find"), String.class);
-        
+
         assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
         assertThat(response.body()).contains("Find Owners");
     }
@@ -34,7 +34,7 @@ class OwnerControllerTest {
     void shouldShowOwnersList() {
         HttpResponse<String> response = client.toBlocking()
                 .exchange(HttpRequest.GET("/owners/list"), String.class);
-        
+
         assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
         assertThat(response.body()).contains("Owners");
     }
@@ -43,7 +43,7 @@ class OwnerControllerTest {
     void shouldFilterOwnersByLastName() {
         HttpResponse<String> response = client.toBlocking()
                 .exchange(HttpRequest.GET("/owners/list?lastName=Davis"), String.class);
-        
+
         assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
         assertThat(response.body()).contains("Davis");
     }
@@ -52,7 +52,7 @@ class OwnerControllerTest {
     void shouldShowOwnerDetails() {
         HttpResponse<String> response = client.toBlocking()
                 .exchange(HttpRequest.GET("/owners/1"), String.class);
-        
+
         assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
         assertThat(response.body()).contains("George");
         assertThat(response.body()).contains("Franklin");
@@ -62,7 +62,7 @@ class OwnerControllerTest {
     void shouldShowNewOwnerForm() {
         HttpResponse<String> response = client.toBlocking()
                 .exchange(HttpRequest.GET("/owners/new"), String.class);
-        
+
         assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
         assertThat(response.body()).contains("New Owner");
     }
@@ -71,7 +71,7 @@ class OwnerControllerTest {
     void shouldShowEditOwnerForm() {
         HttpResponse<String> response = client.toBlocking()
                 .exchange(HttpRequest.GET("/owners/1/edit"), String.class);
-        
+
         assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
         assertThat(response.body()).contains("Edit Owner");
         assertThat(response.body()).contains("George");

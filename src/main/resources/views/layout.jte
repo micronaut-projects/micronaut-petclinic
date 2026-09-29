@@ -26,7 +26,8 @@
             <i class="fas fa-paw"></i>
             <span>${msg.text("app.title")}</span>
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
@@ -55,7 +56,8 @@
                 @endif
 
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fas fa-globe"></i>
                         @if(locale != null && locale.toString().startsWith("en"))
                             ${msg.text("lang.en")}
@@ -71,9 +73,12 @@
                         @endif
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
-                        <li><a class="dropdown-item" href="/locale?lang=en&backUrl=${request.getPath()}">${msg.text("lang.en")}</a></li>
-                        <li><a class="dropdown-item" href="/locale?lang=es&backUrl=${request.getPath()}">${msg.text("lang.es")}</a></li>
-                        <li><a class="dropdown-item" href="/locale?lang=de&backUrl=${request.getPath()}">${msg.text("lang.de")}</a></li>
+                        <li><a class="dropdown-item"
+                               href="/locale?lang=en&backUrl=${request.getPath()}">${msg.text("lang.en")}</a></li>
+                        <li><a class="dropdown-item"
+                               href="/locale?lang=es&backUrl=${request.getPath()}">${msg.text("lang.es")}</a></li>
+                        <li><a class="dropdown-item"
+                               href="/locale?lang=de&backUrl=${request.getPath()}">${msg.text("lang.de")}</a></li>
                     </ul>
                 </li>
             </ul>
@@ -96,8 +101,10 @@
                 <h5>${msg.text("footer.quickLinks")}</h5>
                 <ul class="list-unstyled mb-0">
                     <li><a href="/"><i class="fas fa-chevron-right me-2"></i>${msg.text("nav.home")}</a></li>
-                    <li><a href="/owners/find"><i class="fas fa-chevron-right me-2"></i>${msg.text("nav.findOwners")}</a></li>
-                    <li><a href="/vets"><i class="fas fa-chevron-right me-2"></i>${msg.text("nav.veterinarians")}</a></li>
+                    <li><a href="/owners/find"><i class="fas fa-chevron-right me-2"></i>${msg.text("nav.findOwners")}
+                        </a></li>
+                    <li><a href="/vets"><i class="fas fa-chevron-right me-2"></i>${msg.text("nav.veterinarians")}</a>
+                    </li>
                 </ul>
             </div>
             <div class="col-md-4">
@@ -108,7 +115,8 @@
                     </a>
                 </p>
                 <p class="mb-0">
-                    <a href="https://github.com/micronaut-projects/micronaut-petclinic" target="_blank" rel="noopener noreferrer">
+                    <a href="https://github.com/micronaut-projects/micronaut-petclinic" target="_blank"
+                       rel="noopener noreferrer">
                         <i class="fab fa-github me-2"></i>${msg.text("footer.viewOnGitHub")}
                     </a>
                 </p>

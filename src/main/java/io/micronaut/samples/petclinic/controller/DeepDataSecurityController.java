@@ -45,9 +45,19 @@ class DeepDataSecurityController {
      * @param deepSecOwnerRepository the Oracle-only elevated repository
      */
     DeepDataSecurityController(ClinicService clinicService,
-                                      DeepSecOwnerRepository deepSecOwnerRepository) {
+                               DeepSecOwnerRepository deepSecOwnerRepository) {
         this.clinicService = clinicService;
         this.deepSecOwnerRepository = deepSecOwnerRepository;
+    }
+
+    private static String displayUser(Authentication authentication) {
+        for (String attributeName : List.of("preferred_username", "upn", "email", "unique_name")) {
+            Object value = authentication.getAttributes().get(attributeName);
+            if (value instanceof String text && !text.isBlank()) {
+                return text;
+            }
+        }
+        return authentication.getName();
     }
 
     /**
@@ -58,7 +68,7 @@ class DeepDataSecurityController {
      *
      * @param authentication the authenticated request principal
      * @return the page model containing the principal and Oracle-visible rows
-    */
+     */
     @Get("/owners")
     @ExecuteOn(TaskExecutors.BLOCKING)
     @Produces(MediaType.TEXT_HTML)
@@ -94,16 +104,6 @@ class DeepDataSecurityController {
         );
     }
 
-    private static String displayUser(Authentication authentication) {
-        for (String attributeName : List.of("preferred_username", "upn", "email", "unique_name")) {
-            Object value = authentication.getAttributes().get(attributeName);
-            if (value instanceof String text && !text.isBlank()) {
-                return text;
-            }
-        }
-        return authentication.getName();
-    }
-
     /**
      * Demonstrates a narrowly scoped {@link io.micronaut.security.annotation.RunAs}
      * operation. The support role is requested only while the repository
@@ -111,7 +111,7 @@ class DeepDataSecurityController {
      *
      * @param ownerId the owner id
      * @return the elevated result, or 404 when the owner is not visible
-    */
+     */
     @Get("/owners/{ownerId}/support-contact")
     @ExecuteOn(TaskExecutors.BLOCKING)
     @Secured("CLINIC_STAFF")

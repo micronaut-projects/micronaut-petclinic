@@ -9,6 +9,7 @@ import io.micronaut.samples.petclinic.service.ClinicService;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
+
 import java.util.Collection;
 import java.util.Map;
 

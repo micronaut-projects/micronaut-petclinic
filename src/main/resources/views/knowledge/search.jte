@@ -50,62 +50,92 @@
             <p class="text-muted small mb-0">${msg.text("knowledge.quickSearch.description")}</p>
         </div>
         <div class="row g-3 mb-4">
-                <div class="col-md-4"><a class="card h-100 text-decoration-none" data-knowledge-query="What vaccinations does my puppy need?" href="/knowledge?query=What+vaccinations+does+my+puppy+need%3F">
-                    <div class="card-body"><h5><i class="fas fa-syringe text-primary me-2"></i>${msg.text("knowledge.quickSearch.puppy.title")}</h5><p class="text-muted mb-0">${msg.text("knowledge.quickSearch.puppy.description")}</p></div>
+            <div class="col-md-4"><a class="card h-100 text-decoration-none"
+                                     data-knowledge-query="What vaccinations does my puppy need?"
+                                     href="/knowledge?query=What+vaccinations+does+my+puppy+need%3F">
+                    <div class="card-body"><h5><i
+                                    class="fas fa-syringe text-primary me-2"></i>${msg.text("knowledge.quickSearch.puppy.title")}
+                        </h5>
+                        <p class="text-muted mb-0">${msg.text("knowledge.quickSearch.puppy.description")}</p></div>
                 </a></div>
-                <div class="col-md-4"><a class="card h-100 text-decoration-none" data-knowledge-query="When should a young dog receive its shots?" href="/knowledge?query=When+should+a+young+dog+receive+its+shots%3F">
-                    <div class="card-body"><h5><i class="fas fa-calendar-check text-info me-2"></i>${msg.text("knowledge.quickSearch.dog.title")}</h5><p class="text-muted mb-0">${msg.text("knowledge.quickSearch.dog.description")}</p></div>
+            <div class="col-md-4"><a class="card h-100 text-decoration-none"
+                                     data-knowledge-query="When should a young dog receive its shots?"
+                                     href="/knowledge?query=When+should+a+young+dog+receive+its+shots%3F">
+                    <div class="card-body"><h5><i
+                                    class="fas fa-calendar-check text-info me-2"></i>${msg.text("knowledge.quickSearch.dog.title")}
+                        </h5>
+                        <p class="text-muted mb-0">${msg.text("knowledge.quickSearch.dog.description")}</p></div>
                 </a></div>
-                <div class="col-md-4"><a class="card h-100 text-decoration-none" data-knowledge-query="How should I clean my bird's cage?" href="/knowledge?query=How+should+I+clean+my+bird%27s+cage%3F">
-                    <div class="card-body"><h5><i class="fas fa-dove text-warning me-2"></i>${msg.text("knowledge.quickSearch.bird.title")}</h5><p class="text-muted mb-0">${msg.text("knowledge.quickSearch.bird.description")}</p></div>
+            <div class="col-md-4"><a class="card h-100 text-decoration-none"
+                                     data-knowledge-query="How should I clean my bird's cage?"
+                                     href="/knowledge?query=How+should+I+clean+my+bird%27s+cage%3F">
+                    <div class="card-body"><h5><i
+                                    class="fas fa-dove text-warning me-2"></i>${msg.text("knowledge.quickSearch.bird.title")}
+                        </h5>
+                        <p class="text-muted mb-0">${msg.text("knowledge.quickSearch.bird.description")}</p></div>
                 </a></div>
-                <div class="col-md-4"><a class="card h-100 text-decoration-none" data-knowledge-query="What temperature and humidity does a reptile habitat need?" href="/knowledge?query=What+temperature+and+humidity+does+a+reptile+habitat+need%3F">
-                    <div class="card-body"><h5><i class="fas fa-temperature-half text-danger me-2"></i>${msg.text("knowledge.quickSearch.reptile.title")}</h5><p class="text-muted mb-0">${msg.text("knowledge.quickSearch.reptile.description")}</p></div>
+            <div class="col-md-4"><a class="card h-100 text-decoration-none"
+                                     data-knowledge-query="What temperature and humidity does a reptile habitat need?"
+                                     href="/knowledge?query=What+temperature+and+humidity+does+a+reptile+habitat+need%3F">
+                    <div class="card-body"><h5><i
+                                    class="fas fa-temperature-half text-danger me-2"></i>${msg.text("knowledge.quickSearch.reptile.title")}
+                        </h5>
+                        <p class="text-muted mb-0">${msg.text("knowledge.quickSearch.reptile.description")}</p></div>
                 </a></div>
-                <div class="col-md-4"><a class="card h-100 text-decoration-none" data-knowledge-query="How can I improve my cat's nutrition" href="/knowledge?query=How+can+I+improve+my+cat%27s+nutrition">
-                    <div class="card-body"><h5><i class="fas fa-bowl-food text-success me-2"></i>${msg.text("knowledge.quickSearch.cat.title")}</h5><p class="text-muted mb-0">${msg.text("knowledge.quickSearch.cat.description")}</p></div>
+            <div class="col-md-4"><a class="card h-100 text-decoration-none"
+                                     data-knowledge-query="How can I improve my cat's nutrition"
+                                     href="/knowledge?query=How+can+I+improve+my+cat%27s+nutrition">
+                    <div class="card-body"><h5><i
+                                    class="fas fa-bowl-food text-success me-2"></i>${msg.text("knowledge.quickSearch.cat.title")}
+                        </h5>
+                        <p class="text-muted mb-0">${msg.text("knowledge.quickSearch.cat.description")}</p></div>
                 </a></div>
-                <div class="col-md-4"><a class="card h-100 text-decoration-none" data-knowledge-query="What are pet poisoning warning signs" href="/knowledge?query=What+are+pet+poisoning+warning+signs">
-                    <div class="card-body"><h5><i class="fas fa-triangle-exclamation text-danger me-2"></i>${msg.text("knowledge.quickSearch.emergency.title")}</h5><p class="text-muted mb-0">${msg.text("knowledge.quickSearch.emergency.description")}</p></div>
+            <div class="col-md-4"><a class="card h-100 text-decoration-none"
+                                     data-knowledge-query="What are pet poisoning warning signs"
+                                     href="/knowledge?query=What+are+pet+poisoning+warning+signs">
+                    <div class="card-body"><h5><i
+                                    class="fas fa-triangle-exclamation text-danger me-2"></i>${msg.text("knowledge.quickSearch.emergency.title")}
+                        </h5>
+                        <p class="text-muted mb-0">${msg.text("knowledge.quickSearch.emergency.description")}</p></div>
                 </a></div>
         </div>
 
         <div id="knowledge-results" aria-live="polite">
-        @if(query != null && !query.isBlank())
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2 class="h4 mb-0">${msg.text("knowledge.resultsTitle")}</h2>
-                <span class="badge bg-primary">${msg.text("knowledge.matches", results.size())}</span>
-            </div>
-
-            @if(results.isEmpty())
-                <div class="alert alert-warning">
-                    <i class="fas fa-circle-info me-2"></i>${msg.text("knowledge.noMatches")}
+            @if(query != null && !query.isBlank())
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h4 mb-0">${msg.text("knowledge.resultsTitle")}</h2>
+                    <span class="badge bg-primary">${msg.text("knowledge.matches", results.size())}</span>
                 </div>
-            @else
-                @for(io.micronaut.samples.petclinic.dto.PetCareSearchResult result : results)
-                    <article class="card mb-3 animate-fade-in-up">
-                        <div class="card-body">
-                            <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
-                                <div>
-                                    <span class="badge bg-secondary me-2">${result.topic()}</span>
-                                    <span class="badge bg-light text-dark">${result.species()}</span>
+
+                @if(results.isEmpty())
+                    <div class="alert alert-warning">
+                        <i class="fas fa-circle-info me-2"></i>${msg.text("knowledge.noMatches")}
+                    </div>
+                @else
+                    @for(io.micronaut.samples.petclinic.dto.PetCareSearchResult result : results)
+                        <article class="card mb-3 animate-fade-in-up">
+                            <div class="card-body">
+                                <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
+                                    <div>
+                                        <span class="badge bg-secondary me-2">${result.topic()}</span>
+                                        <span class="badge bg-light text-dark">${result.species()}</span>
+                                    </div>
+                                    <span class="text-muted small">${msg.text("knowledge.distance", result.distance())}</span>
                                 </div>
-                                <span class="text-muted small">${msg.text("knowledge.distance", result.distance())}</span>
+                                <h3 class="h5">${result.documentTitle()}</h3>
+                                <div class="text-muted small mb-2">${result.documentSource()}</div>
+                                <p class="mb-2">${result.content()}</p>
+                                <div class="text-muted small">
+                                    ${msg.text("knowledge.chunk", result.chunkIndex() + 1)}
+                                    @if(result.similarity() != null)
+                                        &middot; ${msg.text("knowledge.similarity", result.similarity())}
+                                    @endif
+                                </div>
                             </div>
-                            <h3 class="h5">${result.documentTitle()}</h3>
-                            <div class="text-muted small mb-2">${result.documentSource()}</div>
-                            <p class="mb-2">${result.content()}</p>
-                            <div class="text-muted small">
-                                ${msg.text("knowledge.chunk", result.chunkIndex() + 1)}
-                                @if(result.similarity() != null)
-                                    &middot; ${msg.text("knowledge.similarity", result.similarity())}
-                                @endif
-                            </div>
-                        </div>
-                    </article>
-                @endfor
+                        </article>
+                    @endfor
+                @endif
             @endif
-        @endif
         </div>
 
         <div class="card mt-5 border-primary">
@@ -172,8 +202,8 @@
                 const content = items.length > 0
                     ? items.map(renderResult).join("")
                     : "<div class=\"alert alert-warning\"><i class=\"fas fa-circle-info me-2\"></i>"
-                        + escapeHtml(labels.noMatchesLabel)
-                        + "</div>";
+                    + escapeHtml(labels.noMatchesLabel)
+                    + "</div>";
                 results.innerHTML = heading + content;
             };
 

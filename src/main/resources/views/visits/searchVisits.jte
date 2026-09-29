@@ -67,7 +67,8 @@
 
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="h4 mb-0">${msg.text("visit.search.results")}</h2>
-            <span class="badge bg-primary rounded-pill" id="visit-results-count">0 ${msg.text("visit.search.matches")}</span>
+            <span class="badge bg-primary rounded-pill"
+                  id="visit-results-count">0 ${msg.text("visit.search.matches")}</span>
         </div>
 
         <div id="visit-loading" class="text-center py-5 d-none" aria-live="polite">
@@ -119,8 +120,8 @@
             const renderVisit = (visit) => {
                 const patient = visit.petName
                     ? "<i class=\"fas fa-paw me-1\"></i>" + escapeHtml(visit.petName)
-                        + (visit.ownerName ? "<span class=\"mx-1\">·</span>"
-                            + escapeHtml(visit.ownerName) : "")
+                    + (visit.ownerName ? "<span class=\"mx-1\">·</span>"
+                        + escapeHtml(visit.ownerName) : "")
                     : escapeHtml(labels.unknownLabel);
 
                 return "<div class=\"col-12 col-lg-6\">"

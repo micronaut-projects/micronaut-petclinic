@@ -25,7 +25,7 @@ class WelcomeControllerTest {
     void shouldReturnWelcomePage() {
         HttpResponse<String> response = client.toBlocking()
                 .exchange(HttpRequest.GET("/"), String.class);
-        
+
         assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
         assertThat(response.body()).isNotNull();
     }

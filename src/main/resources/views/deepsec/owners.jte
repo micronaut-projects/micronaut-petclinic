@@ -164,7 +164,8 @@
                                 </div>
                             @else
                                 <div class="mb-2">
-                                    <span class="text-muted small"><i class="fas fa-info-circle me-1"></i>${msg.text("deepsec.noPetsReturned")}</span>
+                                    <span class="text-muted small"><i
+                                                class="fas fa-info-circle me-1"></i>${msg.text("deepsec.noPetsReturned")}</span>
                                 </div>
                             @endif
                         </div>

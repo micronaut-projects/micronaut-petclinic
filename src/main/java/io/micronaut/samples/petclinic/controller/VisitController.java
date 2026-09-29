@@ -120,8 +120,8 @@ public class VisitController {
      */
     @Post(value = "/new", consumes = MediaType.APPLICATION_JSON)
     public HttpResponse<?> processNewVisitForm(@PathVariable Integer ownerId,
-                                                @PathVariable Integer petId,
-                                                @Valid @Body VisitForm form) {
+                                               @PathVariable Integer petId,
+                                               @Valid @Body VisitForm form) {
         Optional<Pet> pet = clinicService.findPetById(petId);
 
         if (pet.isEmpty()) {

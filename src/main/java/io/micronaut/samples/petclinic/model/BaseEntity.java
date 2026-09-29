@@ -14,23 +14,6 @@ import java.util.Objects;
 public sealed interface BaseEntity permits NamedEntity, Person, Visit {
 
     /**
-     * Returns the persistence identifier.
-     *
-     * @return the entity id, or {@code null} before the entity has been saved
-     */
-    Integer id();
-
-    /**
-     * Determines whether this entity has not yet been persisted.
-     *
-     * @return {@code true} when the entity has no id
-     */
-    @Transient
-    default boolean isNew() {
-        return id() == null;
-    }
-
-    /**
      * Compares two entities by concrete type and persistence identifier.
      *
      * @param entity the entity providing the equality implementation
@@ -56,5 +39,22 @@ public sealed interface BaseEntity permits NamedEntity, Person, Visit {
      */
     static int entityHashCode(BaseEntity entity) {
         return Objects.hash(entity.id());
+    }
+
+    /**
+     * Returns the persistence identifier.
+     *
+     * @return the entity id, or {@code null} before the entity has been saved
+     */
+    Integer id();
+
+    /**
+     * Determines whether this entity has not yet been persisted.
+     *
+     * @return {@code true} when the entity has no id
+     */
+    @Transient
+    default boolean isNew() {
+        return id() == null;
     }
 }

@@ -1,13 +1,15 @@
 package io.micronaut.samples.petclinic.repository;
 
 import io.micronaut.data.annotation.Join;
-import static io.micronaut.data.annotation.Join.Type.LEFT_FETCH;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.samples.petclinic.model.Owner;
-import io.micronaut.data.model.Sort;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+
+import static io.micronaut.data.annotation.Join.Type.LEFT_FETCH;
 
 /**
  * Repository for {@link Owner} entities.

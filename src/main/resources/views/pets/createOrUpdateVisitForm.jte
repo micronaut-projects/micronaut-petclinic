@@ -74,7 +74,8 @@
                     @if(pet.getVisits() != null && !pet.getVisits().isEmpty())
                         <div class="card mt-4 animate-fade-in-up stagger-1">
                             <div class="card-header">
-                                <h5 class="mb-0"><i class="fas fa-history me-2"></i>${msg.text("pet.previousVisits")}</h5>
+                                <h5 class="mb-0"><i class="fas fa-history me-2"></i>${msg.text("pet.previousVisits")}
+                                </h5>
                             </div>
                             <div class="card-body">
                                 <div class="visit-timeline">
@@ -110,26 +111,35 @@
                             ${msg.text("validation.fixErrors")}
                         </div>
                     @endif
- 
-                    <form id="visit-form" action="/owners/${owner.id()}/pets/${pet.id()}/visits/new" method="post" class="needs-validation" data-submit-failed-message="${msg.text("validation.submitFailed")}" novalidate>
+
+                    <form id="visit-form" action="/owners/${owner.id()}/pets/${pet.id()}/visits/new" method="post"
+                          class="needs-validation" data-submit-failed-message="${msg.text("validation.submitFailed")}"
+                          novalidate>
                         <div class="mb-4">
                             <label for="date" class="form-label">
                                 <i class="fas fa-calendar me-2 text-primary"></i>${msg.text("visit.visitDate")}
                             </label>
-                            <input type="date" class="form-control ${validationErrors != null && validationErrors.containsKey("date") ? "is-invalid" : ""}" id="date" name="date"
-                                   value="${visit != null && visit.date() != null ? visit.date().toString() : ""}" required>
+                            <input type="date"
+                                   class="form-control ${validationErrors != null && validationErrors.containsKey("date") ? "is-invalid" : ""}"
+                                   id="date" name="date"
+                                   value="${visit != null && visit.date() != null ? visit.date().toString() : ""}"
+                                   required>
                             @if(validationErrors != null && validationErrors.containsKey("date"))
                                 <div class="invalid-feedback">${validationErrors.get("date")}</div>
                             @else
                                 <div class="invalid-feedback">${msg.text("validation.visitDate.required")}</div>
                             @endif
                         </div>
- 
+
                         <div class="mb-4">
                             <label for="description" class="form-label">
                                 <i class="fas fa-notes-medical me-2 text-primary"></i>${msg.text("visit.description")}
                             </label>
-                            <textarea class="form-control ${validationErrors != null && validationErrors.containsKey("description") ? "is-invalid" : ""}" id="description" name="description" rows="4" minlength="1" maxlength="255" data-required-message="${msg.text("validation.description.required")}" required>${visit != null && visit.description() != null ? visit.description() : ""}</textarea>
+                            <textarea
+                                    class="form-control ${validationErrors != null && validationErrors.containsKey("description") ? "is-invalid" : ""}"
+                                    id="description" name="description" rows="4" minlength="1" maxlength="255"
+                                    data-required-message="${msg.text("validation.description.required")}"
+                                    required>${visit != null && visit.description() != null ? visit.description() : ""}</textarea>
                             @if(validationErrors != null && validationErrors.containsKey("description"))
                                 <div class="invalid-feedback">${validationErrors.get("description")}</div>
                             @else
@@ -142,9 +152,11 @@
                                 <label for="durationMinutes" class="form-label">
                                     <i class="fas fa-clock me-2 text-primary"></i>${msg.text("visit.durationMinutes")}
                                 </label>
-                                <input type="number" class="form-control ${validationErrors != null && validationErrors.containsKey("durationMinutes") ? "is-invalid" : ""}"
+                                <input type="number"
+                                       class="form-control ${validationErrors != null && validationErrors.containsKey("durationMinutes") ? "is-invalid" : ""}"
                                        id="durationMinutes" name="durationMinutes" min="1"
-                                       value="${visit != null && visit.durationMinutes() != null ? visit.durationMinutes().toString() : "30"}" required>
+                                       value="${visit != null && visit.durationMinutes() != null ? visit.durationMinutes().toString() : "30"}"
+                                       required>
                                 @if(validationErrors != null && validationErrors.containsKey("durationMinutes"))
                                     <div class="invalid-feedback">${validationErrors.get("durationMinutes")}</div>
                                 @endif
@@ -153,9 +165,11 @@
                                 <label for="followUpPeriodMonths" class="form-label">
                                     <i class="fas fa-calendar-check me-2 text-primary"></i>${msg.text("visit.followUpPeriodMonths")}
                                 </label>
-                                <input type="number" class="form-control ${validationErrors != null && validationErrors.containsKey("followUpPeriodMonths") ? "is-invalid" : ""}"
+                                <input type="number"
+                                       class="form-control ${validationErrors != null && validationErrors.containsKey("followUpPeriodMonths") ? "is-invalid" : ""}"
                                        id="followUpPeriodMonths" name="followUpPeriodMonths" min="1"
-                                       value="${visit != null && visit.followUpPeriodMonths() != null ? visit.followUpPeriodMonths().toString() : "6"}" required>
+                                       value="${visit != null && visit.followUpPeriodMonths() != null ? visit.followUpPeriodMonths().toString() : "6"}"
+                                       required>
                                 @if(validationErrors != null && validationErrors.containsKey("followUpPeriodMonths"))
                                     <div class="invalid-feedback">${validationErrors.get("followUpPeriodMonths")}</div>
                                 @endif

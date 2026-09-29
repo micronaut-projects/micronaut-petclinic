@@ -84,7 +84,8 @@
                                 </div>
                             @else
                                 <div class="mb-3">
-                                    <span class="text-muted small"><i class="fas fa-info-circle me-1"></i>${msg.text("owner.noPetsRegistered")}</span>
+                                    <span class="text-muted small"><i
+                                                class="fas fa-info-circle me-1"></i>${msg.text("owner.noPetsRegistered")}</span>
                                 </div>
                             @endif
 

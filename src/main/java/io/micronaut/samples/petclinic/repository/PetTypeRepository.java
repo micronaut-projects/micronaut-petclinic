@@ -1,8 +1,8 @@
 package io.micronaut.samples.petclinic.repository;
 
-import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.samples.petclinic.model.PetType;
+
 import java.util.List;
 import java.util.Optional;
 

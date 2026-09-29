@@ -32,5 +32,4 @@ public record VisitDto(
         return visits.stream().map(VisitDto::from).toList();
     }
 
-    ;
 }

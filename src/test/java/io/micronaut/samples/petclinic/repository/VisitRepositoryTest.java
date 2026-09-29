@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Integration tests for interval queries on {@link VisitRepository}.
  */
 @MicronautTest
-@Requires(env= "oracle")
+@Requires(env = "oracle")
 class VisitRepositoryTest {
 
     @Inject

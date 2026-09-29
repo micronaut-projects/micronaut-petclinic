@@ -20,7 +20,7 @@ public class MessageSourceFactory {
     /**
      * Creates a ResourceBundleMessageSource that loads messages from
      * i18n/messages*.properties files
-     * 
+     *
      * @return The configured MessageSource
      */
     @Singleton

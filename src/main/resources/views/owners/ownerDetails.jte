@@ -78,7 +78,8 @@
                     <div class="card-body">
                         @if(owner.getPets() == null || owner.getPets().isEmpty())
                             <div class="text-center py-5">
-                                <div class="empty-state-icon mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                                <div class="empty-state-icon mx-auto mb-3"
+                                     style="width: 80px; height: 80px; font-size: 2rem;">
                                     <i class="fas fa-paw"></i>
                                 </div>
                                 <h5>${msg.text("owner.noPetsYet")}</h5>
@@ -117,10 +118,12 @@
                                             <span>${pet.getBirthDate() != null ? pet.getBirthDate().toString() : ""}</span>
                                         </div>
                                         <div class="col-md-5 text-md-end mt-3 mt-md-0">
-                                            <a href="/owners/${owner.id()}/pets/${pet.id()}/edit" class="btn btn-sm btn-outline-primary me-2">
+                                            <a href="/owners/${owner.id()}/pets/${pet.id()}/edit"
+                                               class="btn btn-sm btn-outline-primary me-2">
                                                 <i class="fas fa-edit"></i> ${msg.text("button.edit")}
                                             </a>
-                                            <a href="/owners/${owner.id()}/pets/${pet.id()}/visits/new" class="btn btn-sm btn-primary">
+                                            <a href="/owners/${owner.id()}/pets/${pet.id()}/visits/new"
+                                               class="btn btn-sm btn-primary">
                                                 <i class="fas fa-plus"></i> ${msg.text("button.addVisit")}
                                             </a>
                                         </div>
@@ -128,7 +131,9 @@
 
                                     @if(pet.getVisits() != null && !pet.getVisits().isEmpty())
                                         <div class="mt-3 pt-3 border-top">
-                                            <h6 class="text-muted mb-3"><i class="fas fa-calendar-alt me-2"></i>${msg.text("pet.visitHistory")}</h6>
+                                            <h6 class="text-muted mb-3"><i
+                                                        class="fas fa-calendar-alt me-2"></i>${msg.text("pet.visitHistory")}
+                                            </h6>
                                             <div class="visit-timeline">
                                                 @for(Visit visit : pet.getVisits())
                                                     <div class="visit-item">

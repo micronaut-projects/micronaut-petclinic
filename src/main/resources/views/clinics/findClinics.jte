@@ -111,7 +111,8 @@
                                 <label for="radiusMeters" class="form-label">
                                     <i class="fas fa-ruler-combined me-2"></i>${msg.text("clinic.radiusMeters")}
                                 </label>
-                                <input type="number" step="100" min="100" class="form-control form-control-lg" id="radiusMeters"
+                                <input type="number" step="100" min="100" class="form-control form-control-lg"
+                                       id="radiusMeters"
                                        name="radiusMeters">
                             </div>
                             <div class="col-12 clinic-field clinic-field-manual-polygon">
@@ -140,10 +141,12 @@
                                         <div class="form-text">${msg.text("clinic.manualLineHelp")}</div>
                                     </div>
                                     <div class="d-flex gap-2">
-                                        <button class="btn btn-outline-secondary" id="clinic-example-line" type="button">
+                                        <button class="btn btn-outline-secondary" id="clinic-example-line"
+                                                type="button">
                                             <i class="fas fa-route me-2"></i>${msg.text("clinic.exampleLine")}
                                         </button>
-                                        <button class="btn btn-outline-primary" id="clinic-add-line-point" type="button">
+                                        <button class="btn btn-outline-primary" id="clinic-add-line-point"
+                                                type="button">
                                             <i class="fas fa-plus me-2"></i>${msg.text("clinic.addPoint")}
                                         </button>
                                     </div>
@@ -168,7 +171,8 @@
                         </div>
                     </div>
 
-                    <div class="tab-pane fade show active" id="map-search-panel" role="tabpanel" aria-labelledby="map-search-tab">
+                    <div class="tab-pane fade show active" id="map-search-panel" role="tabpanel"
+                         aria-labelledby="map-search-tab">
                         <div id="clinic-map" class="clinic-map"></div>
                         <div class="clinic-map-instructions" id="clinic-map-instructions" role="status"
                              data-near-instruction="${msg.text("clinic.mapInstruction.near")}"

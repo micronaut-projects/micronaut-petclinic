@@ -5,6 +5,7 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.geo.LineString;
 import io.micronaut.data.model.geo.Point;
 import io.micronaut.data.model.geo.Polygon;
+import io.micronaut.samples.petclinic.dto.VisitSearchCriteria;
 import io.micronaut.samples.petclinic.model.Clinic;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
@@ -13,7 +14,6 @@ import io.micronaut.samples.petclinic.model.Speciality;
 import io.micronaut.samples.petclinic.model.Vet;
 import io.micronaut.samples.petclinic.model.VetWithSpecialities;
 import io.micronaut.samples.petclinic.model.Visit;
-import io.micronaut.samples.petclinic.dto.VisitSearchCriteria;
 import io.micronaut.samples.petclinic.repository.ClinicRepository;
 import io.micronaut.samples.petclinic.repository.OwnerRepository;
 import io.micronaut.samples.petclinic.repository.PetRepository;
@@ -85,188 +85,6 @@ public class ClinicService {
 
     // ========== Owner Operations ==========
 
-    /**
-     * Find an owner by ID.
-     * @param id the owner ID
-     * @return the owner, if found
-     */
-    public Optional<Owner> findOwnerById(Integer id) {
-        return ownerRepository.findById(id);
-    }
-
-    /**
-     * Find owners by last name (case-insensitive partial match).
-     * @param lastName the last name to search for
-     * @return collection of matching owners
-     */
-    public Collection<Owner> findOwnerByLastName(String lastName) {
-        return ownerRepository.findByLastNameContainingIgnoreCase(lastName, Sort.of(Sort.Order.asc("lastName")));
-    }
-
-    /**
-     * Find all owners.
-     * @return collection of all owners
-     */
-    public Collection<Owner> findAllOwners() {
-        return ownerRepository.findAll(Sort.of(Sort.Order.asc("lastName")));
-    }
-
-    /**
-     * Save an owner (create or update).
-     * @param owner the owner to save
-     * @return the persisted owner returned by the repository
-     */
-    @Transactional
-    public Owner saveOwner(Owner owner) {
-        if (owner.isNew()) {
-            return ownerRepository.save(owner);
-        } else {
-            return ownerRepository.update(owner);
-        }
-    }
-
-    /**
-     * Delete an owner by ID.
-     * @param id the owner ID
-     */
-    @Transactional
-    public void deleteOwner(Integer id) {
-        ownerRepository.deleteById(id);
-    }
-
-    // ========== Pet Operations ==========
-
-    /**
-     * Find a pet by ID.
-     * @param id the pet ID
-     * @return the pet, if found
-     */
-    public Optional<Pet> findPetById(Integer id) {
-        return petRepository.findById(id);
-    }
-
-    /**
-     * Find all pets.
-     * @return list of all pets
-     */
-    public List<Pet> findAllPets() {
-        return petRepository.findAll();
-    }
-
-    /**
-     * Save a pet (create or update).
-     * @param pet the pet to save
-     * @return the persisted pet returned by the repository
-     */
-    @Transactional
-    public Pet savePet(Pet pet) {
-        if (pet.isNew()) {
-            return petRepository.save(pet);
-        } else {
-            return petRepository.update(pet);
-        }
-    }
-
-    /**
-     * Delete a pet by ID.
-     * @param id the pet ID
-     */
-    @Transactional
-    public void deletePet(Integer id) {
-        petRepository.deleteById(id);
-    }
-
-    // ========== Pet Type Operations ==========
-
-    /**
-     * Find all pet types.
-     * @return list of all pet types
-     */
-    public List<PetType> findPetTypes() {
-        return petTypeRepository.findAllOrderByName();
-    }
-
-    /**
-     * Find a pet type by ID.
-     * @param id the pet type ID
-     * @return the pet type, if found
-     */
-    public Optional<PetType> findPetTypeById(Integer id) {
-        return petTypeRepository.findById(id);
-    }
-
-    // ========== Visit Operations ==========
-
-    /**
-     * Find a visit by ID.
-     * @param id the visit ID
-     * @return the visit, if found
-     */
-    public Optional<Visit> findVisitById(Integer id) {
-        return visitRepository.findById(id);
-    }
-
-    /**
-     * Find all visits for a pet.
-     * @param petId the pet ID
-     * @return collection of visits
-     */
-    public Collection<Visit> findVisitsByPetId(Integer petId) {
-        return visitRepository.findByPetId(petId);
-    }
-
-    /**
-     * Searches visits using the supplied optional filters.
-     *
-     * @param criteria the search filters
-     * @return matching visits ordered from newest to oldest
-     */
-    public List<Visit> searchVisits(VisitSearchCriteria criteria) {
-        return visitRepository.findByDateBetweenAndDurationLessThanEqualsAndPeriodLessThanEquals(
-                criteria.fromDate(),
-                criteria.toDate(),
-                Duration.ofMinutes(criteria.maxDurationMinutes()),
-                Period.ofMonths(criteria.maxFollowUpMonths())
-        );
-    }
-
-    /**
-     * Save a visit (create or update).
-     * @param visit the visit to save
-     * @return the persisted visit returned by the repository
-     */
-    @Transactional
-    public Visit saveVisit(Visit visit) {
-        if (visit.isNew()) {
-            return visitRepository.save(visit);
-        } else {
-            return visitRepository.update(visit);
-        }
-    }
-
-    /**
-     * Delete a visit by ID.
-     * @param id the visit ID
-     */
-    @Transactional
-    public void deleteVisit(Integer id) {
-        visitRepository.deleteById(id);
-    }
-
-    // ========== Vet Operations ==========
-
-    /**
-     * Find all veterinarians.
-     * Cached for performance.
-     * @return collection of all vets
-     */
-    @Cacheable("vets")
-    public Collection<Vet> findAllVets() {
-        return vetRepository.findAllWithSpecialities().stream()
-                .map(ClinicService::toVet)
-                .collect(Collectors.toList());
-    }
-
     private static Vet toVet(VetWithSpecialities vet) {
         return new Vet(vet.id(), vet.firstName(), vet.lastName(), parseSpecialities(vet.specialityRows()));
     }
@@ -283,82 +101,6 @@ public class ClinicService {
             }
         }
         return specialities;
-    }
-
-    /**
-     * Find a vet by ID.
-     * @param id the vet ID
-     * @return the vet, if found
-     */
-    public Optional<Vet> findVetById(Integer id) {
-        return vetRepository.findById(id);
-    }
-
-    // ========== Speciality Operations ==========
-
-    /**
-     * Find all specialities.
-     * @return list of all specialities
-     */
-    public List<Speciality> findAllSpecialities() {
-        return specialityRepository.findAllOrderByName();
-    }
-
-    /**
-     * Find a speciality by ID.
-     * @param id the speciality ID
-     * @return the speciality, if found
-     */
-    public Optional<Speciality> findSpecialityById(Integer id) {
-        return specialityRepository.findById(id);
-    }
-
-    /**
-     * Finds physical clinic branches near a WGS 84 coordinate.
-     *
-     * @param longitude the longitude coordinate
-     * @param latitude the latitude coordinate
-     * @param radiusMeters the search radius in meters
-     * @return nearby clinics
-     */
-    public List<Clinic> findClinicsNear(double longitude, double latitude, double radiusMeters) {
-        return clinicRepository.findByLocationNear(new Point(longitude, latitude), radiusMeters);
-    }
-
-    /**
-     * Finds clinics whose location falls within the supplied bounding box.
-     *
-     * @param minLongitude western bound
-     * @param minLatitude southern bound
-     * @param maxLongitude eastern bound
-     * @param maxLatitude northern bound
-     * @return clinics inside the polygon
-     */
-    public List<Clinic> findClinicsWithinBounds(double minLongitude,
-                                                double minLatitude,
-                                                double maxLongitude,
-                                                double maxLatitude) {
-        return clinicRepository.findByLocationGeoWithin(toBoundingBox(minLongitude, minLatitude, maxLongitude, maxLatitude));
-    }
-
-    /**
-     * Finds clinics whose location falls within the supplied polygon.
-     *
-     * @param coordinates polygon shell coordinates
-     * @return clinics inside the polygon
-     */
-    public List<Clinic> findClinicsWithinPolygon(List<Point> coordinates) {
-        return clinicRepository.findByLocationGeoWithin(toPolygon(coordinates));
-    }
-
-    /**
-     * Finds clinics whose service area intersects the supplied line.
-     *
-     * @param coordinates line coordinates
-     * @return clinics intersecting the line
-     */
-    public List<Clinic> findClinicsIntersectingLine(List<Point> coordinates) {
-        return clinicRepository.findByServiceAreaGeoIntersects(toLineString(coordinates));
     }
 
     private static Polygon toBoundingBox(double minLongitude,
@@ -386,6 +128,8 @@ public class ClinicService {
         validateSimplePolygon(shell);
         return new Polygon(List.of(shell));
     }
+
+    // ========== Pet Operations ==========
 
     private static LineString toLineString(List<Point> coordinates) {
         if (coordinates == null || coordinates.size() < 2) {
@@ -451,6 +195,8 @@ public class ClinicService {
         return false;
     }
 
+    // ========== Pet Type Operations ==========
+
     /**
      * Checks whether two polygon edges share a vertex and therefore may touch.
      *
@@ -493,6 +239,8 @@ public class ClinicService {
                 || isZero(d4) && isPointOnSegment(firstEnd, secondStart, secondEnd);
     }
 
+    // ========== Visit Operations ==========
+
     /**
      * Computes the orientation of a point relative to a directed line segment.
      *
@@ -529,6 +277,258 @@ public class ClinicService {
      */
     private static boolean isZero(double value) {
         return Math.abs(value) <= GEOMETRY_EPSILON;
+    }
+
+    /**
+     * Find an owner by ID.
+     * @param id the owner ID
+     * @return the owner, if found
+     */
+    public Optional<Owner> findOwnerById(Integer id) {
+        return ownerRepository.findById(id);
+    }
+
+    /**
+     * Find owners by last name (case-insensitive partial match).
+     * @param lastName the last name to search for
+     * @return collection of matching owners
+     */
+    public Collection<Owner> findOwnerByLastName(String lastName) {
+        return ownerRepository.findByLastNameContainingIgnoreCase(lastName, Sort.of(Sort.Order.asc("lastName")));
+    }
+
+    // ========== Vet Operations ==========
+
+    /**
+     * Find all owners.
+     * @return collection of all owners
+     */
+    public Collection<Owner> findAllOwners() {
+        return ownerRepository.findAll(Sort.of(Sort.Order.asc("lastName")));
+    }
+
+    /**
+     * Save an owner (create or update).
+     * @param owner the owner to save
+     * @return the persisted owner returned by the repository
+     */
+    @Transactional
+    public Owner saveOwner(Owner owner) {
+        if (owner.isNew()) {
+            return ownerRepository.save(owner);
+        } else {
+            return ownerRepository.update(owner);
+        }
+    }
+
+    /**
+     * Delete an owner by ID.
+     * @param id the owner ID
+     */
+    @Transactional
+    public void deleteOwner(Integer id) {
+        ownerRepository.deleteById(id);
+    }
+
+    /**
+     * Find a pet by ID.
+     * @param id the pet ID
+     * @return the pet, if found
+     */
+    public Optional<Pet> findPetById(Integer id) {
+        return petRepository.findById(id);
+    }
+
+    // ========== Speciality Operations ==========
+
+    /**
+     * Find all pets.
+     * @return list of all pets
+     */
+    public List<Pet> findAllPets() {
+        return petRepository.findAll();
+    }
+
+    /**
+     * Save a pet (create or update).
+     * @param pet the pet to save
+     * @return the persisted pet returned by the repository
+     */
+    @Transactional
+    public Pet savePet(Pet pet) {
+        if (pet.isNew()) {
+            return petRepository.save(pet);
+        } else {
+            return petRepository.update(pet);
+        }
+    }
+
+    /**
+     * Delete a pet by ID.
+     * @param id the pet ID
+     */
+    @Transactional
+    public void deletePet(Integer id) {
+        petRepository.deleteById(id);
+    }
+
+    /**
+     * Find all pet types.
+     * @return list of all pet types
+     */
+    public List<PetType> findPetTypes() {
+        return petTypeRepository.findAllOrderByName();
+    }
+
+    /**
+     * Find a pet type by ID.
+     * @param id the pet type ID
+     * @return the pet type, if found
+     */
+    public Optional<PetType> findPetTypeById(Integer id) {
+        return petTypeRepository.findById(id);
+    }
+
+    /**
+     * Find a visit by ID.
+     * @param id the visit ID
+     * @return the visit, if found
+     */
+    public Optional<Visit> findVisitById(Integer id) {
+        return visitRepository.findById(id);
+    }
+
+    /**
+     * Find all visits for a pet.
+     * @param petId the pet ID
+     * @return collection of visits
+     */
+    public Collection<Visit> findVisitsByPetId(Integer petId) {
+        return visitRepository.findByPetId(petId);
+    }
+
+    /**
+     * Searches visits using the supplied optional filters.
+     *
+     * @param criteria the search filters
+     * @return matching visits ordered from newest to oldest
+     */
+    public List<Visit> searchVisits(VisitSearchCriteria criteria) {
+        return visitRepository.findByDateBetweenAndDurationLessThanEqualsAndPeriodLessThanEquals(
+                criteria.fromDate(),
+                criteria.toDate(),
+                Duration.ofMinutes(criteria.maxDurationMinutes()),
+                Period.ofMonths(criteria.maxFollowUpMonths())
+        );
+    }
+
+    /**
+     * Save a visit (create or update).
+     * @param visit the visit to save
+     * @return the persisted visit returned by the repository
+     */
+    @Transactional
+    public Visit saveVisit(Visit visit) {
+        if (visit.isNew()) {
+            return visitRepository.save(visit);
+        } else {
+            return visitRepository.update(visit);
+        }
+    }
+
+    /**
+     * Delete a visit by ID.
+     * @param id the visit ID
+     */
+    @Transactional
+    public void deleteVisit(Integer id) {
+        visitRepository.deleteById(id);
+    }
+
+    /**
+     * Find all veterinarians.
+     * Cached for performance.
+     * @return collection of all vets
+     */
+    @Cacheable("vets")
+    public Collection<Vet> findAllVets() {
+        return vetRepository.findAllWithSpecialities().stream()
+                .map(ClinicService::toVet)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Find a vet by ID.
+     * @param id the vet ID
+     * @return the vet, if found
+     */
+    public Optional<Vet> findVetById(Integer id) {
+        return vetRepository.findById(id);
+    }
+
+    /**
+     * Find all specialities.
+     * @return list of all specialities
+     */
+    public List<Speciality> findAllSpecialities() {
+        return specialityRepository.findAllOrderByName();
+    }
+
+    /**
+     * Find a speciality by ID.
+     * @param id the speciality ID
+     * @return the speciality, if found
+     */
+    public Optional<Speciality> findSpecialityById(Integer id) {
+        return specialityRepository.findById(id);
+    }
+
+    /**
+     * Finds physical clinic branches near a WGS 84 coordinate.
+     *
+     * @param longitude the longitude coordinate
+     * @param latitude the latitude coordinate
+     * @param radiusMeters the search radius in meters
+     * @return nearby clinics
+     */
+    public List<Clinic> findClinicsNear(double longitude, double latitude, double radiusMeters) {
+        return clinicRepository.findByLocationNear(new Point(longitude, latitude), radiusMeters);
+    }
+
+    /**
+     * Finds clinics whose location falls within the supplied bounding box.
+     *
+     * @param minLongitude western bound
+     * @param minLatitude southern bound
+     * @param maxLongitude eastern bound
+     * @param maxLatitude northern bound
+     * @return clinics inside the polygon
+     */
+    public List<Clinic> findClinicsWithinBounds(double minLongitude,
+                                                double minLatitude,
+                                                double maxLongitude,
+                                                double maxLatitude) {
+        return clinicRepository.findByLocationGeoWithin(toBoundingBox(minLongitude, minLatitude, maxLongitude, maxLatitude));
+    }
+
+    /**
+     * Finds clinics whose location falls within the supplied polygon.
+     *
+     * @param coordinates polygon shell coordinates
+     * @return clinics inside the polygon
+     */
+    public List<Clinic> findClinicsWithinPolygon(List<Point> coordinates) {
+        return clinicRepository.findByLocationGeoWithin(toPolygon(coordinates));
+    }
+
+    /**
+     * Finds clinics whose service area intersects the supplied line.
+     *
+     * @param coordinates line coordinates
+     * @return clinics intersecting the line
+     */
+    public List<Clinic> findClinicsIntersectingLine(List<Point> coordinates) {
+        return clinicRepository.findByServiceAreaGeoIntersects(toLineString(coordinates));
     }
 
 }

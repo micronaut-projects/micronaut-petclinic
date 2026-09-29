@@ -1,7 +1,7 @@
 package io.micronaut.samples.petclinic.dto;
 
-import io.micronaut.serde.annotation.Serdeable;
 import io.micronaut.samples.petclinic.model.PetCareChunk;
+import io.micronaut.serde.annotation.Serdeable;
 
 /**
  * JSON-friendly representation of a ranked vector search result.

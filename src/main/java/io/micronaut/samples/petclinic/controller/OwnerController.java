@@ -205,13 +205,13 @@ public class OwnerController {
     @View("owners/createOrUpdateOwnerForm")
     public Map<String, Object> initUpdateOwnerForm(@PathVariable Integer ownerId) {
         Owner owner = clinicService.findOwnerById(ownerId).orElseThrow(NotFoundException::new);
-            return Map.of(
-                    "owner", formMapper.toOwnerForm(owner),
-                    "ownerId", ownerId,
-                    "isNew", false,
-                    "validationErrors", Map.of()
-            );
-        }
+        return Map.of(
+                "owner", formMapper.toOwnerForm(owner),
+                "ownerId", ownerId,
+                "isNew", false,
+                "validationErrors", Map.of()
+        );
+    }
 
 
     /**

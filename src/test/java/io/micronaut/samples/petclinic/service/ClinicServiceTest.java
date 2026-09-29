@@ -1,13 +1,19 @@
 package io.micronaut.samples.petclinic.service;
 
 import io.micronaut.samples.petclinic.dto.VisitSearchCriteria;
-import io.micronaut.samples.petclinic.model.*;
+import io.micronaut.samples.petclinic.model.Owner;
+import io.micronaut.samples.petclinic.model.Pet;
+import io.micronaut.samples.petclinic.model.PetType;
+import io.micronaut.samples.petclinic.model.Speciality;
+import io.micronaut.samples.petclinic.model.Vet;
+import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,9 +57,9 @@ class ClinicServiceTest {
     @Test
     void shouldSaveNewOwner() {
         Owner owner = new Owner("John", "Doe", "123 Main St", "Springfield", "1234567890");
-        
+
         Owner savedOwner = clinicService.saveOwner(owner);
-        
+
         assertThat(savedOwner.id()).isNotNull();
         assertThat(savedOwner.getFirstName()).isEqualTo("John");
     }
@@ -95,16 +101,16 @@ class ClinicServiceTest {
     void shouldSaveNewPet() {
         Optional<Owner> owner = clinicService.findOwnerById(1);
         assertThat(owner).isPresent();
-        
+
         PetType catType = clinicService.findPetTypes().stream()
                 .filter(t -> t.name().equals("cat"))
                 .findFirst()
                 .orElseThrow();
-        
+
         Pet pet = new Pet("Whiskers", LocalDate.of(2023, 1, 1), catType, owner.get());
-        
+
         Pet savedPet = clinicService.savePet(pet);
-        
+
         assertThat(savedPet.id()).isNotNull();
         assertThat(savedPet.name()).isEqualTo("Whiskers");
     }
@@ -113,11 +119,11 @@ class ClinicServiceTest {
     void shouldSaveNewVisit() {
         Optional<Pet> pet = clinicService.findPetById(1);
         assertThat(pet).isPresent();
-        
+
         Visit visit = new Visit(LocalDate.now(), "Annual checkup", pet.get());
-        
+
         Visit savedVisit = clinicService.saveVisit(visit);
-        
+
         assertThat(savedVisit.id()).isNotNull();
         assertThat(savedVisit.description()).isEqualTo("Annual checkup");
     }

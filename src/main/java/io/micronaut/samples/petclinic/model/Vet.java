@@ -1,11 +1,11 @@
 package io.micronaut.samples.petclinic.model;
 
+import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Transient;
-import io.micronaut.core.annotation.Creator;
 import io.micronaut.serde.annotation.Serdeable;
 import io.micronaut.sourcegen.annotations.Wither;
 import jakarta.validation.constraints.NotBlank;

@@ -14,6 +14,18 @@ class StaticPetCareEmbeddingServiceTest {
     private final StaticPetCareEmbeddingService embeddingService =
             new StaticPetCareEmbeddingService();
 
+    private static double cosine(float[] left, float[] right) {
+        double dot = 0.0;
+        double leftLength = 0.0;
+        double rightLength = 0.0;
+        for (int i = 0; i < left.length; i++) {
+            dot += left[i] * right[i];
+            leftLength += left[i] * left[i];
+            rightLength += right[i] * right[i];
+        }
+        return dot / Math.sqrt(leftLength * rightLength);
+    }
+
     @Test
     void providesTheConfiguredVectorSize() {
         FloatVector vector = embeddingService.embed("What vaccinations does my puppy need?");
@@ -50,17 +62,5 @@ class StaticPetCareEmbeddingServiceTest {
         FloatVector reptileVector = embeddingService.embed("What temperature and humidity does a reptile habitat need?");
 
         assertThat(cosine(birdVector.data(), reptileVector.data())).isLessThan(0.80);
-    }
-
-    private static double cosine(float[] left, float[] right) {
-        double dot = 0.0;
-        double leftLength = 0.0;
-        double rightLength = 0.0;
-        for (int i = 0; i < left.length; i++) {
-            dot += left[i] * right[i];
-            leftLength += left[i] * left[i];
-            rightLength += right[i] * right[i];
-        }
-        return dot / Math.sqrt(leftLength * rightLength);
     }
 }

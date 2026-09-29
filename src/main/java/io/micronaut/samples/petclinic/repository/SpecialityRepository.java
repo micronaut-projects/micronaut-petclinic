@@ -2,6 +2,7 @@ package io.micronaut.samples.petclinic.repository;
 
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.samples.petclinic.model.Speciality;
+
 import java.util.List;
 import java.util.Optional;
 

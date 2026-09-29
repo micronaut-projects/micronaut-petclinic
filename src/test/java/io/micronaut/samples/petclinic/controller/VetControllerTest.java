@@ -25,7 +25,7 @@ class VetControllerTest {
     void shouldReturnVetsJson() {
         HttpResponse<String> response = client.toBlocking()
                 .exchange(HttpRequest.GET("/vets/json"), String.class);
-        
+
         assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
         assertThat(response.body()).isNotNull();
         assertThat(response.body()).contains("firstName");
@@ -36,7 +36,7 @@ class VetControllerTest {
     void shouldReturnVetsHtmlPage() {
         HttpResponse<String> response = client.toBlocking()
                 .exchange(HttpRequest.GET("/vets"), String.class);
-        
+
         assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
         assertThat(response.body()).isNotNull();
         assertThat(response.body()).contains("Veterinarians");

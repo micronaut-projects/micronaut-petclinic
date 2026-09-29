@@ -8,7 +8,6 @@ import io.micronaut.samples.petclinic.dto.VisitForm;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.Visit;
-import jakarta.inject.Singleton;
 
 import java.time.Duration;
 import java.time.Period;

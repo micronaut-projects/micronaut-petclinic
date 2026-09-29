@@ -49,6 +49,14 @@ public class PetCareKnowledgeLoader implements ApplicationEventListener<StartupE
         this.jsonMapper = jsonMapper;
     }
 
+    private static JsonNode required(JsonNode parent, String field) {
+        JsonNode value = parent.get(field);
+        if (value == null || value.isNull()) {
+            throw new IllegalStateException("Missing field '" + field + "' in " + KNOWLEDGE_RESOURCE);
+        }
+        return value;
+    }
+
     @Override
     @Transactional
     public void onApplicationEvent(StartupEvent event) {
@@ -95,13 +103,5 @@ public class PetCareKnowledgeLoader implements ApplicationEventListener<StartupE
             ));
             index++;
         }
-    }
-
-    private static JsonNode required(JsonNode parent, String field) {
-        JsonNode value = parent.get(field);
-        if (value == null || value.isNull()) {
-            throw new IllegalStateException("Missing field '" + field + "' in " + KNOWLEDGE_RESOURCE);
-        }
-        return value;
     }
 }

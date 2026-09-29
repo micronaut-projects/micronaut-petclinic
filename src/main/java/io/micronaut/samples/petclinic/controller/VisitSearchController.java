@@ -60,7 +60,7 @@ public class VisitSearchController {
     @Get("/search")
     public List<VisitDto> search(@QueryValue @NonNull LocalDate fromDate,
                                  @QueryValue @NonNull LocalDate toDate,
-                                 @QueryValue(defaultValue = "120" ) Integer maxDurationMinutes,
+                                 @QueryValue(defaultValue = "120") Integer maxDurationMinutes,
                                  @QueryValue(defaultValue = "12") Integer maxFollowUpMonths) {
         VisitSearchCriteria criteria = new VisitSearchCriteria(fromDate, toDate, maxDurationMinutes, maxFollowUpMonths);
         return VisitDto.from(clinicService.searchVisits(criteria));

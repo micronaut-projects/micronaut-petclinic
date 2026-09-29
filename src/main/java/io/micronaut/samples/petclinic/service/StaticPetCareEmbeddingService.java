@@ -31,28 +31,6 @@ public final class StaticPetCareEmbeddingService implements PetCareEmbeddingServ
         vectors = loadVectors();
     }
 
-    @Override
-    public FloatVector embed(String text) {
-        if (text == null || text.isBlank()) {
-            return new FloatVector(new float[PetCareEmbeddingDimensions.VALUE]);
-        }
-
-        FloatVector vector = vectors.get(text.trim());
-        if (vector == null) {
-            throw new IllegalArgumentException("No precomputed pet-care vector for query: " + text);
-        }
-        return copy(vector);
-    }
-
-    @Override
-    public Optional<FloatVector> find(String text) {
-        if (text == null || text.isBlank()) {
-            return Optional.empty();
-        }
-        FloatVector vector = vectors.get(text.trim());
-        return vector == null ? Optional.empty() : Optional.of(copy(vector));
-    }
-
     private static Map<String, FloatVector> loadVectors() {
         Map<String, FloatVector> loaded = new HashMap<>();
         try (InputStream input = StaticPetCareEmbeddingService.class.getResourceAsStream(VECTOR_RESOURCE)) {
@@ -101,5 +79,27 @@ public final class StaticPetCareEmbeddingService implements PetCareEmbeddingServ
 
     private static FloatVector copy(FloatVector vector) {
         return new FloatVector(vector.data().clone());
+    }
+
+    @Override
+    public FloatVector embed(String text) {
+        if (text == null || text.isBlank()) {
+            return new FloatVector(new float[PetCareEmbeddingDimensions.VALUE]);
+        }
+
+        FloatVector vector = vectors.get(text.trim());
+        if (vector == null) {
+            throw new IllegalArgumentException("No precomputed pet-care vector for query: " + text);
+        }
+        return copy(vector);
+    }
+
+    @Override
+    public Optional<FloatVector> find(String text) {
+        if (text == null || text.isBlank()) {
+            return Optional.empty();
+        }
+        FloatVector vector = vectors.get(text.trim());
+        return vector == null ? Optional.empty() : Optional.of(copy(vector));
     }
 }

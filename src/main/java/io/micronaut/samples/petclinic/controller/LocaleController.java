@@ -11,7 +11,6 @@ import io.micronaut.security.rules.SecurityRule;
 
 import java.net.URI;
 import java.time.Duration;
-import java.util.Optional;
 
 /**
  * Controller for handling locale/language switching.

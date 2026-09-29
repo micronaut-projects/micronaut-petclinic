@@ -1,10 +1,11 @@
 package io.micronaut.samples.petclinic.repository;
 
-import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.data.model.Sort;
+import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+
 import java.util.Collection;
 import java.util.Optional;
 
@@ -63,7 +64,7 @@ class OwnerRepositoryTest {
         Owner owner = new Owner("Test", "Owner", "123 Test St", "Test City", "5551234567");
 
         Owner saved = ownerRepository.save(owner);
-        
+
         assertThat(saved.id()).isNotNull();
         assertThat(saved.getFirstName()).isEqualTo("Test");
     }
@@ -72,9 +73,9 @@ class OwnerRepositoryTest {
     void shouldUpdateExistingOwner() {
         Optional<Owner> owner = ownerRepository.findById(1);
         assertThat(owner).isPresent();
-        
+
         Owner updated = ownerRepository.update(owner.get().withCity("New City"));
-        
+
         assertThat(updated.getCity()).isEqualTo("New City");
     }
 }

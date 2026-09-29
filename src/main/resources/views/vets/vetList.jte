@@ -17,7 +17,8 @@
             <div class="col-md-4">
                 <div class="card h-100">
                     <div class="card-body d-flex align-items-center">
-                        <div class="feature-icon gradient-1 me-3" style="width: 50px; height: 50px; font-size: 1.25rem;">
+                        <div class="feature-icon gradient-1 me-3"
+                             style="width: 50px; height: 50px; font-size: 1.25rem;">
                             <i class="fas fa-user-md"></i>
                         </div>
                         <div>
@@ -30,7 +31,8 @@
             <div class="col-md-4">
                 <div class="card h-100">
                     <div class="card-body d-flex align-items-center">
-                        <div class="feature-icon gradient-2 me-3" style="width: 50px; height: 50px; font-size: 1.25rem;">
+                        <div class="feature-icon gradient-2 me-3"
+                             style="width: 50px; height: 50px; font-size: 1.25rem;">
                             <i class="fas fa-award"></i>
                         </div>
                         <div>
@@ -43,7 +45,8 @@
             <div class="col-md-4">
                 <div class="card h-100">
                     <div class="card-body d-flex align-items-center">
-                        <div class="feature-icon gradient-4 me-3" style="width: 50px; height: 50px; font-size: 1.25rem;">
+                        <div class="feature-icon gradient-4 me-3"
+                             style="width: 50px; height: 50px; font-size: 1.25rem;">
                             <i class="fas fa-clock"></i>
                         </div>
                         <div>
