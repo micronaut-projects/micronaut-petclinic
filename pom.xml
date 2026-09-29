@@ -30,7 +30,8 @@
         <jte.version>3.2.4</jte.version>
         <h2gis.version>2.2.5</h2gis.version>
         <!-- Azure provider 1.1.0 uses configuration-cache APIs removed in later drivers. -->
-        <oracle-jdbc.version>23.26.3.0.0</oracle-jdbc.version>
+        <!--TODO: Remove once ojdbc-provider-azure is upgraded to latest versions & this issue [https://github.com/oracle/ojdbc-extensions/issues/286] is addressed.-->
+        <oracle-jdbc.version>23.26.1.0.0</oracle-jdbc.version>
         <azure-core.version>1.59.1</azure-core.version>
         <maven.native.plugin.version>1.1.10</maven.native.plugin.version>
         <maven.native.plugin.version>1.1.14</maven.native.plugin.version>
@@ -348,6 +349,13 @@
                                 </goals>
                             </execution>
                         </executions>
+                    <!-- TODO: Remove once The native build tools are upgraded to use this version or higher.-->
+                        <configuration>
+                            <metadataRepository>
+                                <enabled>true</enabled>
+                                <version>1.0.17</version>
+                            </metadataRepository>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>

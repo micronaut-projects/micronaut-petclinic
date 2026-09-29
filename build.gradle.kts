@@ -117,3 +117,10 @@ tasks.withType<Test>().configureEach {
     maxParallelForks = 1
     systemProperty("micronaut.server.port", "-1")
 }
+
+// TODO: Remove once The native build tools are upgraded to use this version or higher.
+graalvmNative {
+    metadataRepository {
+        version = "1.0.17"
+    }
+}
