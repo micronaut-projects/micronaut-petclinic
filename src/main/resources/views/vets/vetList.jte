@@ -13,6 +13,12 @@
     </div>
 
     <main class="container flex-grow-1 py-4">
+        <div class="d-flex justify-content-end mb-4">
+            <a href="/vets/new" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>${msg.text("button.addVet")}
+            </a>
+        </div>
+
         <div class="row g-4 mb-5">
             <div class="col-md-4">
                 <div class="card h-100">

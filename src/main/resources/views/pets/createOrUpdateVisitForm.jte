@@ -111,7 +111,10 @@
                         </div>
                     @endif
  
-                    <form id="visit-form" action="/owners/${owner.id()}/pets/${pet.id()}/visits/new" method="post" class="needs-validation" data-submit-failed-message="${msg.text("validation.submitFailed")}" novalidate>
+                    <form id="visit-form" action="/owners/${owner.id()}/pets/${pet.id()}/visits/new" method="post" class="needs-validation" novalidate>
+                        <div id="visit-submit-error" class="alert alert-danger d-none" role="alert">
+                            ${msg.text("validation.submitFailed")}
+                        </div>
                         <div class="mb-4">
                             <label for="date" class="form-label">
                                 <i class="fas fa-calendar me-2 text-primary"></i>${msg.text("visit.visitDate")}
@@ -178,6 +181,7 @@
                         (() => {
                             const form = document.getElementById('visit-form');
                             const description = document.getElementById('description');
+                            const submitError = document.getElementById('visit-submit-error');
 
                             description.addEventListener('input', () => {
                                 description.setCustomValidity(
@@ -191,6 +195,7 @@
                                 event.preventDefault();
                                 description.dispatchEvent(new Event('input'));
                                 form.classList.add('was-validated');
+                                submitError.classList.add('d-none');
 
                                 if (!form.checkValidity()) {
                                     return;
@@ -213,6 +218,10 @@
                                         body: JSON.stringify(payload)
                                     });
 
+                                    if (response.status === 401) {
+                                        return;
+                                    }
+
                                     const responseBody = await response.text();
                                     if (response.redirected) {
                                         window.location.assign(response.url);
@@ -222,7 +231,10 @@
                                         document.close();
                                     }
                                 } catch (error) {
-                                    window.alert(form.dataset.submitFailedMessage);
+                                    if (window.petclinicAuthRedirecting || (error && error.name === 'AbortError')) {
+                                        return;
+                                    }
+                                    submitError.classList.remove('d-none');
                                 }
                             });
                         })();

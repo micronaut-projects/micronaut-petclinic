@@ -11,7 +11,6 @@ import io.micronaut.security.rules.SecurityRule;
 
 import java.net.URI;
 import java.time.Duration;
-import java.util.Optional;
 
 /**
  * Controller for handling locale/language switching.
@@ -38,6 +37,7 @@ public class LocaleController {
      * @return redirect to referring page or home with locale cookie set
      */
     @Get
+    @Secured(SecurityRule.IS_ANONYMOUS)
     public HttpResponse<?> changeLocale(@QueryValue(defaultValue = "en") String lang,
                                         HttpRequest<?> request) {
         // Validate language code

@@ -43,15 +43,42 @@ public class ErrorController {
     }
 
     /**
+     * Handle authorization failures raised by the security filter.
+     *
+     * @param request the original request
+     * @return the error view with the correct status
+     */
+    @Error(status = HttpStatus.UNAUTHORIZED, global = true)
+    @View("error/401")
+    public Map<String, Object> unauthorized(HttpRequest<?> request) {
+        return Map.of(
+                "path", request.getPath(),
+                "message", "Unauthorized"
+        );
+    }
+    /**
+     * Handle authorization failures raised by the security filter.
+     *
+     * @param request the original request
+     * @return the error view with the correct status
+     */
+    @Error(status = HttpStatus.FORBIDDEN, global = true)
+    @View("error/401")
+    public Map<String, Object> forbidden(HttpRequest<?> request) {
+        return Map.of(
+                "path", request.getPath(),
+                "message", "Forbidden"
+        );
+    }
+
+    /**
      * Handle 500 Internal Server Error.
      * @param request the original request
-     * @param throwable the exception that occurred
      * @return the error view
      */
-    @Error(global = true)
+    @Error(status = HttpStatus.INTERNAL_SERVER_ERROR, global = true)
     @View("error/error")
-    public Map<String, Object> handleError(HttpRequest<?> request, Throwable throwable) {
-        LOG.error("Error :", throwable);
+    public Map<String, Object> internalServerError(HttpRequest<?> request) {
         return Map.of(
                 "path", request.getPath(),
                 "message", HttpStatus.INTERNAL_SERVER_ERROR.getReason(),

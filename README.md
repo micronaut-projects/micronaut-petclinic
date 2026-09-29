@@ -16,6 +16,7 @@ This Micronaut PetClinic app allows you to:
 - Register pets for owners
 - Schedule veterinary visits
 - View veterinarians and their specialities
+- Sign in with session-based authentication
 - Switch between English, Spanish, and German
 
 
@@ -259,7 +260,7 @@ curl -X POST http://localhost:8080/clinics/intersects \
 
 The Oracle profile also includes a retrieval-only vector search example based on Micronaut Data's [vector type support](https://github.com/micronaut-projects/micronaut-data/pull/3637). It seeds a small pet-care knowledge base, stores each chunk as a `FloatVector` in an Oracle `VECTOR(384, FLOAT32)` column, and uses the derived vector-search repository method with cosine distance.
 
-Start the Oracle profile and open http://localhost:8080/knowledge. The demo uses vectors precomputed once with the all-MiniLM-L6-v2 model and checked into `src/main/resources/knowledge/pet-care-embeddings.tsv`; the runtime has no embedding model, ONNX Runtime, native tokenizer, LLM, or external API key. It returns ranked chunks with their source, topic, species, and distance. The HTTP API is:
+Start the Oracle profile and open http://localhost:8080/knowledge. The demo uses LangChain4j's local [all-MiniLM-L6-v2](https://github.com/langchain4j/langchain4j/blob/main/docs/docs/integrations/embedding-models/1-in-process.md) ONNX embedding model, so no LLM or external API key is required. It returns ranked chunks with their source, topic, species, and distance. The HTTP API is:
 
 ```bash
 curl -X POST http://localhost:8080/knowledge/search \
@@ -267,7 +268,7 @@ curl -X POST http://localhost:8080/knowledge/search \
   -d '{"query":"What vaccinations does my puppy need?"}'
 ```
 
-The vector service is intentionally an interface, making it straightforward to replace the checked-in catalog with another vector source while keeping Oracle retrieval unchanged. The sample query vectors are cataloged alongside the chunk vectors, so queries outside the demo catalog return no matches.
+The vector service is an interface, making it straightforward to replace the checked-in catalog with another vector source while keeping Oracle retrieval unchanged. The sample query vectors are cataloged alongside the chunk vectors, so queries outside the demo catalog return no matches.
 
 ## Project Structure
 
@@ -278,7 +279,9 @@ src/main/java/
       ├── repository/      # Data access interfaces
       ├── service/         # Business logic
       ├── dto/             # Form objects
-      ├── controller/      #
+      ├── security/        # Micronaut Security authentication provider
+      ├── utils/           # Password encoding helpers
+      ├── controller/      # HTTP controllers
       └── system/          #
 
 src/main/resources/
@@ -317,10 +320,12 @@ export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
 
 - **Micronaut 5.x** - Framework
 - **Java 25** - Programming language
+- **Micronaut Security** - Session login and authorization
 - **Micronaut Data JDBC** - Database access
 - **JTE** - HTML template engine
 - **HikariCP** - JDBC connection pooling
 - **Caffeine** - Caching
+- **Spring Security Crypto** - BCrypt password hashing
 - **Bootstrap 5** - CSS framework
 
 ---
@@ -339,6 +344,9 @@ export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
 ./gradlew test jacocoTestReport
 ./gradlew check
 ```
+
+Authentication coverage includes login success and failure, session access to protected pages, anonymous 401 handling,
+registration, duplicate user rejection, password encoding, and role assignment.
 
 ---
 

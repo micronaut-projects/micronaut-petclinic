@@ -18,6 +18,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link href="/resources/css/petclinic.css" rel="stylesheet">
+    <script src="/resources/js/auth-fetch.js"></script>
 </head>
 <body class="d-flex flex-column min-vh-100">
 <nav class="navbar navbar-expand-lg">
@@ -76,6 +77,21 @@
                         <li><a class="dropdown-item" href="/locale?lang=de&backUrl=${request.getPath()}">${msg.text("lang.de")}</a></li>
                     </ul>
                 </li>
+                @if(request != null && request.getAttribute("authenticated", Boolean.class).orElse(false))
+                    <li class="nav-item">
+                        <form action="/logout" method="post" class="d-inline">
+                            <button type="submit" class="nav-link nav-link-button">
+                                <i class="fas fa-right-from-bracket"></i> ${msg.text("nav.logout")}
+                            </button>
+                        </form>
+                    </li>
+                @else
+                    <li class="nav-item">
+                        <a class="nav-link" href="/user/auth">
+                            <i class="fas fa-user"></i> ${msg.text("nav.login")}
+                        </a>
+                    </li>
+                @endif
             </ul>
         </div>
     </div>

@@ -27,6 +27,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static io.micronaut.samples.petclinic.model.Role.Authority.ROLE_ADMIN_;
+import static io.micronaut.samples.petclinic.model.Role.Authority.ROLE_STAFF_;
+
 /**
  * Controller for pet-related operations.
  * Handles CRUD operations for pets within the context of their owners.
@@ -108,6 +111,7 @@ public class PetController {
      * @param ownerId the owner ID
      * @return the create pet form view
      */
+    @Secured(SecurityRule.IS_ANONYMOUS)
     @Get("/new")
     @View("pets/createOrUpdatePetForm")
     public Map<String, Object> initCreationForm(@PathVariable Integer ownerId) {
@@ -127,6 +131,7 @@ public class PetController {
      * @param form    the pet form data
      * @return redirect to owner details
      */
+    @Secured(ROLE_STAFF_)
     @Post(value = "/new", consumes = MediaType.APPLICATION_FORM_URLENCODED)
     public HttpResponse<?> processCreationForm(@PathVariable Integer ownerId, @Valid @Body PetForm form) {
         Optional<Owner> owner = getOwner(ownerId);
@@ -159,6 +164,7 @@ public class PetController {
      * @param petId   the pet ID
      * @return the edit pet form view
      */
+    @Secured(SecurityRule.IS_AUTHENTICATED)
     @Get("/{petId}/edit")
     @View("pets/createOrUpdatePetForm")
     public Map<String, Object> initUpdateForm(@PathVariable Integer ownerId, @PathVariable Integer petId) {
