@@ -235,6 +235,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
+                    <fork>true</fork>
                     <annotationProcessorPaths combine.children="append">
                         <path>
                             <groupId>io.micronaut</groupId>
@@ -270,6 +271,7 @@
                     <compilerArgs>
                         <arg>-Amicronaut.processing.group=io.micronaut.samples</arg>
                         <arg>-Amicronaut.processing.module=micronaut-petclinic</arg>
+                        <arg>-J-Dmicronaut.data.sql.dialect-options.oracle.version=23.1</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>

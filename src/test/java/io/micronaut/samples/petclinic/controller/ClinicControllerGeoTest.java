@@ -184,4 +184,29 @@ class ClinicControllerGeoTest {
         assertThat(response.body()).contains("\"latitude\":43.0748");
         assertThat(response.body()).doesNotContain("University Pet Clinic");
     }
+
+    @Test
+    void shouldReturnNearbyClinicsFilteredByBooleanFlags() {
+        String nearby = """
+                {
+                  "latitude": 43.0745,
+                  "longitude": -89.3840,
+                  "radiusMeters": 5000,
+                  "acceptingNewPatients": true,
+                  "emergencyService": true
+                }
+                """;
+
+        HttpResponse<String> response = client.toBlocking()
+                .exchange(HttpRequest.POST("/clinics/nearby", nearby)
+                        .contentType(MediaType.APPLICATION_JSON), String.class);
+
+        assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
+        assertThat(response.body()).contains("Downtown Madison Pet Clinic");
+        assertThat(response.body()).contains("East Madison Pet Clinic");
+        assertThat(response.body()).contains("\"acceptingNewPatients\":true");
+        assertThat(response.body()).contains("\"emergencyService\":true");
+        assertThat(response.body()).doesNotContain("Capitol Square Pet Clinic");
+        assertThat(response.body()).doesNotContain("University Pet Clinic");
+    }
 }

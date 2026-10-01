@@ -99,11 +99,15 @@ configurations.configureEach {
 
 tasks.withType<JavaCompile>().configureEach {
     options.release.set(25)
+    options.isFork = true
     options.compilerArgs.addAll(
         listOf(
             "-Amicronaut.processing.group=io.micronaut.samples",
             "-Amicronaut.processing.module=micronaut-petclinic"
         )
+    )
+    options.forkOptions.jvmArgs = listOf(
+        "-Dmicronaut.data.sql.dialect-options.oracle.version=23.1"
     )
 }
 

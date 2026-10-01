@@ -37,4 +37,30 @@ public interface ClinicRepository extends CrudRepository<Clinic, Integer> {
      * @return nearby clinics
      */
     List<Clinic> findByLocationNear(Geometry geometry, double distance);
+
+    /**
+     * Finds clinics by their new-patient availability.
+     *
+     * @param acceptingNewPatients the availability value to match
+     * @return clinics with the requested availability
+     */
+    List<Clinic> findByAcceptingNewPatients(Boolean acceptingNewPatients);
+
+    /**
+     * Finds clinics by whether they provide emergency service.
+     *
+     * @param emergencyService the emergency-service value to match
+     * @return clinics with the requested service flag
+     */
+    List<Clinic> findByEmergencyService(Boolean emergencyService);
+
+    /**
+     * Finds clinics matching both Boolean availability flags.
+     *
+     * @param acceptingNewPatients the new-patient availability value
+     * @param emergencyService the emergency-service value
+     * @return clinics matching both flags
+     */
+    List<Clinic> findByAcceptingNewPatientsAndEmergencyService(Boolean acceptingNewPatients,
+                                                                Boolean emergencyService);
 }

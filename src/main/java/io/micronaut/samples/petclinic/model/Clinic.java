@@ -7,8 +7,8 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Srid;
-import io.micronaut.data.model.geo.Point;
 import io.micronaut.data.model.geo.LineString;
+import io.micronaut.data.model.geo.Point;
 import io.micronaut.data.model.geo.Polygon;
 import io.micronaut.serde.annotation.Serdeable;
 import jakarta.validation.constraints.NotBlank;
@@ -29,6 +29,8 @@ import static io.micronaut.data.annotation.Relation.Kind.ONE_TO_MANY;
  * @param name the display name of the clinic branch
  * @param address the street address
  * @param city the city
+ * @param acceptingNewPatients whether the clinic is currently accepting new patients
+ * @param emergencyService whether the clinic provides emergency service
  * @param location the geospatial point for the branch
  * @param serviceArea the geospatial service coverage area for the branch
  * @param serviceOfferings the services offered by this clinic branch
@@ -51,6 +53,14 @@ public record Clinic(
         @MappedProperty("CITY")
         @NotBlank
         String city,
+
+        @MappedProperty("ACCEPTING_NEW_PATIENTS")
+        @NotNull
+        Boolean acceptingNewPatients,
+
+        @MappedProperty("EMERGENCY_SERVICE")
+        @NotNull
+        Boolean emergencyService,
 
         @Srid(value = 4326, type = Srid.CrsType.GEOGRAPHIC)
         @Index(columns = "LOCATION")
@@ -79,7 +89,7 @@ public record Clinic(
      * Creates an empty clinic for framework binding.
      */
     public Clinic() {
-        this(null, null, null, null, null, null, List.of());
+        this(null, null, null, null, null, null, null, null, List.of());
     }
 
     /**
@@ -92,7 +102,36 @@ public record Clinic(
      * @param latitude the latitude coordinate
      */
     public Clinic(String name, String address, String city, double longitude, double latitude) {
-        this(null, name, address, city, new Point(longitude, latitude), serviceArea(longitude, latitude), List.of());
+        this(null, name, address, city, true, false, new Point(longitude, latitude), serviceArea(longitude, latitude), List.of());
+    }
+
+    /**
+     * Creates a new clinic without an id and with its availability flags.
+     *
+     * @param name the display name
+     * @param address the street address
+     * @param city the city
+     * @param longitude the longitude coordinate
+     * @param latitude the latitude coordinate
+     * @param acceptingNewPatients whether the clinic is accepting new patients
+     * @param emergencyService whether the clinic provides emergency service
+     */
+    public Clinic(String name,
+                  String address,
+                  String city,
+                  double longitude,
+                  double latitude,
+                  boolean acceptingNewPatients,
+                  boolean emergencyService) {
+        this(null,
+                name,
+                address,
+                city,
+                acceptingNewPatients,
+                emergencyService,
+                new Point(longitude, latitude),
+                serviceArea(longitude, latitude),
+                List.of());
     }
 
     private static Polygon serviceArea(double longitude, double latitude) {

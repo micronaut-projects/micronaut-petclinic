@@ -58,7 +58,9 @@ public class ClinicController {
     public List<ClinicDto> nearby(@Body ClinicNearbyRequest request) {
         List<Clinic> clinics = clinicService.findClinicsNear(request.longitude(),
                 request.latitude(),
-                request.radiusMeters());
+                request.radiusMeters(),
+                request.acceptingNewPatients(),
+                request.emergencyService());
         return ClinicDto.from(clinics);
     }
 
@@ -72,7 +74,9 @@ public class ClinicController {
     @Produces(MediaType.APPLICATION_JSON)
     public List<ClinicDto> withinPolygon(@Body ClinicCoordinatesRequest request) {
         List<Clinic> clinics = clinicService.findClinicsWithinPolygon(
-                request.coordinatesAsPointList());
+                request.coordinatesAsPointList(),
+                request.acceptingNewPatients(),
+                request.emergencyService());
         return ClinicDto.from(clinics);
     }
 
@@ -86,7 +90,9 @@ public class ClinicController {
     @Produces(MediaType.APPLICATION_JSON)
     public List<ClinicDto> intersectsLine(@Body ClinicCoordinatesRequest request) {
         List<Clinic> clinics = clinicService.findClinicsIntersectingLine(
-                request.coordinatesAsPointList());
+                request.coordinatesAsPointList(),
+                request.acceptingNewPatients(),
+                request.emergencyService());
         return ClinicDto.from(clinics);
     }
 }
