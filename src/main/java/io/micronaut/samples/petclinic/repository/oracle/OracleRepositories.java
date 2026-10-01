@@ -10,6 +10,7 @@ import io.micronaut.samples.petclinic.model.Speciality;
 import io.micronaut.samples.petclinic.model.VetWithSpecialities;
 import io.micronaut.samples.petclinic.repository.AppointmentRepository;
 import io.micronaut.samples.petclinic.repository.ClinicRepository;
+import io.micronaut.samples.petclinic.repository.ClinicServiceOfferingRepository;
 import io.micronaut.samples.petclinic.repository.OwnerRepository;
 import io.micronaut.samples.petclinic.repository.PetCareChunkRepository;
 import io.micronaut.samples.petclinic.repository.PetCareDocumentRepository;

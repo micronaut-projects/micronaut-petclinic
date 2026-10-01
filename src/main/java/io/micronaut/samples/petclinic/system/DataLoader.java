@@ -3,6 +3,7 @@ package io.micronaut.samples.petclinic.system;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.context.event.StartupEvent;
+import io.micronaut.samples.petclinic.model.Appointment;
 import io.micronaut.samples.petclinic.model.Clinic;
 import io.micronaut.samples.petclinic.model.ClinicServiceOffering;
 import io.micronaut.samples.petclinic.model.Owner;
@@ -327,7 +328,6 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
         clinics.add(new Clinic("Portage Pet Clinic", "117 W Cook St.", "Portage", -89.4626, 43.5391, true, false));
         clinics.add(new Clinic("Janesville Pet Clinic", "20 S Main St.", "Janesville", -89.0187, 42.6828, false, true));
         clinics.add(new Clinic("Milwaukee Pet Clinic", "200 E Wells St.", "Milwaukee", -87.9065, 43.0410, true, true));
-        clinicRepository.saveAll(clinics);
         for (Clinic clinic : clinicRepository.saveAll(clinics)) {
             seedClinicOfferings(clinic);
         }

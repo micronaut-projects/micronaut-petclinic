@@ -11,6 +11,7 @@ import io.micronaut.samples.petclinic.model.VetWithSpecialities;
 import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.samples.petclinic.repository.AppointmentRepository;
 import io.micronaut.samples.petclinic.repository.ClinicRepository;
+import io.micronaut.samples.petclinic.repository.ClinicServiceOfferingRepository;
 import io.micronaut.samples.petclinic.repository.OwnerRepository;
 import io.micronaut.samples.petclinic.repository.PetRepository;
 import io.micronaut.samples.petclinic.repository.PetTypeRepository;
@@ -151,6 +152,7 @@ public final class MySqlRepositories {
     public interface MySqlClinicRepository extends ClinicRepository {
 
     }
+
     /**
      * Mysql appointment repository used by the transaction-priority showcase.
      */
