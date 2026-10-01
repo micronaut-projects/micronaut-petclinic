@@ -254,7 +254,7 @@ curl -X POST http://localhost:8080/clinics/intersects \
 
 ### Clinic service offering upsert
 
-This branch contains a standalone showcase for the unreleased Micronaut Data 5.2.0 `@Upsert` feature. The 5.2.0 Data artifacts must already be available in your local Maven/Gradle repository; they are not yet available from Maven Central.
+The application also includes a showcase of the newly introduced @Upsert feature of micronaut data 5.2.0.
 
 Each clinic has its own service catalog at `/clinics/{clinicId}/services`. From the clinic search results, click **Services**, or open the first sample clinic directly at http://localhost:8080/clinics/1/services.
 

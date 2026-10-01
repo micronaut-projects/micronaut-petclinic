@@ -7,7 +7,6 @@ import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
-import io.micronaut.serde.annotation.Serdeable;
 
 import java.math.BigDecimal;
 
@@ -35,7 +34,6 @@ import static io.micronaut.data.annotation.Relation.Kind.MANY_TO_ONE;
 @MappedEntity("CLINIC_SERVICE_OFFERINGS")
 @Index(name = "UK_CLINIC_SERVICE_CODE", columns = {"CLINIC_ID", "SERVICE_CODE"}, unique = true)
 @Index(name = "UK_CLINIC_SERVICE_KEY", columns = "CLINIC_SERVICE_KEY", unique = true)
-@Serdeable
 public record ClinicServiceOffering(
         @Id
         @GeneratedValue
