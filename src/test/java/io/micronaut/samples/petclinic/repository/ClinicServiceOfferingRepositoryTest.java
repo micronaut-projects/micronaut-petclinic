@@ -48,6 +48,7 @@ class ClinicServiceOfferingRepositoryTest {
         ClinicServiceOffering inserted = offeringRepository
                 .findByClinicIdAndServiceCode(clinic.id(), SERVICE_CODE)
                 .orElseThrow();
+        assertThat(inserted.clinic().id()).isEqualTo(clinic.id());
 
         offeringRepository.upsert(new ClinicServiceOffering(
                 clinic, SERVICE_CODE, "Extended wellness check", "Updated description", new BigDecimal("65.00"), 45));
@@ -61,6 +62,7 @@ class ClinicServiceOfferingRepositoryTest {
                 .as("upsert must update the existing row instead of inserting a new offering")
                 .isEqualTo(inserted.id());
         assertThat(updated.name()).isEqualTo("Extended wellness check");
+        assertThat(updated.clinic().id()).isEqualTo(clinic.id());
         assertThat(updated.description()).isEqualTo("Updated description");
         assertThat(updated.price()).isEqualByComparingTo("65.00");
         assertThat(updated.durationMinutes()).isEqualTo(45);
@@ -80,12 +82,16 @@ class ClinicServiceOfferingRepositoryTest {
 
         assertThat(offeringRepository.findByClinicIdAndServiceCode(downtownClinic.id(), SERVICE_CODE))
                 .get()
-                .extracting(ClinicServiceOffering::name)
-                .isEqualTo("Downtown wellness check");
+                .satisfies(offering -> {
+                    assertThat(offering.clinic().id()).isEqualTo(downtownClinic.id());
+                    assertThat(offering.name()).isEqualTo("Downtown wellness check");
+                });
         assertThat(offeringRepository.findByClinicIdAndServiceCode(capitolClinic.id(), SERVICE_CODE))
                 .get()
-                .extracting(ClinicServiceOffering::name)
-                .isEqualTo("Capitol wellness check");
+                .satisfies(offering -> {
+                    assertThat(offering.clinic().id()).isEqualTo(capitolClinic.id());
+                    assertThat(offering.name()).isEqualTo("Capitol wellness check");
+                });
     }
 
     @Test
@@ -94,10 +100,14 @@ class ClinicServiceOfferingRepositoryTest {
         Clinic capitolClinic = clinicByName("Capitol Square Pet Clinic");
 
         assertThat(offeringRepository.findByClinicIdOrderByServiceCode(downtownClinic.id()))
+                .satisfies(offerings -> assertThat(offerings)
+                        .allSatisfy(offering -> assertThat(offering.clinic().id()).isEqualTo(downtownClinic.id())))
                 .extracting(ClinicServiceOffering::serviceCode)
                 .contains("WELLNESS_CHECK", "SENIOR_PET_SCREENING")
                 .doesNotContain("RABIES_EXPRESS");
         assertThat(offeringRepository.findByClinicIdOrderByServiceCode(capitolClinic.id()))
+                .satisfies(offerings -> assertThat(offerings)
+                        .allSatisfy(offering -> assertThat(offering.clinic().id()).isEqualTo(capitolClinic.id())))
                 .extracting(ClinicServiceOffering::serviceCode)
                 .contains("RABIES_EXPRESS", "APARTMENT_PET_BEHAVIOR")
                 .doesNotContain("WELLNESS_CHECK");

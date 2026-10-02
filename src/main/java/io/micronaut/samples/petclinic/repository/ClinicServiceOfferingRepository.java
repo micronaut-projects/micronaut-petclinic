@@ -1,11 +1,14 @@
 package io.micronaut.samples.petclinic.repository;
 
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Upsert;
-import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.samples.petclinic.model.ClinicServiceOffering;
 
 import java.util.List;
 import java.util.Optional;
+
+import static io.micronaut.data.annotation.Join.Type.LEFT_FETCH;
 
 /**
  * Repository for the service catalog belonging to each clinic.
@@ -14,7 +17,7 @@ import java.util.Optional;
  * {@code @JdbcRepository}. The explicit {@link Upsert} method is intentionally
  * opt-in so the example makes the generated native upsert visible.</p>
  */
-public interface ClinicServiceOfferingRepository extends CrudRepository<ClinicServiceOffering, Integer> {
+public interface ClinicServiceOfferingRepository extends GenericRepository<ClinicServiceOffering, Integer> {
 
     /**
      * Inserts an offering or updates the offering with the same clinic and code.
@@ -26,11 +29,19 @@ public interface ClinicServiceOfferingRepository extends CrudRepository<ClinicSe
     ClinicServiceOffering upsert(ClinicServiceOffering offering);
 
     /**
+     * Deletes an offering by its database identifier.
+     *
+     * @param id the offering identifier
+     */
+    void deleteById(Integer id);
+
+    /**
      * Lists a clinic's offerings in stable catalog-code order.
      *
      * @param clinicId the clinic branch
      * @return offerings owned by that clinic
      */
+    @Join(value = "clinic", type = LEFT_FETCH)
     List<ClinicServiceOffering> findByClinicIdOrderByServiceCode(Integer clinicId);
 
     /**
@@ -40,5 +51,6 @@ public interface ClinicServiceOfferingRepository extends CrudRepository<ClinicSe
      * @param serviceCode the clinic-local code
      * @return the offering if configured
      */
+    @Join(value = "clinic", type = LEFT_FETCH)
     Optional<ClinicServiceOffering> findByClinicIdAndServiceCode(Integer clinicId, String serviceCode);
 }

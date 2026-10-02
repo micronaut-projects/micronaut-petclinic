@@ -41,7 +41,6 @@ public record ClinicServiceOffering(
 
         @Relation(MANY_TO_ONE)
         @MappedProperty("CLINIC_ID")
-        @Nullable
         Clinic clinic,
 
         @MappedProperty("CLINIC_SERVICE_KEY")
