@@ -52,7 +52,9 @@ public final class PostgresRepositories {
          * @return pets belonging to the owner
          */
         @Override
-        @Query(value = "SELECT p.* FROM PETS p WHERE p.OWNER_ID = :ownerId ORDER BY p.NAME", nativeQuery = true)
+        @Query(value = """
+                SELECT p.* FROM "PETS" p WHERE p."OWNER_ID" = :ownerId ORDER BY p."NAME"
+                """, nativeQuery = true)
         Collection<Pet> findByOwnerId(Integer ownerId);
 
         /**
@@ -61,8 +63,9 @@ public final class PostgresRepositories {
          * @param ownerIds owner ids to match
          * @return pets belonging to the supplied owners
          */
-        @Override
-        @Query(value = "SELECT p.* FROM PETS p WHERE p.OWNER_ID IN (:ownerIds) ORDER BY p.OWNER_ID, p.NAME", nativeQuery = true)
+        @Query(value = """
+                SELECT p.* FROM "PETS" p WHERE p."OWNER_ID" IN (:ownerIds) ORDER BY p."OWNER_ID", p."NAME"
+                """, nativeQuery = true)
         List<Pet> findByOwnerIdIn(List<Integer> ownerIds);
     }
 
@@ -97,17 +100,17 @@ public final class PostgresRepositories {
         @Query(value = """
                 SELECT
                     v.id,
-                    v.FIRST_NAME AS first_name,
-                    v.LAST_NAME AS last_name,
+                    v."FIRST_NAME" AS first_name,
+                    v."LAST_NAME" AS last_name,
                     STRING_AGG(
-                        CASE WHEN s.id IS NOT NULL THEN s.id::text || ':' || s.NAME END,
-                        '|' ORDER BY s.NAME
+                        CASE WHEN s.id IS NOT NULL THEN s.id::text || ':' || s."NAME" END,
+                        '|' ORDER BY s."NAME"
                     ) AS speciality_rows
-                FROM VETS v
-                LEFT JOIN VET_SPECIALTIES vs ON vs.VET_ID = v.id
-                LEFT JOIN SPECIALTIES s ON s.id = vs.SPECIALTY_ID
-                GROUP BY v.id, v.FIRST_NAME, v.LAST_NAME
-                ORDER BY v.LAST_NAME
+                FROM "VETS" v
+                LEFT JOIN "VET_SPECIALTIES" vs ON vs."VET_ID" = v.id
+                LEFT JOIN "SPECIALTIES" s ON s.id = vs."SPECIALTY_ID"
+                GROUP BY v.id, v."FIRST_NAME", v."LAST_NAME"
+                ORDER BY v."LAST_NAME"
                 """, nativeQuery = true)
         Collection<VetWithSpecialities> findAllWithSpecialities();
     }
@@ -125,8 +128,20 @@ public final class PostgresRepositories {
          * @return visits for the pet
          */
         @Override
-        @Query(value = "SELECT v.* FROM VISITS v WHERE v.PET_ID = :petId ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
+        @Query(value = """
+                SELECT v.* FROM "VISITS" v WHERE v."PET_ID" = :petId ORDER BY v."VISIT_DATE" DESC
+                """, nativeQuery = true)
         Collection<Visit> findByPetId(Integer petId);
+
+        /**
+         * Finds visits for a pet using Oracle SQL.
+         *
+         * @param petName the pet name
+         * @return visits for the pet
+         */
+        @Override
+        @Query(value = "SELECT v.* FROM VISITS v LEFT JOIN PETS p ON v.PET_ID = p.ID WHERE p.NAME = :petName  ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
+        Collection<Visit> findByPetName(String petName);
     }
 
     /**
@@ -142,7 +157,9 @@ public final class PostgresRepositories {
          * @return specialities associated with the vet
          */
         @Override
-        @Query(value = "SELECT s.* FROM SPECIALTIES s JOIN VET_SPECIALTIES vs ON vs.SPECIALTY_ID = s.id WHERE vs.VET_ID = :vetId ORDER BY s.NAME", nativeQuery = true)
+        @Query(value = """
+                SELECT s.* FROM "SPECIALTIES" s JOIN "VET_SPECIALTIES" vs ON vs."SPECIALTY_ID" = s.id WHERE vs."VET_ID" = :vetId ORDER BY s."NAME"
+                """, nativeQuery = true)
         List<Speciality> findSpecialitiesByVetId(Integer vetId);
     }
 
@@ -159,11 +176,11 @@ public final class PostgresRepositories {
     public interface PostgresAppointmentRepository extends AppointmentRepository {
         @NonNull
         @Override
-        @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE a.ID = :appointmentId FOR UPDATE", nativeQuery = true)
+        @Query(value = "SELECT a.* FROM \"APPOINTMENTS\" a WHERE a.\"id\" = :appointmentId FOR UPDATE", nativeQuery = true)
         Optional<Appointment> findByIdForUpdate(Integer appointmentId);
 
         @Override
-        @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE STATUS = 'AVAILABLE' ORDER BY DISPLAY_ORDER, ID", nativeQuery = true)
+        @Query(value = "SELECT a.* FROM \"APPOINTMENTS\" a WHERE a.\"STATUS\" = 'AVAILABLE' ORDER BY a.\"DISPLAY_ORDER\", a.\"id\"", nativeQuery = true)
         List<Appointment> findAvailableAppointments();
     }
 }

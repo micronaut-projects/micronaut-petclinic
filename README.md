@@ -255,8 +255,8 @@ src/main/resources/
 
 - `application.yml` - Main configuration (H2 default)
 - `application-oracle.yml` - Oracle settings
-- `application-mysql.yml` - MySQL settings
 - `application-oracle-deepsec.yml` - opt-in Oracle Deep Data Security and IAM settings
+- `application-mysql.yml` - MySQL settings
 - `application-postgres.yml` - PostgreSQL settings
 
 To use a specific database locally:
@@ -288,18 +288,33 @@ export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
 
 ## Testing
 
+`./mvnw test` runs the integration suite against the default in-memory H2 database. `./mvnw verify` runs that H2 suite first, then reruns it against disposable PostgreSQL, MySQL, and Oracle databases managed by Micronaut Test Resources.
+
 ```bash
-# Run all tests (Maven)
+# H2 integration suite
 ./mvnw test
 
-# Run integration tests (Maven)
+# H2 plus PostgreSQL, MySQL, and Oracle integration suites
 ./mvnw verify
-
-# Gradle alternatives
-./gradlew test
-./gradlew test jacocoTestReport
-./gradlew check
 ```
+
+Docker must be running for `verify`; Micronaut Test Resources provisions the disposable database containers and pulls missing images automatically. Oracle startup is typically slower than PostgreSQL and MySQL.
+
+```bash
+# Gradle equivalents
+./gradlew test                  # H2 integration suite
+./gradlew check                 # H2 plus all database integrations
+
+# Run one database integration suite
+./gradlew testPostgresIntegration
+./gradlew testMysqlIntegration
+./gradlew testOracleIntegration
+
+# Generate coverage
+./gradlew test jacocoTestReport
+```
+
+The former Maven database test profiles are no longer used.
 
 `OracleTransactionPriorityIntegrationTest` and `OracleTransactionPriorityControllerTest` require `MICRONAUT_ENVIRONMENTS=oracle`; the default `CREATE_DROP` setting drops and recreates application tables in the `petclinic` schema.
 Use a disposable database, or preserve an already-seeded schema with `DATASOURCES_DEFAULT_SCHEMA_GENERATE=NONE PETCLINIC_SAMPLE_DATA_ENABLED=false`.
