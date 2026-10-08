@@ -129,9 +129,11 @@ public class OwnerController {
      */
     @Get("/{ownerId}")
     @View("owners/ownerDetails")
-    public Map<String, Object> showOwner(@PathVariable Integer ownerId) {
+    public Map<String, Object> showOwner(@PathVariable Integer ownerId,
+                                        @QueryValue(defaultValue = "details") String tab) {
         Owner owner = clinicService.findOwnerById(ownerId).orElseThrow(NotFoundException::new);
-        return Map.of("owner", owner);
+        String activeTab = "json-duality".equals(tab) ? tab : "details";
+        return Map.of("owner", owner, "activeTab", activeTab);
     }
 
     /**

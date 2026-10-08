@@ -60,6 +60,7 @@ docker-compose --profile oracle up
 
 > **Note:** The Oracle profile uses the full Oracle AI Database 26ai Free image so it can configure TCPS. Set `ORACLE_IMAGE` if you need a different compatible image for your platform.
 
+
 ### Oracle Deep Data Security showcase
 
 The repository also includes an opt-in Oracle Deep Data Security integration. It connects Micronaut Data JDBC through the Micronaut Security OJDBC extension, propagating the authenticated end-user access token to Oracle. Oracle maps Entra app roles to data roles and applies `DATA GRANT` policies at the row and column boundary.
@@ -405,6 +406,16 @@ Wait for bookings in any other tabs or clients to finish too. Reset uses plain
 rollback enabled, a reset blocked by a LOW booking can cause Oracle to roll that
 booking back after the configured 3-second HIGH wait target. Reset can also clear
 a booking that commits while it waits for the row lock.
+
+### Oracle JSON duality showcase
+
+In the `oracle` environment, open an owner and select the **JSON Duality** tab
+(for example, http://localhost:8080/owners/1?tab=json-duality) to view that
+owner, their pets, and visit history together as one document. Edit existing
+owner, pet, or visit details and save; the changes also appear in Petclinic's
+regular forms. If the record changed since it was loaded, saving reports a
+conflict so you can reload the latest version. Adding or removing pets and
+visits is not supported in this showcase.
 
 ## Troubleshooting
 

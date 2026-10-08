@@ -4,6 +4,7 @@
 @import java.util.Locale
 
 @param Owner owner
+@param String activeTab
 @param io.micronaut.samples.petclinic.system.I18nViewModelProcessor.Msg msg
 @param io.micronaut.http.HttpRequest<?> request
 @param java.util.Locale locale
@@ -32,6 +33,24 @@
             <i class="fas fa-arrow-left me-2"></i>${msg.text("owner.backToSearch")}
         </a>
 
+        <ul class="nav nav-tabs mb-4" role="tablist" aria-label="${msg.text("owner.details")}">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link ${activeNames != null && activeNames.contains("oracle") && "json-duality".equals(activeTab) ? "" : "active"}"
+                   href="/owners/${owner.id()}" role="tab">
+                    ${msg.text("owner.details")}
+                </a>
+            </li>
+            @if(activeNames != null && activeNames.contains("oracle"))
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link ${"json-duality".equals(activeTab) ? "active" : ""}"
+                       href="/owners/${owner.id()}?tab=json-duality" role="tab">
+                        <i class="fas fa-code me-2"></i>${msg.text("nav.jsonDuality")}
+                    </a>
+                </li>
+            @endif
+        </ul>
+
+        @if(!(activeNames != null && activeNames.contains("oracle") && "json-duality".equals(activeTab)))
         <div class="row g-4">
             <div class="col-lg-4">
                 <div class="detail-card animate-fade-in-up">
@@ -150,5 +169,114 @@
                 </div>
             </div>
         </div>
+        @endif
+
+        @if(activeNames != null && activeNames.contains("oracle") && "json-duality".equals(activeTab))
+            <div class="mb-4">
+                <h2 class="h3 mb-1">${msg.text("jsonDuality.title")}</h2>
+                <p class="text-muted mb-0">${msg.text("jsonDuality.subtitle")}</p>
+            </div>
+            <div id="json-duality-page" data-document-url="/owners/${owner.id()}/json-duality"
+                 data-loading-label="${msg.text("jsonDuality.loading")}" data-load-error-label="${msg.text("jsonDuality.loadError")}" 
+                 data-save-label="${msg.text("jsonDuality.saveSuccess")}" data-save-error-label="${msg.text("jsonDuality.saveError")}" 
+                 data-conflict-label="${msg.text("jsonDuality.conflict")}" data-invalid-label="${msg.text("jsonDuality.invalid")}">
+                <div class="row g-4">
+                    <div class="col-lg-4">
+                        <div class="card animate-fade-in-up">
+                            <div class="card-header"><h5 class="mb-0">${msg.text("jsonDuality.howItWorks")}</h5></div>
+                            <div class="card-body">
+                                <p>${msg.text("jsonDuality.explanation")}</p>
+                                <ul class="mb-0">
+                                    <li><code>@JsonView</code> maps the owner document.</li>
+                                    <li><code>@JsonSubView</code> maps the nested pets and visits.</li>
+                                    <li><code>@Relation</code> declares their nested collections.</li>
+                                    <li>The Oracle repository reads and updates the generated view.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-8">
+                        <div class="card animate-fade-in-up stagger-1">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0"><i class="fas fa-code me-2"></i>${msg.text("jsonDuality.document")}</h5>
+                                <span class="badge bg-secondary">${msg.text("jsonDuality.oracleOnly")}</span>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted">${msg.text("jsonDuality.editInstructions")}</p>
+                                <textarea id="owner-document" class="form-control font-monospace" rows="25"
+                                          spellcheck="false" aria-label="${msg.text("jsonDuality.document")}"></textarea>
+                                <div class="d-flex flex-wrap gap-2 mt-3">
+                                    <button id="reload-document" class="btn btn-outline-secondary" type="button">
+                                        <i class="fas fa-rotate me-2"></i>${msg.text("jsonDuality.reload")}
+                                    </button>
+                                    <button id="save-document" class="btn btn-primary" type="button">
+                                        <i class="fas fa-floppy-disk me-2"></i>${msg.text("jsonDuality.save")}
+                                    </button>
+                                </div>
+                                <div id="document-status" class="mt-3" role="status" aria-live="polite" hidden></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                (() => {
+                    const page = document.getElementById("json-duality-page");
+                    const editor = document.getElementById("owner-document");
+                    const status = document.getElementById("document-status");
+                    const documentUrl = page.dataset.documentUrl;
+                    const setStatus = (message, style = "info") => {
+                        const hasMessage = Boolean(message);
+                        status.hidden = !hasMessage;
+                        status.className = hasMessage ? "mt-3 alert alert-" + style : "mt-3";
+                        status.textContent = hasMessage ? message : "";
+                    };
+                    const loadDocument = async () => {
+                        setStatus(page.dataset.loadingLabel, "secondary");
+                        try {
+                            const response = await fetch(documentUrl, { headers: { Accept: "application/json" } });
+                            if (!response.ok) throw new Error(page.dataset.loadErrorLabel);
+                            editor.value = JSON.stringify(await response.json(), null, 2);
+                            setStatus("");
+                        } catch (error) {
+                            setStatus(error.message || page.dataset.loadErrorLabel, "danger");
+                        }
+                    };
+                    document.getElementById("reload-document").addEventListener("click", loadDocument);
+                    document.getElementById("save-document").addEventListener("click", async () => {
+                        let document;
+                        try {
+                            document = JSON.parse(editor.value);
+                        } catch {
+                            setStatus(page.dataset.invalidLabel, "warning");
+                            return;
+                        }
+                        try {
+                            const response = await fetch(documentUrl, {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json", Accept: "application/json" },
+                                body: JSON.stringify(document)
+                            });
+                            const result = await response.json();
+                            if (response.status === 409) {
+                                setStatus(result.message || page.dataset.conflictLabel, "warning");
+                                return;
+                            }
+                            if (!response.ok) {
+                                setStatus(result.message || page.dataset.saveErrorLabel, "danger");
+                                return;
+                            }
+                            editor.value = JSON.stringify(result, null, 2);
+                            setStatus(page.dataset.saveLabel, "success");
+                        } catch (error) {
+                            setStatus(error.message || page.dataset.saveErrorLabel, "danger");
+                        }
+                    });
+                    loadDocument();
+                })();
+            </script>
+        @endif
     </main>
 `, msg = msg, request = request, locale = locale, activeNames = activeNames)
