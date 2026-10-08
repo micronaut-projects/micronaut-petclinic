@@ -25,7 +25,7 @@ public interface ClinicServiceOfferingRepository extends GenericRepository<Clini
      * @param offering the clinic-owned offering
      * @return the persisted offering when the driver returns it
      */
-    @Upsert(conflictsOn = {"clinicServiceKey"})
+    @Upsert(conflictsOn = {"clinic", "serviceCode"})
     ClinicServiceOffering upsert(ClinicServiceOffering offering);
 
     /**
@@ -36,7 +36,7 @@ public interface ClinicServiceOfferingRepository extends GenericRepository<Clini
     void deleteById(Integer id);
 
     /**
-     * Lists a clinic's offerings in stable catalog-code order.
+     * Lists a clinic's offerings in stable catalog-code order, fetching the owning clinic.
      *
      * @param clinicId the clinic branch
      * @return offerings owned by that clinic

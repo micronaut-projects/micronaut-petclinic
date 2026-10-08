@@ -40,15 +40,19 @@ class ClinicServiceOfferingRepositoryTest {
     }
 
     @Test
-    void shouldInsertThenUpdateTheSameClinicOffering() {
+    void shouldInsertThenUpdateUsingTheGeneratedClinicIdAndServiceCodeConflictKey() {
         Clinic clinic = testClinic("Upsert Clinic", -89.70, 43.08);
+        assertThat(clinic.id()).isNotNull();
         offeringRepository.upsert(new ClinicServiceOffering(
                 clinic, SERVICE_CODE, "Wellness check", "Initial description", new BigDecimal("45.00"), 30));
 
         ClinicServiceOffering inserted = offeringRepository
                 .findByClinicIdAndServiceCode(clinic.id(), SERVICE_CODE)
                 .orElseThrow();
+        assertThat(inserted.id()).isNotNull();
         assertThat(inserted.clinic().id()).isEqualTo(clinic.id());
+        assertThat(inserted.clinic().location().x()).isEqualTo(-89.70);
+        assertThat(inserted.clinic().serviceArea()).isNotNull();
 
         offeringRepository.upsert(new ClinicServiceOffering(
                 clinic, SERVICE_CODE, "Extended wellness check", "Updated description", new BigDecimal("65.00"), 45));
@@ -63,6 +67,8 @@ class ClinicServiceOfferingRepositoryTest {
                 .isEqualTo(inserted.id());
         assertThat(updated.name()).isEqualTo("Extended wellness check");
         assertThat(updated.clinic().id()).isEqualTo(clinic.id());
+        assertThat(updated.clinic().location().x()).isEqualTo(-89.70);
+        assertThat(updated.clinic().serviceArea()).isNotNull();
         assertThat(updated.description()).isEqualTo("Updated description");
         assertThat(updated.price()).isEqualByComparingTo("65.00");
         assertThat(updated.durationMinutes()).isEqualTo(45);
@@ -75,6 +81,8 @@ class ClinicServiceOfferingRepositoryTest {
     void shouldKeepTheSameServiceCodeIndependentPerClinic() {
         Clinic downtownClinic = testClinic("Upsert Downtown Clinic", -89.71, 43.08);
         Clinic capitolClinic = testClinic("Upsert Capitol Clinic", -89.72, 43.08);
+        assertThat(downtownClinic.id()).isNotNull();
+        assertThat(capitolClinic.id()).isNotNull().isNotEqualTo(downtownClinic.id());
         offeringRepository.upsert(new ClinicServiceOffering(
                 downtownClinic, SERVICE_CODE, "Downtown wellness check", null, new BigDecimal("45.00"), 30));
         offeringRepository.upsert(new ClinicServiceOffering(
@@ -83,14 +91,16 @@ class ClinicServiceOfferingRepositoryTest {
         assertThat(offeringRepository.findByClinicIdAndServiceCode(downtownClinic.id(), SERVICE_CODE))
                 .get()
                 .satisfies(offering -> {
-                    assertThat(offering.clinic().id()).isEqualTo(downtownClinic.id());
                     assertThat(offering.name()).isEqualTo("Downtown wellness check");
+                    assertThat(offering.clinic().id()).isEqualTo(downtownClinic.id());
+                    assertThat(offering.clinic().location()).isNotNull();
                 });
         assertThat(offeringRepository.findByClinicIdAndServiceCode(capitolClinic.id(), SERVICE_CODE))
                 .get()
                 .satisfies(offering -> {
-                    assertThat(offering.clinic().id()).isEqualTo(capitolClinic.id());
                     assertThat(offering.name()).isEqualTo("Capitol wellness check");
+                    assertThat(offering.clinic().id()).isEqualTo(capitolClinic.id());
+                    assertThat(offering.clinic().location()).isNotNull();
                 });
     }
 
@@ -99,15 +109,13 @@ class ClinicServiceOfferingRepositoryTest {
         Clinic downtownClinic = clinicByName("Downtown Madison Pet Clinic");
         Clinic capitolClinic = clinicByName("Capitol Square Pet Clinic");
 
+        assertThat(downtownClinic.id()).isNotNull();
+        assertThat(capitolClinic.id()).isNotNull().isNotEqualTo(downtownClinic.id());
         assertThat(offeringRepository.findByClinicIdOrderByServiceCode(downtownClinic.id()))
-                .satisfies(offerings -> assertThat(offerings)
-                        .allSatisfy(offering -> assertThat(offering.clinic().id()).isEqualTo(downtownClinic.id())))
                 .extracting(ClinicServiceOffering::serviceCode)
                 .contains("WELLNESS_CHECK", "SENIOR_PET_SCREENING")
                 .doesNotContain("RABIES_EXPRESS");
         assertThat(offeringRepository.findByClinicIdOrderByServiceCode(capitolClinic.id()))
-                .satisfies(offerings -> assertThat(offerings)
-                        .allSatisfy(offering -> assertThat(offering.clinic().id()).isEqualTo(capitolClinic.id())))
                 .extracting(ClinicServiceOffering::serviceCode)
                 .contains("RABIES_EXPRESS", "APARTMENT_PET_BEHAVIOR")
                 .doesNotContain("WELLNESS_CHECK");

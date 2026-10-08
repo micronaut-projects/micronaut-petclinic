@@ -15,16 +15,8 @@ import static io.micronaut.data.annotation.Relation.Kind.MANY_TO_ONE;
 /**
  * A service that is offered by one clinic branch.
  *
- * <p>The service code is only unique inside a clinic. That composite
- * identity is represented by {@code clinicServiceKey}, because Micronaut Data
- * 5.2.0 cannot use a generated id reached through a relationship as an
- * {@code @Upsert} conflict property.
- * Two clinic branches can therefore both offer {@code WELLNESS_CHECK} while
- * retaining different prices, descriptions, or durations.</p>
- *
  * @param id the database identifier
  * @param clinic the clinic branch that owns this offering
- * @param clinicServiceKey the stable upsert key derived from the clinic and service code
  * @param serviceCode the stable code used by the clinic's catalog
  * @param name the display name
  * @param description an optional description
@@ -33,7 +25,6 @@ import static io.micronaut.data.annotation.Relation.Kind.MANY_TO_ONE;
  */
 @MappedEntity("CLINIC_SERVICE_OFFERINGS")
 @Index(name = "UK_CLINIC_SERVICE_CODE", columns = {"CLINIC_ID", "SERVICE_CODE"}, unique = true)
-@Index(name = "UK_CLINIC_SERVICE_KEY", columns = "CLINIC_SERVICE_KEY", unique = true)
 public record ClinicServiceOffering(
         @Id
         @GeneratedValue
@@ -42,9 +33,6 @@ public record ClinicServiceOffering(
         @Relation(MANY_TO_ONE)
         @MappedProperty("CLINIC_ID")
         Clinic clinic,
-
-        @MappedProperty("CLINIC_SERVICE_KEY")
-        String clinicServiceKey,
 
         @MappedProperty("SERVICE_CODE")
         String serviceCode,
@@ -67,7 +55,7 @@ public record ClinicServiceOffering(
      * Creates an empty instance for framework binding.
      */
     public ClinicServiceOffering() {
-        this(null, null, null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null);
     }
 
     /**
@@ -86,14 +74,7 @@ public record ClinicServiceOffering(
                                  String description,
                                  BigDecimal price,
                                  Integer durationMinutes) {
-        this(null, clinic, clinicServiceKey(clinic, serviceCode), serviceCode,
+        this(null, clinic, serviceCode,
                 name, description, price, durationMinutes);
-    }
-
-    private static String clinicServiceKey(Clinic clinic, String serviceCode) {
-        if (clinic == null || clinic.id() == null || serviceCode == null) {
-            return null;
-        }
-        return clinic.id() + ":" + serviceCode;
     }
 }
