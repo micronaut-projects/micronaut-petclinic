@@ -11,6 +11,7 @@ import io.micronaut.samples.petclinic.model.VetWithSpecialities;
 import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.samples.petclinic.repository.AppointmentRepository;
 import io.micronaut.samples.petclinic.repository.ClinicRepository;
+import io.micronaut.samples.petclinic.repository.ClinicServiceOfferingRepository;
 import io.micronaut.samples.petclinic.repository.OwnerRepository;
 import io.micronaut.samples.petclinic.repository.PetRepository;
 import io.micronaut.samples.petclinic.repository.PetTypeRepository;
@@ -149,6 +150,14 @@ public final class PostgresRepositories {
     @Requires(env = "postgres")
     @JdbcRepository(dialect = Dialect.POSTGRES)
     public interface PostgresClinicRepository extends ClinicRepository {
+    }
+
+    /**
+     * PostgreSQL clinic service offering repository bean.
+     */
+    @Requires(env = "postgres")
+    @JdbcRepository(dialect = Dialect.POSTGRES)
+    public interface PostgresClinicServiceOfferingRepository extends ClinicServiceOfferingRepository {
     }
 
     /**

@@ -11,6 +11,7 @@ import io.micronaut.samples.petclinic.model.VetWithSpecialities;
 import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.samples.petclinic.repository.AppointmentRepository;
 import io.micronaut.samples.petclinic.repository.ClinicRepository;
+import io.micronaut.samples.petclinic.repository.ClinicServiceOfferingRepository;
 import io.micronaut.samples.petclinic.repository.OwnerRepository;
 import io.micronaut.samples.petclinic.repository.PetRepository;
 import io.micronaut.samples.petclinic.repository.PetTypeRepository;
@@ -166,5 +167,13 @@ public final class H2Repositories {
         @Override
         @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE STATUS = 'AVAILABLE' ORDER BY DISPLAY_ORDER, ID", nativeQuery = true)
         List<Appointment> findAvailableAppointments();
+    }
+
+    /**
+     * H2 clinic service offering repository bean.
+     */
+    @Requires(notEnv = {"mysql", "postgres", "oracle"})
+    @JdbcRepository(dialect = Dialect.H2)
+    public interface H2ClinicServiceOfferingRepository extends ClinicServiceOfferingRepository {
     }
 }
