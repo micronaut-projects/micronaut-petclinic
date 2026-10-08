@@ -159,11 +159,11 @@ public final class PostgresRepositories {
     public interface PostgresAppointmentRepository extends AppointmentRepository {
         @NonNull
         @Override
-        @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE a.ID = :appointmentId FOR UPDATE", nativeQuery = true)
+        @Query(value = "SELECT a.* FROM \"APPOINTMENTS\" a WHERE a.\"id\" = :appointmentId FOR UPDATE", nativeQuery = true)
         Optional<Appointment> findByIdForUpdate(Integer appointmentId);
 
         @Override
-        @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE STATUS = 'AVAILABLE' ORDER BY DISPLAY_ORDER, ID", nativeQuery = true)
+        @Query(value = "SELECT a.* FROM \"APPOINTMENTS\" a WHERE a.\"STATUS\" = 'AVAILABLE' ORDER BY a.\"DISPLAY_ORDER\", a.\"id\"", nativeQuery = true)
         List<Appointment> findAvailableAppointments();
     }
 }

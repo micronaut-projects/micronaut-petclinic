@@ -64,6 +64,10 @@ BEGIN
 END;
 /
 
+-- Micronaut Data generates Oracle JSON Relational Duality Views from @JsonView.
+-- Apply the privilege even when the petclinic user already exists.
+GRANT CREATE VIEW TO petclinic;
+
 ALTER USER petclinic DEFAULT TABLESPACE PETCLINIC_DATA;
 ALTER USER petclinic QUOTA UNLIMITED ON PETCLINIC_DATA;
 
