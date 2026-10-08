@@ -1,18 +1,18 @@
 [versions]
-micronaut-platform = "5.2.0"
+micronaut-platform = "5.2.2"
 micronaut-gradle-plugin = "5.0.2"
 micronaut-sourcegen = "2.2.3"
 # Azure provider 1.1.0 uses oracle.jdbc.util.OracleConfigurationCache,
 # which moved to oracle.jdbc.util.configuration in driver 23.26.2.0.0.
 # TODO: Remove once ojdbc-provider-azure is upgraded to latest versions & this issue [https://github.com/oracle/ojdbc-extensions/issues/286] is addressed.
-ojdbc = { strictly = "23.26.1.0.0" }
+ojdbc = { strictly = "23.26.3.0.0" }
 ojdbc-provider-azure = "1.1.0"
-azure-core = "1.59.1"
-azure-core-http-jdk-httpclient = "1.1.7"
+azure-core = "1.60.0"
+azure-core-http-jdk-httpclient = "1.2.0"
 mysql = "26.7.0"
-postgresql = "42.7.13"
+postgresql = "42.7.14"
 h2gis = "2.2.5"
-logback = "1.6.4"
+logback = "1.6.5"
 graalvm-native = "1.1.14"
 jte = "3.2.4"
 

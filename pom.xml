@@ -15,7 +15,7 @@
     <parent>
         <groupId>io.micronaut.platform</groupId>
         <artifactId>micronaut-parent</artifactId>
-        <version>5.2.0</version>
+        <version>5.2.2</version>
     </parent>
 
     <properties>
@@ -31,8 +31,8 @@
         <h2gis.version>2.2.5</h2gis.version>
         <!-- Azure provider 1.1.0 uses configuration-cache APIs removed in later drivers. -->
         <!--TODO: Remove once ojdbc-provider-azure is upgraded to latest versions & this issue [https://github.com/oracle/ojdbc-extensions/issues/286] is addressed.-->
-        <oracle-jdbc.version>23.26.1.0.0</oracle-jdbc.version>
-        <azure-core.version>1.59.1</azure-core.version>
+        <oracle-jdbc.version>23.26.3.0.0</oracle-jdbc.version>
+        <azure-core.version>1.60.0</azure-core.version>
         <maven.native.plugin.version>1.1.10</maven.native.plugin.version>
         <maven.native.plugin.version>1.1.14</maven.native.plugin.version>
         <maven.shared.utils.version>3.5.0</maven.shared.utils.version>
@@ -128,7 +128,7 @@
         <dependency>
             <groupId>com.azure</groupId>
             <artifactId>azure-core-http-jdk-httpclient</artifactId>
-            <version>1.1.7</version>
+            <version>1.2.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
