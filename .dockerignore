@@ -1,0 +1,13 @@
+.git
+.gitignore
+.dockerignore
+.env
+.env.*
+.micronaut
+.gradle
+gradle
+build
+target
+docker/oracle
+README.md
+migration-guide.md

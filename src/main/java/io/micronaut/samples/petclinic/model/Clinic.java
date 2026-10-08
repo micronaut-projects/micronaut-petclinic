@@ -26,6 +26,8 @@ import java.util.List;
  * @param name the display name of the clinic branch
  * @param address the street address
  * @param city the city
+ * @param acceptingNewPatients whether the clinic is currently accepting new patients
+ * @param emergencyService whether the clinic provides emergency service
  * @param location the geospatial point for the branch
  * @param serviceArea the geospatial service coverage area for the branch
  */
@@ -48,6 +50,14 @@ public record Clinic(
         @NotBlank
         String city,
 
+        @MappedProperty("ACCEPTING_NEW_PATIENTS")
+        @NotNull
+        Boolean acceptingNewPatients,
+
+        @MappedProperty("EMERGENCY_SERVICE")
+        @NotNull
+        Boolean emergencyService,
+
         @Srid(value = 4326, type = Srid.CrsType.GEOGRAPHIC)
         @Index(columns = "LOCATION")
         @MappedProperty("LOCATION")
@@ -65,7 +75,7 @@ public record Clinic(
      * Creates an empty clinic for framework binding.
      */
     public Clinic() {
-        this(null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null, null);
     }
 
     /**
@@ -78,7 +88,35 @@ public record Clinic(
      * @param latitude the latitude coordinate
      */
     public Clinic(String name, String address, String city, double longitude, double latitude) {
-        this(null, name, address, city, new Point(longitude, latitude), serviceArea(longitude, latitude));
+        this(name, address, city, longitude, latitude, true, false);
+    }
+
+    /**
+     * Creates a new clinic without an id and with its availability flags.
+     *
+     * @param name the display name
+     * @param address the street address
+     * @param city the city
+     * @param longitude the longitude coordinate
+     * @param latitude the latitude coordinate
+     * @param acceptingNewPatients whether the clinic is accepting new patients
+     * @param emergencyService whether the clinic provides emergency service
+     */
+    public Clinic(String name,
+                  String address,
+                  String city,
+                  double longitude,
+                  double latitude,
+                  boolean acceptingNewPatients,
+                  boolean emergencyService) {
+        this(null,
+                name,
+                address,
+                city,
+                acceptingNewPatients,
+                emergencyService,
+                new Point(longitude, latitude),
+                serviceArea(longitude, latitude));
     }
 
     private static Polygon serviceArea(double longitude, double latitude) {

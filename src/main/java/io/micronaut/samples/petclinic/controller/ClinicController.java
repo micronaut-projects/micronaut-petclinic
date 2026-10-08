@@ -11,6 +11,8 @@ import io.micronaut.samples.petclinic.dto.ClinicDto;
 import io.micronaut.samples.petclinic.dto.ClinicNearbyRequest;
 import io.micronaut.samples.petclinic.model.Clinic;
 import io.micronaut.samples.petclinic.service.ClinicService;
+import io.micronaut.security.annotation.Secured;
+import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
 
 import java.util.List;
@@ -20,6 +22,7 @@ import java.util.Map;
  * Controller for clinic geospatial lookup examples.
  */
 @Controller("/clinics")
+@Secured(SecurityRule.IS_ANONYMOUS)
 public class ClinicController {
 
     private final ClinicService clinicService;
@@ -55,7 +58,9 @@ public class ClinicController {
     public List<ClinicDto> nearby(@Body ClinicNearbyRequest request) {
         List<Clinic> clinics = clinicService.findClinicsNear(request.longitude(),
                 request.latitude(),
-                request.radiusMeters());
+                request.radiusMeters(),
+                request.acceptingNewPatients(),
+                request.emergencyService());
         return ClinicDto.from(clinics);
     }
 
@@ -69,7 +74,9 @@ public class ClinicController {
     @Produces(MediaType.APPLICATION_JSON)
     public List<ClinicDto> withinPolygon(@Body ClinicCoordinatesRequest request) {
         List<Clinic> clinics = clinicService.findClinicsWithinPolygon(
-                request.coordinatesAsPointList());
+                request.coordinatesAsPointList(),
+                request.acceptingNewPatients(),
+                request.emergencyService());
         return ClinicDto.from(clinics);
     }
 
@@ -83,7 +90,9 @@ public class ClinicController {
     @Produces(MediaType.APPLICATION_JSON)
     public List<ClinicDto> intersectsLine(@Body ClinicCoordinatesRequest request) {
         List<Clinic> clinics = clinicService.findClinicsIntersectingLine(
-                request.coordinatesAsPointList());
+                request.coordinatesAsPointList(),
+                request.acceptingNewPatients(),
+                request.emergencyService());
         return ClinicDto.from(clinics);
     }
 }

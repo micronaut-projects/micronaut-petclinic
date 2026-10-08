@@ -1,6 +1,5 @@
 package io.micronaut.samples.petclinic.dto;
 
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -16,7 +15,6 @@ import java.time.LocalDate;
  * @param birthDate the submitted birth date
  * @param typeId the submitted pet type id
  */
-@Introspected
 @Serdeable
 public record PetForm(
         Integer id,

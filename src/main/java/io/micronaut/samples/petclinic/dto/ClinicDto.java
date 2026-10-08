@@ -13,6 +13,8 @@ import java.util.List;
  * @param name the clinic name
  * @param address the clinic street address
  * @param city the clinic city
+ * @param acceptingNewPatients whether the clinic is accepting new patients
+ * @param emergencyService whether the clinic provides emergency service
  * @param latitude the clinic latitude
  * @param longitude the clinic longitude
  */
@@ -23,6 +25,8 @@ public record ClinicDto(
         String name,
         String address,
         String city,
+        Boolean acceptingNewPatients,
+        Boolean emergencyService,
         double latitude,
         double longitude
 ) {
@@ -39,6 +43,8 @@ public record ClinicDto(
                 clinic.name(),
                 clinic.address(),
                 clinic.city(),
+                clinic.acceptingNewPatients(),
+                clinic.emergencyService(),
                 clinic.location().y(),
                 clinic.location().x()
         );

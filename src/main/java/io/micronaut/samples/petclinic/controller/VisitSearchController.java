@@ -9,6 +9,8 @@ import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.samples.petclinic.dto.VisitDto;
 import io.micronaut.samples.petclinic.dto.VisitSearchCriteria;
 import io.micronaut.samples.petclinic.service.ClinicService;
+import io.micronaut.security.annotation.Secured;
+import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
 import org.jspecify.annotations.NonNull;
 
@@ -21,6 +23,7 @@ import java.util.Map;
  */
 @Controller("/visits")
 @Requires(env = "oracle")
+@Secured(SecurityRule.IS_ANONYMOUS)
 public class VisitSearchController {
 
     private final ClinicService clinicService;

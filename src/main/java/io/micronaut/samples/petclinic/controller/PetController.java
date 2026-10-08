@@ -16,6 +16,8 @@ import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.PetType;
 import io.micronaut.samples.petclinic.service.ClinicService;
+import io.micronaut.security.annotation.Secured;
+import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
@@ -30,6 +32,7 @@ import java.util.Optional;
  * Handles CRUD operations for pets within the context of their owners.
  */
 @Controller("/owners/{ownerId}/pets")
+@Secured(SecurityRule.IS_ANONYMOUS)
 public class PetController {
 
     private final ClinicService clinicService;
@@ -179,8 +182,8 @@ public class PetController {
      */
     @Post(value = "/{petId}/edit", consumes = MediaType.APPLICATION_FORM_URLENCODED)
     public HttpResponse<?> processUpdateForm(@PathVariable Integer ownerId,
-                                              @PathVariable Integer petId,
-                                              @Valid @Body PetForm form) {
+                                             @PathVariable Integer petId,
+                                             @Valid @Body PetForm form) {
         Optional<Owner> owner = getOwner(ownerId);
         if (owner.isEmpty()) {
             return HttpResponse.notFound();

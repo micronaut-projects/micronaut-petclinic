@@ -2,6 +2,8 @@ package io.micronaut.samples.petclinic.controller;
 
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
+import io.micronaut.security.annotation.Secured;
+import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
 import java.util.Map;
 
@@ -21,6 +23,7 @@ public class WelcomeController {
      * Display the welcome/home page.
      * @return the welcome view
      */
+    @Secured(SecurityRule.IS_ANONYMOUS)
     @Get("/")
     @View("welcome")
     public Map<String, Object> welcome() {

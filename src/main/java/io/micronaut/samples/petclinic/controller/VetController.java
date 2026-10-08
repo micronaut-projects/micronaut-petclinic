@@ -6,6 +6,8 @@ import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.samples.petclinic.model.Vet;
 import io.micronaut.samples.petclinic.service.ClinicService;
+import io.micronaut.security.annotation.Secured;
+import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
 import java.util.Collection;
 import java.util.Map;
@@ -15,6 +17,7 @@ import java.util.Map;
  * Displays the list of vets with their specialities.
  */
 @Controller("/vets")
+@Secured(SecurityRule.IS_ANONYMOUS)
 public class VetController {
 
     private final ClinicService clinicService;

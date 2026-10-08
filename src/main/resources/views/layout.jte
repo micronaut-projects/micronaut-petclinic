@@ -52,6 +52,11 @@
                             <i class="fas fa-calendar-check"></i> ${msg.text("nav.visits")}
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/oracle/transaction-priority">
+                            <i class="fas fa-bolt"></i> ${msg.text("nav.transactionPriority")}
+                        </a>
+                    </li>
                 @endif
 
                 <li class="nav-item dropdown">
