@@ -1,3 +1,4 @@
+version: '3.8'
 
 services:
   # Micronaut Pet Clinic Application (H2 - default)
@@ -55,7 +56,6 @@ services:
       POSTGRES_PASSWORD: petclinic
     volumes:
       - postgres_data:/var/lib/postgresql
-      - ./docker/postgres:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U petclinic"]
       timeout: 5s

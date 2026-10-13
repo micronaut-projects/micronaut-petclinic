@@ -1,13 +1,19 @@
 package io.micronaut.samples.petclinic.service;
 
 import io.micronaut.samples.petclinic.dto.VisitSearchCriteria;
-import io.micronaut.samples.petclinic.model.*;
+import io.micronaut.samples.petclinic.model.Owner;
+import io.micronaut.samples.petclinic.model.Pet;
+import io.micronaut.samples.petclinic.model.PetType;
+import io.micronaut.samples.petclinic.model.Speciality;
+import io.micronaut.samples.petclinic.model.Vet;
+import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -70,6 +76,17 @@ class ClinicServiceTest {
         Collection<Vet> vets = clinicService.findAllVets();
         assertThat(vets).isNotEmpty();
         assertThat(vets.size()).isGreaterThanOrEqualTo(6);
+    }
+
+    @Test
+    void shouldSaveNewVet() {
+        Vet vet = new Vet("Casey", "Morgan");
+
+        Vet savedVet = clinicService.saveVet(vet);
+
+        assertThat(savedVet.id()).isNotNull();
+        assertThat(savedVet.getFirstName()).isEqualTo("Casey");
+        assertThat(savedVet.getLastName()).isEqualTo("Morgan");
     }
 
     @Test

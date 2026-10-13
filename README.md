@@ -16,6 +16,7 @@ This Micronaut PetClinic app allows you to:
 - Register pets for owners
 - Schedule veterinary visits
 - View veterinarians and their specialities
+- Sign in with session-based authentication
 - Switch between English, Spanish, and German
 
 
@@ -239,7 +240,9 @@ src/main/java/
       ├── repository/      # Data access interfaces
       ├── service/         # Business logic
       ├── dto/             # Form objects
-      ├── controller/      #
+      ├── security/        # Micronaut Security authentication provider
+      ├── utils/           # Password encoding helpers
+      ├── controller/      # HTTP controllers
       └── system/          #
 
 src/main/resources/
@@ -278,10 +281,12 @@ export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
 
 - **Micronaut 5.x** - Framework
 - **Java 25** - Programming language
+- **Micronaut Security** - Session login and authorization
 - **Micronaut Data JDBC** - Database access
 - **JTE** - HTML template engine
 - **HikariCP** - JDBC connection pooling
 - **Caffeine** - Caching
+- **Spring Security Crypto** - BCrypt password hashing
 - **Bootstrap 5** - CSS framework
 
 ---
@@ -300,6 +305,9 @@ export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
 ./gradlew test jacocoTestReport
 ./gradlew check
 ```
+
+Authentication coverage includes login success and failure, session access to protected pages, anonymous 401 handling,
+registration, duplicate user rejection, password encoding, and role assignment.
 
 `OracleTransactionPriorityIntegrationTest` and `OracleTransactionPriorityControllerTest` require `MICRONAUT_ENVIRONMENTS=oracle`; the default `CREATE_DROP` setting drops and recreates application tables in the `petclinic` schema.
 Use a disposable database, or preserve an already-seeded schema with `DATASOURCES_DEFAULT_SCHEMA_GENERATE=NONE PETCLINIC_SAMPLE_DATA_ENABLED=false`.

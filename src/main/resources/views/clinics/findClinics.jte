@@ -1350,12 +1350,18 @@
                 const request = searchRequest(mode);
                 fetch(request.url, request.options)
                     .then((response) => {
+                        if (response.status === 401) {
+                            return null;
+                        }
                         if (!response.ok) {
                             throw new Error(results.dataset.searchFailed);
                         }
                         return response.json();
                     })
                     .then((clinics) => {
+                        if (clinics === null) {
+                            return;
+                        }
                         updateSummary(modeLabel, clinics.length);
                         renderClinics(clinics, modeLabel);
                     })
