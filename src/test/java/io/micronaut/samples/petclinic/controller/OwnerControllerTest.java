@@ -56,6 +56,8 @@ class OwnerControllerTest {
         assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
         assertThat(response.body()).contains("George");
         assertThat(response.body()).contains("Franklin");
+
+        assertThat(response.body()).doesNotContain("id=\"care-record-tab\"");
     }
 
     @Test

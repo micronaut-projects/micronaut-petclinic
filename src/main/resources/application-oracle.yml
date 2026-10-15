@@ -5,6 +5,10 @@ datasources:
     password: petclinic
     driver-class-name: oracle.jdbc.OracleDriver
     dialect: ORACLE
+    # Scan shared entities and Oracle-specific JSON duality view mappings.
+    packages:
+      - io.micronaut.samples.petclinic.model
+      - io.micronaut.samples.petclinic.oracle.model
     initialization-fail-timeout: 60000
     connection-timeout: 30000
     maximum-pool-size: 10

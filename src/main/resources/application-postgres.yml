@@ -6,6 +6,9 @@ datasources:
     password: petclinic
     driver-class-name: org.postgresql.Driver
     dialect: POSTGRES
+    # Include shared entities only; exclude Oracle-only JSON duality views.
+    packages:
+      - io.micronaut.samples.petclinic.model
     connection-init-sql: >-
       CREATE OR REPLACE FUNCTION SYS_ROW_ETAG(INTEGER, VARCHAR, VARCHAR)
       RETURNS VARCHAR

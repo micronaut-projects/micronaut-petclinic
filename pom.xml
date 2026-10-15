@@ -23,6 +23,7 @@
         <jdk.version>25</jdk.version>
         <release.version>25</release.version>
         <micronaut.version>5.1.0</micronaut.version>
+        <micronaut.data.version>5.2.3</micronaut.data.version>
         <micronaut.sourcegen.version>2.2.3</micronaut.sourcegen.version>
         <micronaut.runtime>netty</micronaut.runtime>
         <micronaut.aot.enabled>false</micronaut.aot.enabled>
@@ -82,6 +83,7 @@
         <dependency>
             <groupId>io.micronaut.data</groupId>
             <artifactId>micronaut-data-jdbc</artifactId>
+            <version>${micronaut.data.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -216,6 +218,11 @@
         <dependency>
             <groupId>io.micronaut</groupId>
             <artifactId>micronaut-management</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.serde</groupId>
+            <artifactId>micronaut-serde-oracle-jdbc-json</artifactId>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
     <build>

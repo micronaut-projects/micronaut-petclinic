@@ -6,6 +6,9 @@ datasources:
     password: petclinic
     driver-class-name: com.mysql.cj.jdbc.Driver
     dialect: MYSQL
+    # Include shared entities only; exclude Oracle-only JSON duality views.
+    packages:
+      - io.micronaut.samples.petclinic.model
     connection-init-sql: >-
       CREATE FUNCTION IF NOT EXISTS SYS_ROW_ETAG(vet_id INT, first_name VARCHAR(255), last_name VARCHAR(255))
       RETURNS CHAR(32) CHARACTER SET ascii

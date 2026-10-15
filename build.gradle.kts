@@ -52,6 +52,7 @@ dependencies {
     runtimeOnly(libs.h2)
     runtimeOnly(libs.h2gis)
     runtimeOnly(libs.ojdbc11)
+    runtimeOnly(libs.micronaut.serde.oracle.jdbc.json)
     implementation(libs.ojdbc.provider.azure)
     implementation(libs.azure.core.http.jdk.httpclient)
     implementation(libs.oraclepki)

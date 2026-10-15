@@ -9,6 +9,7 @@ import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.samples.petclinic.repository.AppointmentRepository;
 import io.micronaut.samples.petclinic.repository.ClinicRepository;
+import io.micronaut.samples.petclinic.repository.ClinicServiceOfferingRepository;
 import io.micronaut.samples.petclinic.repository.OwnerRepository;
 import io.micronaut.samples.petclinic.repository.PetRepository;
 import io.micronaut.samples.petclinic.repository.PetTypeRepository;
@@ -109,6 +110,7 @@ public final class MySqlRepositories {
     public interface MySqlClinicRepository extends ClinicRepository {
 
     }
+
     /**
      * Mysql appointment repository used by the transaction-priority showcase.
      */
@@ -126,5 +128,13 @@ public final class MySqlRepositories {
         @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE STATUS = 'AVAILABLE' ORDER BY DISPLAY_ORDER, ID", nativeQuery = true)
         List<Appointment> findAvailableAppointments();
 
+    }
+
+    /**
+     * MySQL clinic service offering repository bean.
+     */
+    @Requires(env = "mysql")
+    @JdbcRepository(dialect = Dialect.MYSQL)
+    public interface MySqlClinicServiceOfferingRepository extends ClinicServiceOfferingRepository {
     }
 }
