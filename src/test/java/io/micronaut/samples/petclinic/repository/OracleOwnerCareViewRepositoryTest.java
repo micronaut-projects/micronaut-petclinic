@@ -123,7 +123,7 @@ class OracleOwnerCareViewRepositoryTest {
     }
 
     private Owner sampleOwner() {
-        Collection<Owner> matches = ownerRepository.findByLastNameContainingIgnoreCase(
+        Collection<Owner> matches = ownerRepository.findByLastNameContainsIgnoreCase(
                 "Coleman", Sort.of(Sort.Order.asc("lastName")));
         return matches.stream().findFirst().orElseThrow();
     }

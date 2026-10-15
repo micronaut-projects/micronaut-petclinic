@@ -35,7 +35,17 @@ public interface OwnerRepository extends CrudRepository<Owner, Integer> {
      */
     @Join(value = "pets", type = LEFT_FETCH)
     @Join(value = "pets.type", type = LEFT_FETCH)
-    Collection<Owner> findByLastNameContainingIgnoreCase(String lastName, Sort sort);
+    Collection<Owner> findByLastNameContainsIgnoreCase(String lastName, Sort sort);
+
+    /**
+     * Finds owners by case-insensitive partial last-name match.
+     *
+     * @param lastName the last-name fragment to search for
+     * @return matching owners with pets and pet types loaded
+     */
+    @Join(value = "pets", type = LEFT_FETCH)
+    @Join(value = "pets.type", type = LEFT_FETCH)
+    Collection<Owner> findByLastNameContainsIgnoreCase(String lastName);
 
     /**
      * Find an owner by ID, eagerly fetching pets.
@@ -68,4 +78,12 @@ public interface OwnerRepository extends CrudRepository<Owner, Integer> {
     @Join(value = "pets.type", type = LEFT_FETCH)
     @Join(value = "pets.visits", type = LEFT_FETCH)
     Optional<Owner> findById(Integer id);
+
+    /**
+     * Finds owners by lastName.
+     *
+     * @param id the owner id
+     * @return the owner, if found
+     */
+    Collection<Owner> findByLastName(String lastName);
 }
