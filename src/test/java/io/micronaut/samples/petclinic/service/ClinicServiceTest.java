@@ -22,6 +22,9 @@ class ClinicServiceTest {
     @Inject
     ClinicService clinicService;
 
+    @Inject
+    VetService vetService;
+
     @Test
     void shouldFindOwnersByLastName() {
         Collection<Owner> owners = clinicService.findOwnerByLastName("Davis");
@@ -67,21 +70,21 @@ class ClinicServiceTest {
 
     @Test
     void shouldFindAllVets() {
-        Collection<Vet> vets = clinicService.findAllVets();
+        Collection<Vet> vets = vetService.findAll();
         assertThat(vets).isNotEmpty();
         assertThat(vets.size()).isGreaterThanOrEqualTo(6);
     }
 
     @Test
     void shouldFindVetWithSpecialities() {
-        Collection<Vet> vets = clinicService.findAllVets();
+        Collection<Vet> vets = vetService.findAll();
         Vet vetWithSpecialities = vets.stream()
-                .filter(v -> !v.getSpecialities().isEmpty())
+                .filter(v -> !v.specialities().isEmpty())
                 .findFirst()
-                .orElse(null);
+                .orElseThrow();
 
         assertThat(vetWithSpecialities).isNotNull();
-        assertThat(vetWithSpecialities.getSpecialities()).isNotEmpty();
+        assertThat(vetWithSpecialities.specialities()).isNotEmpty();
     }
 
     @Test

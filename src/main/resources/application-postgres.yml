@@ -6,4 +6,16 @@ datasources:
     password: petclinic
     driver-class-name: org.postgresql.Driver
     dialect: POSTGRES
+    connection-init-sql: >-
+      CREATE OR REPLACE FUNCTION SYS_ROW_ETAG(INTEGER, VARCHAR, VARCHAR)
+      RETURNS VARCHAR
+      LANGUAGE SQL
+      IMMUTABLE
+      AS $$
+      SELECT upper(md5(
+        CASE WHEN $1 IS NULL THEN '-1:' ELSE length($1::text)::text || ':' || $1::text END ||
+        CASE WHEN $2 IS NULL THEN '-1:' ELSE length($2)::text || ':' || $2 END ||
+        CASE WHEN $3 IS NULL THEN '-1:' ELSE length($3)::text || ':' || $3 END
+      ))::varchar
+      $$
 
