@@ -1,5 +1,7 @@
 package io.micronaut.samples.petclinic.system;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -21,6 +23,7 @@ public final class VetEtagFunctions {
      * @param lastName last name
      * @return uppercase 32-character hexadecimal hash
      */
+    @ReflectiveAccess // H2 resolves the SQL alias by class and method name in native images.
     public static String sysRowEtag(Integer id, String firstName, String lastName) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
