@@ -11,7 +11,6 @@ import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.PetType;
 import io.micronaut.samples.petclinic.model.Speciality;
 import io.micronaut.samples.petclinic.model.Vet;
-import io.micronaut.samples.petclinic.model.VetSpeciality;
 import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.samples.petclinic.repository.AppointmentRepository;
 import io.micronaut.samples.petclinic.repository.ClinicRepository;
@@ -21,7 +20,6 @@ import io.micronaut.samples.petclinic.repository.PetRepository;
 import io.micronaut.samples.petclinic.repository.PetTypeRepository;
 import io.micronaut.samples.petclinic.repository.SpecialityRepository;
 import io.micronaut.samples.petclinic.repository.VetRepository;
-import io.micronaut.samples.petclinic.repository.VetSpecialityRepository;
 import io.micronaut.samples.petclinic.repository.VisitRepository;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
@@ -53,7 +51,6 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
     private final OwnerRepository ownerRepository;
     private final PetRepository petRepository;
     private final VisitRepository visitRepository;
-    private final VetSpecialityRepository vetSpecialityRepository;
     private final ClinicRepository clinicRepository;
     private final ClinicServiceOfferingRepository clinicServiceOfferingRepository;
     private final AppointmentRepository appointmentRepository;
@@ -152,7 +149,6 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
      * @param ownerRepository repository for owners
      * @param petRepository repository for pets
      * @param visitRepository repository for visits
-     * @param vetSpecialityRepository repository for vet-speciality join rows
      * @param clinicRepository repository for clinic locations
      * @param appointmentRepository appointment repository for the active database
      * @param clinicServiceOfferingRepository repository for clinic service offerings
@@ -163,7 +159,6 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
                       OwnerRepository ownerRepository,
                       PetRepository petRepository,
                       VisitRepository visitRepository,
-                      VetSpecialityRepository vetSpecialityRepository,
                       ClinicRepository clinicRepository,
                       AppointmentRepository appointmentRepository,
                       ClinicServiceOfferingRepository clinicServiceOfferingRepository) {
@@ -173,7 +168,6 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
         this.ownerRepository = ownerRepository;
         this.petRepository = petRepository;
         this.visitRepository = visitRepository;
-        this.vetSpecialityRepository = vetSpecialityRepository;
         this.clinicRepository = clinicRepository;
         this.appointmentRepository = appointmentRepository;
         this.clinicServiceOfferingRepository = clinicServiceOfferingRepository;
@@ -278,12 +272,8 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
     }
 
     private Vet createVet(String firstName, String lastName, Speciality... specialities) {
-        Vet vet = new Vet(firstName, lastName).withSpecialities(Set.copyOf(Arrays.asList(specialities)));
-        Vet saved = vetRepository.save(vet);
-        for (Speciality speciality : specialities) {
-            vetSpecialityRepository.save(new VetSpeciality(saved.id(), speciality.id()));
-        }
-        return saved;
+        return vetRepository.save(new Vet(null, firstName, lastName,
+                Set.copyOf(Arrays.asList(specialities)), null));
     }
 
     private PetType createPetType(String name) {

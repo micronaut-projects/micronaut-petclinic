@@ -4,15 +4,20 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.serde.annotation.Serdeable;
 import io.micronaut.sourcegen.annotations.Wither;
 import jakarta.validation.constraints.NotBlank;
+import org.jspecify.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Entity representing a veterinarian speciality (e.g., surgery, dentistry).
  *
  * @param id the database identifier, or {@code null} for a new speciality
  * @param name the display name of the speciality
+ * @param vets inverse veterinarian assignments, when loaded
  */
 @MappedEntity("SPECIALTIES")
 @Serdeable
@@ -24,14 +29,18 @@ public record Speciality(
 
         @MappedProperty("NAME")
         @NotBlank
-        String name
+        String name,
+
+        @Nullable
+        @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = "specialities")
+        List<Vet> vets
 ) implements NamedEntity, SpecialityWither {
 
     /**
      * Creates an empty speciality for framework binding.
      */
     public Speciality() {
-        this(null, null);
+        this(null, null, List.of());
     }
 
     /**
@@ -40,7 +49,7 @@ public record Speciality(
      * @param name the display name of the speciality
      */
     public Speciality(String name) {
-        this(null, name);
+        this(null, name, List.of());
     }
 
     /**

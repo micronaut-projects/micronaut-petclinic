@@ -12,7 +12,6 @@ import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.PetType;
 import io.micronaut.samples.petclinic.model.Speciality;
 import io.micronaut.samples.petclinic.model.Vet;
-import io.micronaut.samples.petclinic.model.VetWithSpecialities;
 import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.samples.petclinic.dto.VisitSearchCriteria;
 import io.micronaut.samples.petclinic.repository.ClinicRepository;
@@ -20,8 +19,6 @@ import io.micronaut.samples.petclinic.repository.OwnerRepository;
 import io.micronaut.samples.petclinic.repository.PetRepository;
 import io.micronaut.samples.petclinic.repository.PetTypeRepository;
 import io.micronaut.samples.petclinic.repository.SpecialityRepository;
-import io.micronaut.samples.petclinic.repository.VetRepository;
-import io.micronaut.samples.petclinic.repository.VetSpecialityRepository;
 import io.micronaut.samples.petclinic.repository.VisitRepository;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -31,7 +28,6 @@ import java.time.Duration;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -50,9 +46,7 @@ public class ClinicService {
     private final PetRepository petRepository;
     private final PetTypeRepository petTypeRepository;
     private final VisitRepository visitRepository;
-    private final VetRepository vetRepository;
     private final SpecialityRepository specialityRepository;
-    private final VetSpecialityRepository vetSpecialityRepository;
     private final ClinicRepository clinicRepository;
 
     /**
@@ -62,26 +56,20 @@ public class ClinicService {
      * @param petRepository repository for pets
      * @param petTypeRepository repository for pet types
      * @param visitRepository repository for visits
-     * @param vetRepository repository for vets
      * @param specialityRepository repository for specialities
-     * @param vetSpecialityRepository repository for vet-speciality join rows
      * @param clinicRepository repository for clinic locations
      */
     public ClinicService(OwnerRepository ownerRepository,
                          PetRepository petRepository,
                          PetTypeRepository petTypeRepository,
                          VisitRepository visitRepository,
-                         VetRepository vetRepository,
                          SpecialityRepository specialityRepository,
-                         VetSpecialityRepository vetSpecialityRepository,
                          ClinicRepository clinicRepository) {
         this.ownerRepository = ownerRepository;
         this.petRepository = petRepository;
         this.petTypeRepository = petTypeRepository;
         this.visitRepository = visitRepository;
-        this.vetRepository = vetRepository;
         this.specialityRepository = specialityRepository;
-        this.vetSpecialityRepository = vetSpecialityRepository;
         this.clinicRepository = clinicRepository;
     }
 
@@ -253,47 +241,6 @@ public class ClinicService {
     @Transactional
     public void deleteVisit(Integer id) {
         visitRepository.deleteById(id);
-    }
-
-    // ========== Vet Operations ==========
-
-    /**
-     * Find all veterinarians.
-     * Cached for performance.
-     * @return collection of all vets
-     */
-    @Cacheable("vets")
-    public Collection<Vet> findAllVets() {
-        return vetRepository.findAllWithSpecialities().stream()
-                .map(ClinicService::toVet)
-                .collect(Collectors.toList());
-    }
-
-    private static Vet toVet(VetWithSpecialities vet) {
-        return new Vet(vet.id(), vet.firstName(), vet.lastName(), parseSpecialities(vet.specialityRows()));
-    }
-
-    private static Set<Speciality> parseSpecialities(String specialityRows) {
-        if (specialityRows == null || specialityRows.isBlank()) {
-            return Set.of();
-        }
-        Set<Speciality> specialities = new LinkedHashSet<>();
-        for (String specialityRow : specialityRows.split("\\|")) {
-            String[] parts = specialityRow.split(":", 2);
-            if (parts.length == 2) {
-                specialities.add(new Speciality(Integer.valueOf(parts[0]), parts[1]));
-            }
-        }
-        return specialities;
-    }
-
-    /**
-     * Find a vet by ID.
-     * @param id the vet ID
-     * @return the vet, if found
-     */
-    public Optional<Vet> findVetById(Integer id) {
-        return vetRepository.findById(id);
     }
 
     // ========== Speciality Operations ==========

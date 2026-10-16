@@ -359,6 +359,21 @@ curl -X POST http://localhost:8080/knowledge/search \
 
 The vector service is intentionally an interface, making it straightforward to replace the checked-in catalog with another vector source while keeping Oracle retrieval unchanged. The sample query vectors are cataloged alongside the chunk vectors, so queries outside the demo catalog return no matches.
 
+### Veterinarian ETags
+
+Manage vets at `/vets` and specialities at `/vets/specialities`. Edit forms
+submit JSON and display errors inline.
+
+`Vet` uses Micronaut Data's `@GeneratedETag`. JSON `PUT /vets/{id}` and
+`DELETE /vets/{id}` require `If-Match`, as does `DELETE /vets/{id}/delete`
+(no request body). `POST /vets/{id}/edit` accepts `etag` in the JSON body.
+Saves return the updated vet and ETag; deletes return 204. Missing and stale tags return 428
+and 412 respectively. Reload after a conflict.
+
+ETags cover only the vet's ID and names; speciality edits are not protected.
+Oracle uses `SYS_ROW_ETAG`; other profiles define a local equivalent.
+PostgreSQL currently requires a Micronaut Data fix for quoting ETag columns.
+
 ### Oracle transaction priority
 
 With the Oracle profile running, open http://localhost:8080/oracle/transaction-priority.
