@@ -49,7 +49,7 @@
                 } else if (response.status === 428) {
                     showFeedback(feedback.dataset.missingEtag, 'warning', true);
                 } else {
-                    showFeedback(body.message || feedback.dataset.error, 'danger');
+                    showFeedback(feedback.dataset.error, 'danger');
                 }
                 return;
             }

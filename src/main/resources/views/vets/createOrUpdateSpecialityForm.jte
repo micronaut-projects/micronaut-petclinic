@@ -16,18 +16,19 @@
     </div>
     <main class="container flex-grow-1 py-4">
         @if(saved)
-            <div class="alert alert-success" role="status">${msg.text("speciality.saved")}</div>
+            <div id="speciality-saved-alert" class="alert alert-success" role="status">${msg.text("speciality.saved")}</div>
         @endif
         @if(duplicate)
             <div class="alert alert-warning" role="alert">${msg.text("speciality.duplicate")}</div>
         @endif
         <div id="speciality-feedback" class="alert" role="status" aria-live="polite" hidden
              data-saved="${msg.text("speciality.saved")}"
+             data-duplicate="${msg.text("speciality.duplicate")}"
              data-error="${msg.text("speciality.requestFailed")}"
              data-network-error="${msg.text("speciality.networkError")}"></div>
         <section class="card">
             <div class="card-body">
-                <form id="speciality-form" method="post" action="${isNew ? "/vets/specialities/new" : "/vets/specialities/" + specialityForm.id() + "/edit"}">
+                <form id="speciality-form" method="post" action="${isNew ? "/vets/specialities" : "/vets/specialities/" + specialityForm.id()}">
                     @if(!isNew)
                         <input type="hidden" name="id" value="${specialityForm.id()}">
                     @endif

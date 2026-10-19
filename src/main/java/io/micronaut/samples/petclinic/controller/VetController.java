@@ -18,8 +18,8 @@ import io.micronaut.samples.petclinic.dto.SpecialityDto;
 import io.micronaut.samples.petclinic.dto.VetDto;
 import io.micronaut.samples.petclinic.dto.VetForm;
 import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
-import io.micronaut.samples.petclinic.exception.MissingEtagException;
-import io.micronaut.samples.petclinic.exception.StaleEtagException;
+import io.micronaut.samples.petclinic.exception.PreconditionFailedException;
+import io.micronaut.samples.petclinic.exception.PreconditionRequiredException;
 import io.micronaut.samples.petclinic.mapper.FormMapper;
 import io.micronaut.samples.petclinic.model.Speciality;
 import io.micronaut.samples.petclinic.model.Vet;
@@ -31,10 +31,12 @@ import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
 import jakarta.validation.Valid;
 
-import java.net.URI;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
+import static io.micronaut.http.HttpStatus.CREATED;
 import static io.micronaut.http.HttpStatus.NO_CONTENT;
 
 /** Veterinarian and speciality pages and operations. */
@@ -61,23 +63,25 @@ public class VetController {
     /**
      * Displays veterinarians ordered by last name.
      *
+     * @param saved whether to display the saved notice
      * @return the veterinarian list view model
      */
     @Get
     @View("vets/vetList")
-    public Map<String, Object> showVetList() {
-        return Map.of("vets", vetService.findAll());
+    public Map<String, Object> showVetList(@QueryValue(defaultValue = "false") boolean saved) {
+        return vetListModel(saved);
     }
 
     /**
      * Displays the veterinarian list through its HTML alias.
      *
+     * @param saved whether to display the saved notice
      * @return the veterinarian list view model
      */
     @Get("/html")
     @View("vets/vetList")
-    public Map<String, Object> showResourcesVetList() {
-        return showVetList();
+    public Map<String, Object> showResourcesVetList(@QueryValue(defaultValue = "false") boolean saved) {
+        return vetListModel(saved);
     }
 
     /**
@@ -98,20 +102,7 @@ public class VetController {
     @Get("/new")
     @View("vets/createOrUpdateVetForm")
     public Map<String, Object> newVetForm() {
-        return vetFormModel(new VetForm(), true, false, false);
-    }
-
-    /**
-     * Creates a veterinarian from the URL-encoded creation form.
-     *
-     * @param form submitted names and speciality IDs
-     * @return a redirect to the veterinarian list
-     * @throws IllegalRequestArgumentException if a speciality ID is invalid
-     */
-    @Post(value = "/new", consumes = MediaType.APPLICATION_FORM_URLENCODED)
-    public HttpResponse<?> createVetForm(@Valid @Body VetForm form) throws IllegalRequestArgumentException {
-        vetService.create(form);
-        return HttpResponse.redirect(URI.create("/vets?saved=true"));
+        return vetFormModel(new VetDto(), true, false, false);
     }
 
     /**
@@ -128,41 +119,10 @@ public class VetController {
                                            @QueryValue(defaultValue = "false") boolean conflict,
                                            @QueryValue(defaultValue = "false") boolean saved) {
         Vet vet = vetService.findById(id);
-        VetForm form = new VetForm(vet.id(), vet.firstName(), vet.lastName(),
-                vet.specialities().stream().map(Speciality::id).collect(java.util.stream.Collectors.toSet()),
-                vet.etag());
+        VetDto form = new VetDto(vet.id(), vet.firstName(), vet.lastName(),
+                vet.specialities().stream().map(formMapper::toSpecialityDto).collect(Collectors.toSet()),
+                Objects.requireNonNull(vet.etag()));
         return vetFormModel(form, false, conflict, saved);
-    }
-
-    /**
-     * Saves the JSON edit form using its ETag for optimistic locking.
-     *
-     * @param id veterinarian identifier from the URL
-     * @param form submitted fields and the ETag originally loaded
-     * @return HTTP 200 with the saved veterinarian and current ETag
-     * @throws IllegalRequestArgumentException if a speciality ID is invalid
-     * @throws StaleEtagException if the veterinarian has changed
-     */
-    @Post(value = "/{id}/edit", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON)
-    public HttpResponse<VetDto> updateVetForm(@PathVariable Integer id, @Valid @Body VetForm form)
-            throws IllegalRequestArgumentException, StaleEtagException {
-        Vet updated = vetService.update(vetService.findById(id), form);
-        return response(updated, HttpStatus.OK);
-    }
-
-    /**
-     * Deletes a veterinarian using the ETag supplied in {@code If-Match}.
-     *
-     * @param id veterinarian identifier
-     * @param ifMatch the ETag originally loaded by the edit page
-     * @throws MissingEtagException if the ETag is absent or blank
-     * @throws StaleEtagException if the veterinarian has changed
-     */
-    @Delete(value = "/{id}/delete", produces = MediaType.APPLICATION_JSON)
-    @Status(NO_CONTENT)
-    public void deleteVetForm(@PathVariable Integer id,
-                              @Nullable @Header("If-Match") String ifMatch) throws MissingEtagException, StaleEtagException {
-        vetService.delete(id, requiredEtag(ifMatch));
     }
 
     /**
@@ -189,19 +149,6 @@ public class VetController {
     }
 
     /**
-     * Creates a speciality from the JSON form submission.
-     *
-     * @param form submitted speciality name
-     * @return HTTP 201 with the persisted speciality
-     * @throws IllegalRequestArgumentException if the name already exists
-     */
-    @Post(value = "/specialities/new", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON)
-    public HttpResponse<SpecialityDto> createSpecialityForm(@Valid @Body SpecialityDto form)
-            throws IllegalRequestArgumentException {
-        return createSpeciality(form);
-    }
-
-    /**
      * Displays the current speciality name for editing.
      *
      * @param id speciality identifier
@@ -211,8 +158,7 @@ public class VetController {
      */
     @Get("/specialities/{id}/edit")
     @View("vets/createOrUpdateSpecialityForm")
-    public Map<String, Object> editSpecialityForm(@PathVariable
-                                                  Integer id,
+    public Map<String, Object> editSpecialityForm(@PathVariable Integer id,
                                                   @QueryValue(defaultValue = "false") boolean saved,
                                                   @QueryValue(defaultValue = "false") boolean duplicate) {
         Speciality speciality = vetService.findSpecialityById(id);
@@ -220,17 +166,16 @@ public class VetController {
     }
 
     /**
-     * Renames a speciality from the JSON form submission.
+     * Creates a veterinarian, resolving assignments against stored specialities.
      *
-     * @param id speciality identifier from the URL
-     * @param form submitted speciality name
-     * @return HTTP 200 with the updated speciality
-     * @throws IllegalRequestArgumentException if another speciality has that name
+     * @param form submitted names and speciality IDs
+     * @return HTTP 201 with the saved veterinarian and ETag
+     * @throws IllegalRequestArgumentException if a speciality reference is invalid
      */
-    @Post(value = "/specialities/{id}/edit", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON)
-    public HttpResponse<SpecialityDto> updateSpecialityForm(@PathVariable Integer id, @Valid @Body SpecialityDto form)
-            throws IllegalRequestArgumentException {
-        return updateSpeciality(id, form);
+    @Post(consumes = MediaType.APPLICATION_JSON)
+    public HttpResponse<VetDto> createVet(@Valid @Body VetForm form) throws IllegalRequestArgumentException {
+        Vet saved = vetService.create(form);
+        return response(saved, HttpStatus.CREATED);
     }
 
     /**
@@ -245,16 +190,41 @@ public class VetController {
     }
 
     /**
-     * Creates a veterinarian, resolving assignments against stored specialities.
+     * Updates a veterinarian using the ETag supplied in {@code If-Match}.
      *
-     * @param vetDto submitted names and speciality references
-     * @return HTTP 201 with the saved veterinarian and ETag
+     * @param id veterinarian identifier from the URL
+     * @param ifMatch the current ETag, optionally enclosed in double quotes
+     * @param request new names and speciality references
+     * @return HTTP 200 with the updated veterinarian and ETag
+     * @throws PreconditionRequiredException if the ETag is absent or blank
+     * @throws PreconditionFailedException if the veterinarian has changed
      * @throws IllegalRequestArgumentException if a speciality reference is invalid
      */
-    @Post(consumes = MediaType.APPLICATION_JSON)
-    public HttpResponse<VetDto> createVet(@Valid @Body VetDto vetDto) throws IllegalRequestArgumentException {
-        Vet saved = vetService.create(formMapper.toVet(vetDto));
-        return response(saved, HttpStatus.CREATED);
+    @Put(value = "/{id}", consumes = MediaType.APPLICATION_JSON)
+    public HttpResponse<VetDto> updateVet(@PathVariable Integer id,
+                                          @Nullable @Header("If-Match") String ifMatch,
+                                          @Valid @Body VetDto request)
+            throws PreconditionRequiredException, PreconditionFailedException, IllegalRequestArgumentException {
+        Vet current = vetService.findById(id);
+        VetDto update = new VetDto(request.id(), request.firstName(), request.lastName(),
+                request.specialities(), ifMatch);
+        return response(vetService.update(current, update), HttpStatus.OK);
+    }
+
+    /**
+     * Deletes a veterinarian using the ETag supplied in {@code If-Match}.
+     *
+     * @param id veterinarian identifier
+     * @param ifMatch the current ETag, optionally enclosed in double quotes
+     * @throws PreconditionRequiredException if the ETag is absent or blank
+     * @throws PreconditionFailedException if the veterinarian has changed
+     */
+    @Delete("/{id}")
+    @Status(NO_CONTENT)
+    public void deleteVet(@PathVariable Integer id,
+                          @Nullable @Header("If-Match") String ifMatch)
+            throws PreconditionRequiredException, PreconditionFailedException {
+        vetService.delete(id, ifMatch);
     }
 
     /**
@@ -275,9 +245,10 @@ public class VetController {
      * @throws IllegalRequestArgumentException if the name already exists
      */
     @Post(value = "/specialities", consumes = MediaType.APPLICATION_JSON)
-    public HttpResponse<SpecialityDto> createSpeciality(@Valid @Body SpecialityDto request) throws IllegalRequestArgumentException {
+    @Status(CREATED)
+    public SpecialityDto createSpeciality(@Valid @Body SpecialityDto request) throws IllegalRequestArgumentException {
         Speciality saved = vetService.createSpeciality(request);
-        return HttpResponse.status(HttpStatus.CREATED).body(formMapper.toSpecialityDto(saved));
+        return formMapper.toSpecialityDto(saved);
     }
 
     /**
@@ -295,56 +266,24 @@ public class VetController {
         return HttpResponse.ok(formMapper.toSpecialityDto(updated));
     }
 
-    /**
-     * Updates a veterinarian using the ETag supplied in {@code If-Match}.
-     *
-     * @param id veterinarian identifier from the URL
-     * @param ifMatch the current ETag, optionally enclosed in double quotes
-     * @param request new names and speciality references
-     * @return HTTP 200 with the updated veterinarian and ETag
-     * @throws MissingEtagException if the header is absent or blank
-     * @throws StaleEtagException if the veterinarian has changed
-     * @throws IllegalRequestArgumentException if a speciality reference is invalid
-     */
-    @Put(value = "/{id}", consumes = MediaType.APPLICATION_JSON)
-    public HttpResponse<VetDto> updateVet(@PathVariable Integer id,
-                                          @Nullable @Header("If-Match") String ifMatch,
-                                          @Valid @Body VetDto request) throws MissingEtagException, StaleEtagException, IllegalRequestArgumentException {
-        Vet current = vetService.findById(id);
-        String etag = requiredEtag(ifMatch);
-        VetDto update = new VetDto(request.id(), request.firstName(), request.lastName(),
-                request.specialities(), etag);
-        return response(vetService.update(current, update), HttpStatus.OK);
-    }
-
-    /**
-     * Deletes a veterinarian using the ETag supplied in {@code If-Match}.
-     *
-     * @param id veterinarian identifier
-     * @param ifMatch the current ETag, optionally enclosed in double quotes
-     * @throws MissingEtagException if the header is absent or blank
-     * @throws StaleEtagException if the veterinarian has changed
-     */
-    @Delete("/{id}")
-    @Status(NO_CONTENT)
-    public void deleteVet(@PathVariable Integer id,
-                          @Nullable @Header("If-Match") String ifMatch) throws StaleEtagException, MissingEtagException {
-        vetService.delete(id, requiredEtag(ifMatch));
-    }
-
     private HttpResponse<VetDto> response(Vet vet, HttpStatus status) {
+        VetDto dto = formMapper.toVetDto(vet);
         return HttpResponse.status(status)
-                .header("ETag", quote(vet.etag()))
+                .header("ETag", dto.etag())
                 .header("Cache-Control", "no-store")
-                .body(formMapper.toVetDto(vet));
+                .body(dto);
     }
 
-    private Map<String, Object> vetFormModel(VetForm form, boolean isNew, boolean conflict, boolean saved) {
+    private Map<String, Object> vetFormModel(VetDto form, boolean isNew, boolean conflict, boolean saved) {
         return Map.of("vetForm", form,
                 "specialities", vetService.findSpecialities(),
                 "isNew", isNew,
                 "conflict", conflict,
                 "saved", saved);
+    }
+
+    private Map<String, Object> vetListModel(boolean saved) {
+        return Map.of("vets", vetService.findAll(), "saved", saved);
     }
 
     private static Map<String, Object> specialityFormModel(SpecialityDto form,
@@ -355,18 +294,11 @@ public class VetController {
     }
 
 
-    private static String requiredEtag(String ifMatch) throws MissingEtagException {
-        if (ifMatch == null || ifMatch.isBlank()) {
-            throw new MissingEtagException("Send the ETag from the loaded vet in the If-Match header.");
-        }
-        return ifMatch.trim();
-    }
-
-    private static String quote(String etag) {
+    private static String requiredEtag(String etag) throws PreconditionRequiredException {
         if (etag == null || etag.isBlank()) {
-            throw new IllegalStateException("Micronaut Data did not return the generated vet ETag.");
+            throw new PreconditionRequiredException("Send the ETag from the loaded vet in the If-Match header.");
         }
-        return "\"" + etag + "\"";
+        return etag.trim();
     }
 
 }

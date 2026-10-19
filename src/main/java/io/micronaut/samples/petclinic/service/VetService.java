@@ -1,15 +1,13 @@
 package io.micronaut.samples.petclinic.service;
 
 import io.micronaut.data.exceptions.OptimisticLockException;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.samples.petclinic.dto.SpecialityDto;
 import io.micronaut.samples.petclinic.dto.VetDto;
 import io.micronaut.samples.petclinic.dto.VetForm;
 import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
-import io.micronaut.samples.petclinic.exception.MissingEtagException;
-import io.micronaut.samples.petclinic.exception.StaleEtagException;
+import io.micronaut.samples.petclinic.exception.PreconditionFailedException;
+import io.micronaut.samples.petclinic.exception.PreconditionRequiredException;
 import io.micronaut.samples.petclinic.model.Speciality;
 import io.micronaut.samples.petclinic.model.Vet;
 import io.micronaut.samples.petclinic.repository.SpecialityRepository;
@@ -60,7 +58,13 @@ public class VetService {
      * @throws NotFoundException if the identifier does not exist
      */
     public Vet findById(Integer id) {
-        return vetRepository.findById(id).orElseThrow(NotFoundException::new);
+        Vet vet = vetRepository.findById(id).orElseThrow(NotFoundException::new);
+        try {
+            validateEtag(vet.etag());
+        } catch (MissingEtagException e) {
+            throw new IllegalStateException("Fetched vet etag can't be null.");
+        }
+        return vet;
     }
 
     /**
@@ -91,7 +95,11 @@ public class VetService {
      * @throws IllegalRequestArgumentException if the name already exists
      */
     public Speciality createSpeciality(@NonNull SpecialityDto request) throws IllegalRequestArgumentException {
-        ensureUniqueSpecialityName(request.name(), null);
+        try {
+            ensureUniqueSpecialityName(request.name(), null);
+        } catch (DomainValidationException e) {
+            throw new IllegalRequestArgumentException(e.getMessage());
+        }
         return specialityRepository.save(new Speciality(request.name()));
     }
 
@@ -105,10 +113,13 @@ public class VetService {
      * @throws IllegalRequestArgumentException if another speciality has that name
      */
     public Speciality updateSpeciality(@NonNull Integer id, @NonNull SpecialityDto request) throws IllegalRequestArgumentException {
-        Speciality current = specialityRepository.findById(id)
-                .orElseThrow(NotFoundException::new);
-        ensureUniqueSpecialityName(request.name(), id);
-        return specialityRepository.update(new Speciality(id, request.name(), current.vets()));
+        Speciality speciality = specialityRepository.findById(id).orElseThrow(NotFoundException::new);
+        try {
+            ensureUniqueSpecialityName(request.name(), id);
+        } catch (DomainValidationException e) {
+            throw new IllegalRequestArgumentException(e.getMessage());
+        }
+        return specialityRepository.update(speciality.withName(request.name()));
     }
 
     /**
@@ -118,28 +129,15 @@ public class VetService {
      * @return the saved veterinarian with its generated ETag
      * @throws IllegalRequestArgumentException if a speciality reference is invalid
      */
-    @Transactional
     public Vet create(@NonNull VetForm form) throws IllegalRequestArgumentException {
-        Set<Speciality> selectedSpecialities = resolveSpecialities(form.specialityIds());
-        Vet saved = vetRepository.save(new Vet(null, form.firstName(), form.lastName(), selectedSpecialities, null));
+        Set<Speciality> selectedSpecialities;
+        try {
+            selectedSpecialities = resolveSpecialities(form.specialityIds());
+        } catch (DomainValidationException e) {
+            throw new IllegalRequestArgumentException(e.getMessage());
+        }
+        Vet saved = vetRepository.save(form.toVet(null, selectedSpecialities));
         return findById(saved.id());
-    }
-
-    /**
-     * Creates a veterinarian using persisted speciality records.
-     *
-     * @param vet submitted names and speciality references; ID and ETag are ignored
-     * @return the saved veterinarian with its generated ETag
-     * @throws IllegalRequestArgumentException if a speciality reference is invalid
-     */
-    @Transactional
-    public Vet create(@NonNull Vet vet) throws IllegalRequestArgumentException {
-        Set<Integer> specialityIds = vet.specialities().stream()
-                .map(Speciality::id)
-                .collect(Collectors.toSet());
-        Set<Speciality> selectedSpecialities = resolveSpecialities(specialityIds);
-        Vet newVet = new Vet(null, vet.firstName(), vet.lastName(), selectedSpecialities, null);
-        return findById(vetRepository.save(newVet).id());
     }
 
     /**
@@ -148,42 +146,24 @@ public class VetService {
      * @param vet the current persisted vet
      * @param vetDto submitted names, speciality identifiers, and ETag
      * @return the updated vet with its newly generated ETag
-     * @throws MissingEtagException if the ETag is absent or blank
-     * @throws StaleEtagException if the veterinarian has changed
+     * @throws PreconditionRequiredException if the ETag is absent or blank
+     * @throws PreconditionFailedException if the veterinarian has changed
      * @throws IllegalRequestArgumentException if a speciality reference is invalid
      */
     @Transactional(rollbackOn = Exception.class)
-    public Vet update(@NonNull Vet vet, @NonNull VetDto vetDto) throws MissingEtagException, StaleEtagException, IllegalRequestArgumentException {
-        if (vetDto.etag() == null || vetDto.etag().isBlank()) {
-            throw new MissingEtagException("Provide the ETag from the loaded entity when updating.");
-        }
-
+    public Vet update(@NonNull Vet vet, @NonNull VetDto vetDto)
+            throws PreconditionRequiredException, PreconditionFailedException, IllegalRequestArgumentException {
         Set<Integer> specialityIds = vetDto.specialities().stream()
-                .map(SpecialityDto::id)
-                .collect(Collectors.toSet());
-        return updateVersioned(vet, vetDto.firstName(), vetDto.lastName(), specialityIds, vetDto.etag());
-    }
-
-    /**
-     * Updates a veterinarian using the ETag captured when the edit form was loaded.
-     *
-     * @param current the persisted veterinarian
-     * @param form submitted fields and the loaded ETag
-     * @return the saved veterinarian with its current ETag
-     * @throws HttpStatusException if the ID mismatches or the ETag is missing
-     * @throws StaleEtagException if the veterinarian has changed
-     * @throws IllegalRequestArgumentException if a speciality reference is invalid
-     */
-    @Transactional(rollbackOn = Exception.class)
-    public Vet update(@NonNull Vet current, @NonNull VetForm form) throws StaleEtagException, IllegalRequestArgumentException {
-        if (form.id() != null && !form.id().equals(current.id())) {
-            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Vet id in the form must match the URL.");
+                .map(SpecialityDto::id).collect(Collectors.toSet());
+        try {
+            return updateVersioned(vet, vetDto.firstName(), vetDto.lastName(), specialityIds, vetDto.etag());
+        } catch (MissingEtagException e) {
+            throw new PreconditionRequiredException(e.getMessage(), e);
+        } catch (StaleEtagException e) {
+            throw new PreconditionFailedException(e.getMessage(), e);
+        } catch (DomainValidationException e) {
+            throw new IllegalRequestArgumentException(e.getMessage());
         }
-        if (form.etag() == null || form.etag().isBlank()) {
-            throw new HttpStatusException(HttpStatus.PRECONDITION_REQUIRED,
-                    "Reload the veterinarian form before saving.");
-        }
-        return updateVersioned(current, form.firstName(), form.lastName(), form.specialityIds(), form.etag());
     }
 
     /**
@@ -192,18 +172,37 @@ public class VetService {
      * @param id veterinarian identifier
      * @param expectedEtag the loaded ETag, optionally enclosed in double quotes
      * @throws NotFoundException if the identifier does not exist
-     * @throws MissingEtagException if the ETag is absent or blank
-     * @throws StaleEtagException if the veterinarian has changed
+     * @throws PreconditionRequiredException if the ETag is absent or blank
+     * @throws PreconditionFailedException if the veterinarian has changed
      */
-    public void delete(Integer id, String expectedEtag) throws StaleEtagException, MissingEtagException {
-        if (expectedEtag == null || expectedEtag.isBlank()) {
-            throw new MissingEtagException("Reload the veterinarian before deleting.");
-        }
+    @Transactional(rollbackOn = Exception.class)
+    public void delete(Integer id, String expectedEtag)
+            throws PreconditionRequiredException, PreconditionFailedException {
         try {
-            vetRepository.delete(findById(id).withEtag(unquote(expectedEtag)));
-        } catch (OptimisticLockException stale) {
+            validateEtag(expectedEtag);
+            Vet vet = findById(id).withEtag(expectedEtag);
+            deleteVet(vet);
+        } catch (MissingEtagException e) {
+            throw new PreconditionRequiredException(e.getMessage(), e);
+        } catch (StaleEtagException e) {
+            throw new PreconditionFailedException(e.getMessage(), e);
+        }
+    }
+
+    private void validateEtag(String etag) throws MissingEtagException {
+        if (etag == null || etag.isBlank()) {
+            throw new MissingEtagException();
+        }
+    }
+
+    private void deleteVet(@NonNull Vet vet) throws StaleEtagException {
+        try {
+            vetRepository.deleteSpecialityLinks(vet.id());
+            vetRepository.delete(vet);
+        } catch (OptimisticLockException e) {
             throw new StaleEtagException();
         }
+
     }
 
     private Vet updateVersioned(Vet updated) throws StaleEtagException {
@@ -222,37 +221,30 @@ public class VetService {
                                 String firstName,
                                 String lastName,
                                 Set<Integer> specialityIds,
-                                String expectedEtag) throws StaleEtagException, IllegalRequestArgumentException {
+                                String expectedEtag) throws StaleEtagException, MissingEtagException, DomainValidationException {
+        validateEtag(expectedEtag);
         Set<Speciality> selectedSpecialities = resolveSpecialities(specialityIds);
-        return updateVersioned(new Vet(current.id(), firstName, lastName, selectedSpecialities, unquote(expectedEtag)));
+        return updateVersioned(new Vet(current.id(), firstName, lastName, selectedSpecialities, expectedEtag));
     }
 
-    private Set<Speciality> resolveSpecialities(@NonNull Set<Integer> requestedIds) throws IllegalRequestArgumentException {
+    private Set<Speciality> resolveSpecialities(@NonNull Set<Integer> requestedIds) throws DomainValidationException {
         if (requestedIds.isEmpty()) {
             return Set.of();
         }
         if (requestedIds.stream().anyMatch(java.util.Objects::isNull)) {
-            throw new IllegalRequestArgumentException("Each speciality must have an id.");
+            throw new DomainValidationException("Each speciality must have an id.");
         }
         Set<Speciality> resolved = new HashSet<>(specialityRepository.findAllByIdIn(requestedIds));
         if (resolved.size() != requestedIds.size()) {
-            throw new IllegalRequestArgumentException("One or more specialities were not found.");
+            throw new DomainValidationException("One or more specialities were not found.");
         }
         return resolved;
     }
 
-    private void ensureUniqueSpecialityName(String name, Integer currentId) throws IllegalRequestArgumentException {
+    private void ensureUniqueSpecialityName(String name, Integer currentId) throws DomainValidationException {
         if (specialityRepository.findByName(name).filter(existing -> !existing.id().equals(currentId)).isPresent()) {
-            throw new IllegalRequestArgumentException("Speciality name already exists.");
+            throw new DomainValidationException("Speciality name already exists.");
         }
-    }
-
-    private static String unquote(String etag) {
-        String value = etag.trim();
-        if (value.length() >= 2 && value.startsWith("\"") && value.endsWith("\"")) {
-            return value.substring(1, value.length() - 1);
-        }
-        return value;
     }
 
 }

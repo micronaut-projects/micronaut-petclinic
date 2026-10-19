@@ -1,16 +1,16 @@
 package io.micronaut.samples.petclinic.controller;
 
+import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Error;
-import io.micronaut.http.exceptions.HttpStatusException;
-import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.json.JsonSyntaxException;
+import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
-import io.micronaut.samples.petclinic.exception.MissingEtagException;
-import io.micronaut.samples.petclinic.exception.StaleEtagException;
+import io.micronaut.samples.petclinic.exception.PreconditionFailedException;
+import io.micronaut.samples.petclinic.exception.PreconditionRequiredException;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
+import static io.micronaut.http.HttpStatus.PRECONDITION_FAILED;
 import static io.micronaut.http.HttpStatus.PRECONDITION_REQUIRED;
 
 /**
@@ -33,18 +34,7 @@ public class ErrorController {
     private final static Logger LOG = LoggerFactory.getLogger(ErrorController.class);
 
     /**
-     * Reports an invalid domain request.
-     *
-     * @param e the request failure
-     * @return HTTP 400 with a JSON message
-     */
-    @Error(exception = IllegalRequestArgumentException.class, global = true)
-    public static HttpResponse<?> IllegalRequestArgumentExceptionHandler(IllegalRequestArgumentException e) {
-        return HttpResponse.badRequest().body(Map.of("message", message(e, "Invalid request.")));
-    }
-
-    /**
-     * Reports bean-validation failures from any controller.
+     * Reports invalid request data.
      *
      * @param error the request failure
      * @return HTTP 400 with a JSON message
@@ -55,37 +45,38 @@ public class ErrorController {
     }
 
     /**
-     * Reports a mutation without its required ETag.
+     * Reports bean-validation failures from any controller.
      *
-     * @param e the request failure
+     * @param error the request failure
+     * @return HTTP response with a JSON message and status.
+     */
+    @Error(exception = IllegalRequestArgumentException.class, global = true)
+    public HttpResponse<Map<String, String>> validationError(IllegalRequestArgumentException error) {
+        return HttpResponse.badRequest(Map.of("message", message(error, "Invalid request.")));
+    }
+
+    /**
+     * Reports a request that omitted a required precondition.
+     *
+     * @param error the missing-precondition failure
      * @return HTTP 428 with a JSON message
      */
-    @Error(exception = MissingEtagException.class, global = true)
-    public static HttpResponse<?> MissingEtagExceptionHandler(MissingEtagException e) {
-        return HttpResponse.status(PRECONDITION_REQUIRED).body(Map.of("message", message(e, "Provide the current ETag.")));
+    @Error(exception = PreconditionRequiredException.class, global = true)
+    public HttpResponse<Map<String, String>> preconditionRequired(PreconditionRequiredException error) {
+        return HttpResponse.status(PRECONDITION_REQUIRED)
+                .body(Map.of("message", message(error, "Provide the current ETag.")));
     }
 
     /**
-     * Reports a rejected optimistic-locking precondition.
+     * Reports a request whose supplied precondition failed.
      *
-     * @param error the request failure
+     * @param error the failed-precondition failure
      * @return HTTP 412 with a JSON message
      */
-    @Error(exception = StaleEtagException.class, global = true)
-    public HttpResponse<Map<String, String>> staleVet(StaleEtagException error) {
-        return HttpResponse.status(HttpStatus.PRECONDITION_FAILED).body(Map.of("message", error.getMessage()));
-    }
-
-    /**
-     * Preserves the status of an HTTP exception raised by a controller.
-     *
-     * @param error the request failure
-     * @return the exception status and a JSON message
-     */
-    @Error(exception = HttpStatusException.class, global = true)
-    public HttpResponse<Map<String, String>> statusError(HttpStatusException error) {
-        return HttpResponse.status(error.getStatus())
-                .body(Map.of("message", message(error, error.getStatus().getReason())));
+    @Error(exception = PreconditionFailedException.class, global = true)
+    public HttpResponse<Map<String, String>> preconditionFailed(PreconditionFailedException error) {
+        return HttpResponse.status(PRECONDITION_FAILED)
+                .body(Map.of("message", message(error, "The supplied precondition failed.")));
     }
 
     /**
@@ -108,6 +99,18 @@ public class ErrorController {
     @Error(exception = ConversionErrorException.class, global = true)
     public HttpResponse<Map<String, String>> invalidValue(ConversionErrorException error) {
         return HttpResponse.badRequest(Map.of("message", "Invalid request value."));
+    }
+
+    /**
+     * Reports a requested domain resource that does not exist.
+     *
+     * @param error the missing-resource failure
+     * @return HTTP 404 with a JSON message
+     */
+    @Error(exception = NotFoundException.class, global = true)
+    public HttpResponse<Map<String, String>> missingResource(NotFoundException error) {
+        return HttpResponse.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("message", message(error, "Resource not found.")));
     }
 
     /**

@@ -8,6 +8,7 @@ import io.micronaut.data.annotation.Relation;
 import io.micronaut.serde.annotation.Serdeable;
 import io.micronaut.sourcegen.annotations.Wither;
 import jakarta.validation.constraints.NotBlank;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -29,18 +30,15 @@ public record Speciality(
 
         @MappedProperty("NAME")
         @NotBlank
-        String name,
-
-        @Nullable
-        @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = "specialities")
-        List<Vet> vets
+        @NonNull
+        String name
 ) implements NamedEntity, SpecialityWither {
 
     /**
      * Creates an empty speciality for framework binding.
      */
     public Speciality() {
-        this(null, null, List.of());
+        this(null, "");
     }
 
     /**
@@ -49,7 +47,7 @@ public record Speciality(
      * @param name the display name of the speciality
      */
     public Speciality(String name) {
-        this(null, name, List.of());
+        this(null, name);
     }
 
     /**
@@ -71,15 +69,5 @@ public record Speciality(
     @Override
     public int hashCode() {
         return BaseEntity.entityHashCode(this);
-    }
-
-    /**
-     * Returns the speciality display name.
-     *
-     * @return the speciality name
-     */
-    @Override
-    public String toString() {
-        return name;
     }
 }

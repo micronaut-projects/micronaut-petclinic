@@ -2,7 +2,7 @@
 @param io.micronaut.http.HttpRequest<?> request
 @param java.util.Locale locale
 @param java.util.Set<String> activeNames
-@param io.micronaut.samples.petclinic.dto.VetForm vetForm
+@param io.micronaut.samples.petclinic.dto.VetDto vetForm
 @param java.util.List<io.micronaut.samples.petclinic.model.Speciality> specialities
 @param boolean isNew
 @param boolean conflict

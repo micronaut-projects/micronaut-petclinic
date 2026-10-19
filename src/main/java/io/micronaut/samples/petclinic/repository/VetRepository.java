@@ -46,4 +46,13 @@ public interface VetRepository extends CrudRepository<Vet, Integer> {
      */
     @Query(value = "DELETE FROM VET_SPECIALTIES WHERE VET_ID = :id", nativeQuery = true)
     void deleteSpecialityLinks(Integer id);
+
+    /**
+     * Counts speciality assignments stored for a veterinarian.
+     *
+     * @param id veterinarian identifier
+     * @return the number of assignment rows
+     */
+    @Query(value = "SELECT COUNT(*) FROM VET_SPECIALTIES WHERE VET_ID = :id", nativeQuery = true)
+    long countSpecialityLinks(Integer id);
 }

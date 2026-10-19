@@ -1,9 +1,10 @@
 package io.micronaut.samples.petclinic.exception;
 
 /**
- * Signals an invalid domain request, such as an unknown speciality.
+ * Signals invalid request data that does not satisfy domain validation.
  */
 public class IllegalRequestArgumentException extends Exception {
+
     /**
      * Creates a request failure with a message suitable for the client.
      *

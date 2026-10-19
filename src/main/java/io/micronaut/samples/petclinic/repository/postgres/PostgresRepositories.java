@@ -90,8 +90,19 @@ public final class PostgresRepositories {
          * {@inheritDoc}
          */
         @Override
-        @Query(value = "DELETE FROM \"VET_SPECIALTIES\" WHERE \"VET_ID\" = :id", nativeQuery = true)
+        @Query(value = """
+                DELETE FROM "VET_SPECIALTIES" WHERE "VET_ID" = :id
+                """, nativeQuery = true)
         void deleteSpecialityLinks(Integer id);
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        @Query(value = """
+                SELECT COUNT(*) FROM "VET_SPECIALTIES" WHERE "VET_ID" = :id
+                """, nativeQuery = true)
+        long countSpecialityLinks(Integer id);
     }
 
     /**

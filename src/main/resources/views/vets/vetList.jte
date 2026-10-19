@@ -3,6 +3,7 @@
 @param io.micronaut.http.HttpRequest<?> request
 @param java.util.Locale locale
 @param java.util.Set<String> activeNames
+@param boolean saved
 
 @template.layout(content = @`
     <div class="page-header">
@@ -17,6 +18,9 @@
     </div>
 
     <main class="container flex-grow-1 py-4">
+        @if(saved)
+            <div class="alert alert-success" role="status">${msg.text("vet.saved")}</div>
+        @endif
         <div class="row g-4 mb-5">
             <div class="col-md-4">
                 <div class="card h-100">

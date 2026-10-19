@@ -3,6 +3,7 @@
     if (!form) return;
 
     const feedback = document.getElementById('speciality-feedback');
+    const savedAlert = document.getElementById('speciality-saved-alert');
     let pending = false;
 
     function showFeedback(text, kind) {
@@ -27,13 +28,13 @@
 
         try {
             const response = await fetch(form.action, {
-                method: 'POST',
+                method: id ? 'PUT' : 'POST',
                 headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
                 body: JSON.stringify(payload)
             });
             const body = await response.json().catch(() => ({}));
             if (!response.ok) {
-                showFeedback(body.message || feedback.dataset.error, 'danger');
+                showFeedback(response.status === 400 ? feedback.dataset.duplicate : feedback.dataset.error, 'danger');
                 return;
             }
             if (!id) {
@@ -44,6 +45,7 @@
                 window.location.assign('/vets/specialities/' + body.id + '/edit?saved=true');
                 return;
             }
+            if (savedAlert) savedAlert.hidden = true;
             showFeedback(feedback.dataset.saved, 'success');
         } catch (error) {
             showFeedback(feedback.dataset.networkError, 'danger');
