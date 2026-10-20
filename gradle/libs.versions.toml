@@ -11,7 +11,7 @@ ojdbc = { strictly = "23.26.3.0.0" }
 ojdbc-provider-azure = "1.1.0"
 azure-core = "1.60.0"
 azure-core-http-jdk-httpclient = "1.2.0"
-micronaut-test-resources = "4.6.2"
+micronaut-test-resources = "5.0.2"
 mysql = "26.10.0"
 postgresql = "42.7.14"
 h2gis = "2.2.5"
