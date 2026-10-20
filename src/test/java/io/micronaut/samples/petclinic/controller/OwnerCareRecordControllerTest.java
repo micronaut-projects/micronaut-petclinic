@@ -39,7 +39,7 @@ class OwnerCareRecordControllerTest {
 
     @BeforeEach
     void loadSampleDocument() {
-        Collection<Owner> matches = ownerRepository.findByLastNameContainingIgnoreCase(
+        Collection<Owner> matches = ownerRepository.findByLastNameContainsIgnoreCase(
                 "Coleman", Sort.of(Sort.Order.asc("lastName")));
         Owner owner = matches.stream().findFirst().orElseThrow();
         originalDocument = ownerCareViewService.findById(owner.id());
