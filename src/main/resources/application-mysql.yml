@@ -11,9 +11,9 @@ datasources:
       CREATE FUNCTION IF NOT EXISTS SYS_ROW_ETAG(vet_id INT, first_name VARCHAR(255), last_name VARCHAR(255))
       RETURNS CHAR(32) CHARACTER SET ascii
       DETERMINISTIC
-      RETURN UPPER(MD5(CONCAT(
+      RETURN UPPER(LEFT(SHA2(CONCAT(
         IF(vet_id IS NULL, '-1:', CONCAT(CHAR_LENGTH(CAST(vet_id AS CHAR)), ':', CAST(vet_id AS CHAR))),
         IF(first_name IS NULL, '-1:', CONCAT(CHAR_LENGTH(first_name), ':', first_name)),
         IF(last_name IS NULL, '-1:', CONCAT(CHAR_LENGTH(last_name), ':', last_name))
-      )))
+      ), 256), 32))
 

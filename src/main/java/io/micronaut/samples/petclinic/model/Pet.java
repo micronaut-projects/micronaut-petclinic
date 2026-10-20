@@ -4,7 +4,6 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Transient;
 import io.micronaut.serde.annotation.Serdeable;
@@ -42,21 +41,17 @@ public record Pet(
         @GeneratedValue
         Integer id,
 
-        @MappedProperty("NAME")
         @NotBlank
         String name,
 
-        @MappedProperty("BIRTH_DATE")
         @NotNull
         LocalDate birthDate,
 
         @Relation(MANY_TO_ONE)
-        @MappedProperty("TYPE_ID")
         @NotNull
         PetType type,
 
         @Relation(MANY_TO_ONE)
-        @MappedProperty("OWNER_ID")
         Owner owner,
 
         @Relation(value = ONE_TO_MANY, mappedBy = "pet")

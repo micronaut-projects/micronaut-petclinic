@@ -45,12 +45,10 @@ public record Vet(
         @ETagValue
         Integer id,
 
-        @MappedProperty("FIRST_NAME")
         @ETagValue
         @NotBlank
         String firstName,
 
-        @MappedProperty("LAST_NAME")
         @ETagValue
         @NotBlank
         String lastName,

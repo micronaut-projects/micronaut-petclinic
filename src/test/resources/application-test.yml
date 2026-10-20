@@ -7,6 +7,14 @@ micronaut:
     jte:
       dynamic: false
 
+# MySQL Test Resources runs the MySQL server with binary logging enabled.
+# Allow the application test user to create the deterministic SYS_ROW_ETAG function.
+test-resources:
+  containers:
+    mysql:
+      command:
+        - --log-bin-trust-function-creators=ON
+
 # Enable sample data for tests
 petclinic:
   sample-data:

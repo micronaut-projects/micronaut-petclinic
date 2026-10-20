@@ -1,6 +1,7 @@
 package io.micronaut.samples.petclinic.repository.postgres;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -126,16 +127,18 @@ public final class PostgresRepositories {
                 """, nativeQuery = true)
         Collection<Visit> findByPetId(Integer petId);
 
-        /**
-         * Finds visits for a pet using Oracle SQL.
-         *
-         * @param petName the pet name
-         * @return visits for the pet
-         */
-        @Override
-        @Query(value = "SELECT v.* FROM VISITS v LEFT JOIN PETS p ON v.PET_ID = p.ID WHERE p.NAME = :petName  ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
-        Collection<Visit> findByPetName(String petName);
-    }
+    /**
+     * Finds visits for a pet using Oracle SQL.
+     *
+     * @param petName the pet name
+     * @return visits for the pet
+     */
+    @Override
+    @Query(value = """
+        SELECT v.* FROM "VISITS" v LEFT JOIN "PETS" p ON v."PET_ID" = p.ID WHERE p."NAME" = :petName ORDER BY v."VISIT_DATE" DESC
+        """, nativeQuery = true)
+    Collection<Visit> findByPetName(String petName);
+  }
 
     @Requires(env = "postgres")
     @JdbcRepository(dialect = Dialect.POSTGRES)
