@@ -128,12 +128,15 @@ public class VetController {
     /**
      * Displays available specialities ordered by name.
      *
+     * @param created whether to display the creation confirmation
+     * @param changed whether to display the update confirmation
      * @return the speciality list view model
      */
     @Get("/specialities")
     @View("vets/specialityList")
-    public Map<String, Object> showSpecialities() {
-        return Map.of("specialities", vetService.findSpecialities());
+    public Map<String, Object> showSpecialities(@QueryValue(defaultValue = "false") boolean created,
+                                                @QueryValue(defaultValue = "false") boolean changed) {
+        return Map.of("specialities", vetService.findSpecialities(), "created", created, "changed", changed);
     }
 
     /**

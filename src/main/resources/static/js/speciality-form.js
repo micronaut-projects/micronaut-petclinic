@@ -3,7 +3,6 @@
     if (!form) return;
 
     const feedback = document.getElementById('speciality-feedback');
-    const savedAlert = document.getElementById('speciality-saved-alert');
     let pending = false;
 
     function showFeedback(text, kind) {
@@ -42,11 +41,10 @@
                     showFeedback(feedback.dataset.networkError, 'danger');
                     return;
                 }
-                window.location.assign('/vets/specialities/' + body.id + '/edit?saved=true');
+                window.location.assign('/vets/specialities?created=true');
                 return;
             }
-            if (savedAlert) savedAlert.hidden = true;
-            showFeedback(feedback.dataset.saved, 'success');
+            window.location.assign('/vets/specialities?changed=true');
         } catch (error) {
             showFeedback(feedback.dataset.networkError, 'danger');
         } finally {

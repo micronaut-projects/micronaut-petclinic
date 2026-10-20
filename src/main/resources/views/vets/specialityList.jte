@@ -3,6 +3,8 @@
 @param java.util.Locale locale
 @param java.util.Set<String> activeNames
 @param java.util.List<io.micronaut.samples.petclinic.model.Speciality> specialities
+@param boolean created
+@param boolean changed
 
 @template.layout(content = @`
     <div class="page-header">
@@ -12,6 +14,12 @@
         </div>
     </div>
     <main class="container flex-grow-1 py-4">
+        @if(created)
+            <div class="alert alert-success" role="status">${msg.text("speciality.created")}</div>
+        @endif
+        @if(changed)
+            <div class="alert alert-success" role="status">${msg.text("speciality.changed")}</div>
+        @endif
         <div class="d-flex gap-2 flex-wrap mb-4">
             <a href="/vets/specialities/new" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i>${msg.text("speciality.add")}

@@ -22,20 +22,20 @@
         @if(saved)
             <div class="alert alert-success" role="status">${msg.text("vet.saved")}</div>
         @endif
-        @if(!isNew)
-            <div id="vet-feedback" class="alert" role="status" aria-live="polite" hidden
-                 data-saved="${msg.text("vet.saved")}"
-                 data-conflict="${msg.text("vet.conflictPending")}"
-                 data-missing-etag="${msg.text("vet.reloadRequired")}"
-                 data-error="${msg.text("vet.requestFailed")}"
-                 data-network-error="${msg.text("vet.networkError")}">
-                <span id="vet-feedback-message"></span>
+        <div id="vet-feedback" class="alert" role="status" aria-live="polite" hidden
+             data-saved="${msg.text("vet.saved")}"
+             data-conflict="${msg.text("vet.conflictPending")}"
+             data-missing-etag="${msg.text("vet.reloadRequired")}"
+             data-error="${msg.text("vet.requestFailed")}"
+             data-network-error="${msg.text("vet.networkError")}">
+            <span id="vet-feedback-message"></span>
+            @if(!isNew)
                 <a id="vet-reload" class="alert-link ms-2" href="/vets/${vetForm.id()}/edit" hidden>${msg.text("vet.reload")}</a>
-            </div>
-        @endif
+            @endif
+        </div>
         <section class="card">
             <div class="card-body">
-                <form id="vet-edit-form" method="post" action="${isNew ? "/vets/new" : "/vets/" + vetForm.id() + "/edit"}">
+                <form id="vet-edit-form" method="post" action="${isNew ? "/vets" : "/vets/" + vetForm.id()}" data-is-new="${isNew}">
                     @if(!isNew)
                         <input type="hidden" name="id" value="${vetForm.id()}">
                         <input type="hidden" name="etag" value="${vetForm.etag()}">
@@ -83,7 +83,7 @@
                     </div>
                 </form>
                 @if(!isNew)
-                    <form id="vet-delete-form" method="post" action="/vets/${vetForm.id()}/delete" class="mt-4 pt-3 border-top"
+                    <form id="vet-delete-form" method="post" action="/vets/${vetForm.id()}" class="mt-4 pt-3 border-top"
                           data-confirm="${msg.text("vet.confirmDelete")}">
                         <input type="hidden" name="etag" value="${vetForm.etag()}">
                         <button type="submit" class="btn btn-outline-danger">
@@ -94,7 +94,5 @@
             </div>
         </section>
     </main>
-    @if(!isNew)
-        <script src="/resources/js/vet-form.js" defer></script>
-    @endif
+    <script src="/resources/js/vet-form.js" defer></script>
 `, msg = msg, request = request, locale = locale, activeNames = activeNames)

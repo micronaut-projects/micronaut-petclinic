@@ -214,6 +214,8 @@ class VetCrudTest {
         assertThat(created.getContentType()).contains(MediaType.APPLICATION_JSON_TYPE);
         assertThat(created.header("Location")).isNull();
         assertThat(speciality.name()).isEqualTo(name);
+        assertThat(client.toBlocking().retrieve("/vets/specialities?created=true"))
+                .contains("Speciality created.", name);
         VetDto vet = createVet(Set.of(speciality)).body();
 
         String editUrl = "/vets/specialities/" + speciality.id();
@@ -228,6 +230,8 @@ class VetCrudTest {
         assertThat(updated.body()).isEqualTo(new SpecialityDto(speciality.id(), name + " renamed"));
         assertThat(client.toBlocking().retrieve("/vets/" + vet.id(), VetDto.class).specialities())
                 .containsExactly(updated.body());
+        assertThat(client.toBlocking().retrieve("/vets/specialities?changed=true"))
+                .contains("Speciality changed.", name + " renamed");
         assertThat(client.toBlocking().retrieve("/vets/specialities/new"))
                 .contains("id=\"speciality-form\"", "action=\"/vets/specialities\"", "/resources/js/speciality-form.js");
         assertThat(client.toBlocking().retrieve("/vets/specialities/" + speciality.id() + "/edit?saved=true"))
@@ -253,8 +257,13 @@ class VetCrudTest {
     void formSupportsEmptySpecialitiesAndRejectsStaleSaves() {
         VetDto vet = createVet(Set.of(createSpeciality())).body();
         String url = "/vets/" + vet.id();
+        String newPage = client.toBlocking().retrieve("/vets/new");
+        assertThat(newPage).contains("action=\"/vets\"", "data-is-new=\"true\"", "/resources/js/vet-form.js");
+        assertThat(client.toBlocking().retrieve("/vets?saved=true")).contains("Veterinarian saved.");
         String page = client.toBlocking().retrieve(url + "/edit");
-        assertThat(page).contains("name=\"etag\"", vet.etag(), "checked", "/resources/js/vet-form.js", "id=\"vet-feedback\"", "id=\"vet-delete-form\"");
+        assertThat(page).contains("action=\"/vets/" + vet.id() + "\"", "name=\"etag\"", vet.etag(), "checked",
+                "/resources/js/vet-form.js", "id=\"vet-feedback\"", "id=\"vet-delete-form\"")
+                .doesNotContain("action=\"/vets/" + vet.id() + "/edit\"", "action=\"/vets/" + vet.id() + "/delete\"");
         VetDto form = new VetDto(vet.id(), "Form", "Updated", Set.of(), null);
         HttpResponse<VetDto> updated = client.toBlocking().exchange(HttpRequest.PUT(url, form)
                 .header("If-Match", vet.etag()), VetDto.class);
