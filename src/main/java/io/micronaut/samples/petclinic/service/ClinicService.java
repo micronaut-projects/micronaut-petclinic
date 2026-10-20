@@ -29,6 +29,7 @@ import java.time.Period;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -90,7 +91,7 @@ public class ClinicService {
      * @return collection of matching owners
      */
     public Collection<Owner> findOwnerByLastName(String lastName) {
-        return ownerRepository.findByLastNameContainingIgnoreCase(lastName, Sort.of(Sort.Order.asc("lastName")));
+        return ownerRepository.findByLastNameContainsIgnoreCase(lastName, Sort.of(Sort.Order.asc("lastName")));
     }
 
     /**
@@ -415,7 +416,7 @@ public class ClinicService {
 
         Set<Integer> matchingIds = availabilityMatches.stream()
                 .map(Clinic::id)
-                .filter(id -> id != null)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
         return clinics.stream()
                 .filter(clinic -> clinic.id() != null && matchingIds.contains(clinic.id()))

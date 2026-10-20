@@ -6,6 +6,9 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.samples.petclinic.model.Appointment;
 import io.micronaut.samples.petclinic.model.Pet;
+import io.micronaut.samples.petclinic.model.Speciality;
+import io.micronaut.samples.petclinic.model.VetWithSpecialities;
+import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.samples.petclinic.repository.AppointmentRepository;
 import io.micronaut.samples.petclinic.repository.ClinicRepository;
 import io.micronaut.samples.petclinic.repository.ClinicServiceOfferingRepository;
@@ -128,6 +131,25 @@ public final class OracleRepositories {
     @Requires(env = {"oracle", "oracle-deepsec"})
     @JdbcRepository(dialect = Dialect.ORACLE)
     public interface OracleVisitRepository extends VisitRepository {
+        /**
+         * Finds visits for a pet using Oracle SQL.
+         *
+         * @param petId the pet id
+         * @return visits for the pet
+         */
+        @Override
+        @Query(value = "SELECT v.* FROM VISITS v WHERE v.PET_ID = :petId ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
+        Collection<Visit> findByPetId(Integer petId);
+
+        /**
+         * Finds visits for a pet using Oracle SQL.
+         *
+         * @param petName the pet name
+         * @return visits for the pet
+         */
+        @Override
+        @Query(value = "SELECT v.* FROM VISITS v LEFT JOIN PETS p ON v.PET_ID = p.ID WHERE p.NAME = :petName  ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
+        Collection<Visit> findByPetName(String petName);
     }
 
     /**
