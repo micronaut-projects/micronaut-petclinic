@@ -1,5 +1,5 @@
 [versions]
-micronaut-platform = "5.2.2"
+micronaut-platform = "5.2.3"
 #TODO: temperory, Remove once the micronaut platform v5.2.3 is published
 micronaut-data = "5.2.3"
 micronaut-gradle-plugin = "5.0.2"
