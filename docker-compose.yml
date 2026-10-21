@@ -55,7 +55,6 @@ services:
       POSTGRES_PASSWORD: petclinic
     volumes:
       - postgres_data:/var/lib/postgresql
-      - ./docker/postgres:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U petclinic"]
       timeout: 5s
@@ -92,11 +91,10 @@ services:
       - oracle_data:/opt/oracle/oradata
       - ./docker/oracle:/opt/oracle/scripts/startup
     healthcheck:
-      test: ["CMD-SHELL", "echo 'SELECT 1 FROM DUAL;' | sqlplus -L -s / as sysdba >/dev/null || exit 1"]
-      interval: 30s
+      test: ["CMD", "/opt/oracle/healthcheck.sh"]
+      interval: 1s
       timeout: 10s
-      retries: 20
-      start_period: 300s
+      retries: 60
     profiles:
       - oracle
       - oracle-deepsec
