@@ -6,12 +6,13 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Error;
-import io.micronaut.json.JsonSyntaxException;
 import io.micronaut.http.server.exceptions.NotFoundException;
+import io.micronaut.json.JsonSyntaxException;
 import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
 import io.micronaut.samples.petclinic.exception.PreconditionFailedException;
 import io.micronaut.samples.petclinic.exception.PreconditionRequiredException;
 import io.micronaut.security.annotation.Secured;
+import io.micronaut.security.authentication.AuthorizationException;
 import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
 import jakarta.validation.ConstraintViolationException;
@@ -32,6 +33,30 @@ import static io.micronaut.http.HttpStatus.PRECONDITION_REQUIRED;
 public class ErrorController {
 
     private final static Logger LOG = LoggerFactory.getLogger(ErrorController.class);
+
+    /**
+     * Handle authorization failures raised by the security filter.
+     *
+     * @param request the original request
+     * @return the error view with the correct status
+     */
+    @Error(exception = AuthorizationException.class, global = true)
+    @View("error/401")
+    public Map<String, Object> unauthorised(HttpRequest<?> request) {
+        return Map.of(
+                "path", request.getPath(),
+                "message", "unauthorized"
+        );
+    }
+
+    @Error(status = HttpStatus.FORBIDDEN, global = true)
+    @View("error/401")
+    public Map<String, Object> forbidden(HttpRequest<?> request) {
+        return Map.of(
+                "path", request.getPath(),
+                "message", "Forbidden"
+        );
+    }
 
     /**
      * Reports invalid request data.
@@ -108,9 +133,12 @@ public class ErrorController {
      * @return HTTP 404 with a JSON message
      */
     @Error(exception = NotFoundException.class, global = true)
-    public HttpResponse<Map<String, String>> missingResource(NotFoundException error) {
-        return HttpResponse.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("message", message(error, "Resource not found.")));
+    @View("error/404")
+    public Map<String, String> missingResource(HttpRequest<?> request, NotFoundException error) {
+        return Map.of(
+                "path", request.getPath(),
+                "message", "Page not found"
+        );
     }
 
     /**
