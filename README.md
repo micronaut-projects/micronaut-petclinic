@@ -379,11 +379,13 @@ The vector service is intentionally an interface, making it straightforward to r
 Manage vets at `/vets` and specialities at `/vets/specialities`. Edit forms
 submit JSON and display errors inline.
 
-`Vet` uses Micronaut Data's `@GeneratedETag`. JSON `PUT /vets/{id}` and
-`DELETE /vets/{id}` require `If-Match`, as does `DELETE /vets/{id}/delete`
-(no request body). `POST /vets/{id}/edit` accepts `etag` in the JSON body.
-Saves return the updated vet and ETag; deletes return 204. Missing and stale tags return 428
-and 412 respectively. Reload after a conflict.
+`Vet` uses Micronaut Data's `@GeneratedETag`. Send the returned ETag in an
+`If-Match` header for `PUT /vets/{id}` and `DELETE /vets/{id}`; do not put it in
+the request body. Create a vet with `POST /vets` and a JSON body containing
+`firstName`, `lastName`, and `specialityIds`; creation does not require an ETag.
+Create and update responses include the vet and its ETag; delete has no body and
+returns 204. Missing and stale ETags return 428 and 412 respectively. Reload after
+a conflict.
 
 ETags cover only the vet's ID and names; speciality edits are not protected.
 Oracle uses `SYS_ROW_ETAG`; other profiles define a local equivalent.
