@@ -104,27 +104,25 @@ public class VetController {
     @Get("/new")
     @View("vets/createOrUpdateVetForm")
     public Map<String, Object> newVetForm() {
-        return vetFormModel(new VetDto(), true, false, false);
+        return vetFormModel(new VetDto(), true, false);
     }
 
     /**
      * Loads the current veterinarian and ETag into the edit page.
      *
      * @param id veterinarian identifier
-     * @param conflict whether to display the conflict notice
      * @param saved whether to display the saved notice
      * @return the edit form and available specialities
      */
     @Get("/{id}/edit")
     @View("vets/createOrUpdateVetForm")
     public Map<String, Object> editVetForm(@PathVariable Integer id,
-                                           @QueryValue(defaultValue = "false") boolean conflict,
                                            @QueryValue(defaultValue = "false") boolean saved) {
         Vet vet = vetService.findById(id);
         VetDto form = new VetDto(vet.id(), vet.firstName(), vet.lastName(),
                 vet.specialities().stream().map(formMapper::toSpecialityDto).collect(Collectors.toSet()),
                 Objects.requireNonNull(vet.etag()));
-        return vetFormModel(form, false, conflict, saved);
+        return vetFormModel(form, false, saved);
     }
 
     /**
@@ -277,11 +275,10 @@ public class VetController {
                 .body(dto);
     }
 
-    private Map<String, Object> vetFormModel(VetDto form, boolean isNew, boolean conflict, boolean saved) {
+    private Map<String, Object> vetFormModel(VetDto form, boolean isNew, boolean saved) {
         return Map.of("vetForm", form,
                 "specialities", vetService.findSpecialities(),
                 "isNew", isNew,
-                "conflict", conflict,
                 "saved", saved);
     }
 

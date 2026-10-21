@@ -5,7 +5,6 @@
 @param io.micronaut.samples.petclinic.dto.VetDto vetForm
 @param java.util.List<io.micronaut.samples.petclinic.model.Speciality> specialities
 @param boolean isNew
-@param boolean conflict
 @param boolean saved
 
 @template.layout(content = @`
@@ -16,9 +15,6 @@
         </div>
     </div>
     <main class="container flex-grow-1 py-4">
-        @if(conflict)
-            <div class="alert alert-warning" role="alert">${msg.text("vet.conflict")}</div>
-        @endif
         @if(saved)
             <div class="alert alert-success" role="status">${msg.text("vet.saved")}</div>
         @endif
