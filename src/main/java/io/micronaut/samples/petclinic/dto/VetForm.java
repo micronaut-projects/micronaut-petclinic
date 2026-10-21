@@ -15,7 +15,6 @@ import java.util.HashSet;
 /**
  * Request model for the veterinarian create and edit pages.
  *
- * @param id veterinarian identifier, or {@code null} when creating
  * @param firstName veterinarian first name
  * @param lastName veterinarian last name
  * @param specialityIds selected speciality identifiers
@@ -23,7 +22,6 @@ import java.util.HashSet;
 @Introspected
 @Serdeable
 public record VetForm(
-        @Nullable Integer id,
         @NotBlank @Size(max = 255) String firstName,
         @NotBlank @Size(max = 255) String lastName,
         Set<Integer> specialityIds
@@ -45,7 +43,7 @@ public record VetForm(
      * Creates an empty model for the veterinarian creation page.
      */
     public VetForm() {
-        this(null, null, null, Set.of());
+        this(null, null, Set.of());
     }
 
     /**
@@ -55,7 +53,7 @@ public record VetForm(
      * @param specialities resolved speciality entities
      * @return the veterinarian with no ETag
      */
-    public Vet toVet(Integer vetId, Set<Speciality> specialities) {
-        return new Vet(vetId, firstName, lastName, specialities, null);
+    public Vet toVet(Set<Speciality> specialities) {
+        return new Vet(null, firstName, lastName, specialities, null);
     }
 }

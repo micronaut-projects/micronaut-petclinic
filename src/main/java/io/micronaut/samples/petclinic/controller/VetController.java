@@ -32,8 +32,10 @@ import io.micronaut.views.View;
 import jakarta.validation.Valid;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.micronaut.http.HttpStatus.CREATED;
@@ -206,12 +208,10 @@ public class VetController {
     @Put(value = "/{id}", consumes = MediaType.APPLICATION_JSON)
     public HttpResponse<VetDto> updateVet(@PathVariable Integer id,
                                           @Nullable @Header("If-Match") String ifMatch,
-                                          @Valid @Body VetDto request)
+                                          @Valid @Body VetForm request)
             throws PreconditionRequiredException, PreconditionFailedException, IllegalRequestArgumentException {
         Vet current = vetService.findById(id);
-        VetDto update = new VetDto(request.id(), request.firstName(), request.lastName(),
-                request.specialities(), ifMatch);
-        return response(vetService.update(current, update), HttpStatus.OK);
+        return response(vetService.update(current, request, ifMatch), HttpStatus.OK);
     }
 
     /**

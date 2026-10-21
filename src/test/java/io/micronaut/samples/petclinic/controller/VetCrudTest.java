@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -60,8 +61,9 @@ class VetCrudTest {
         SpecialityDto speciality = createSpeciality();
         HttpResponse<VetDto> created = createVet(Set.of(speciality));
         VetDto vet = created.body();
-        String url = "/vets/" + vet.id();
+        String url = "/vets/" + Objects.requireNonNull(vet).id();
         String etag = created.header("ETag");
+        Objects.requireNonNull(etag);
         assertThat((Object) created.status()).isEqualTo(HttpStatus.CREATED);
         assertThat(etag).isEqualTo("\"" + vet.etag() + "\"");
         assertThat(created.header("Cache-Control")).isEqualTo("no-store");
@@ -71,8 +73,8 @@ class VetCrudTest {
         assertThat(loaded.header("ETag")).isEqualTo(etag);
 
         HttpResponse<VetDto> updated = client.toBlocking().exchange(HttpRequest.PUT(url,
-                new VetDto(vet.id(), "Updated", vet.lastName(), Set.of(), null)).header("If-Match", etag), VetDto.class);
-        assertThat(updated.body().firstName()).isEqualTo("Updated");
+                new VetForm("Updated", vet.lastName(), Set.of())).header("If-Match", etag), VetDto.class);
+        assertThat(Objects.requireNonNull(updated.body()).firstName()).isEqualTo("Updated");
         assertThat(updated.header("ETag")).isNotEqualTo(etag);
         assertThat(vets.findById(vet.id()).orElseThrow().specialities()).isEmpty();
         assertThat(specialities.findById(speciality.id())).isPresent();
@@ -99,16 +101,18 @@ class VetCrudTest {
         SpecialityDto first = createSpeciality();
         SpecialityDto second = createSpeciality();
         HttpResponse<VetDto> created = createVet(Set.of(first));
+        String etagHeader = created.header("Etag");
+        Objects.requireNonNull(etagHeader);
         VetDto vet = created.body();
-        String url = "/vets/" + vet.id();
+        String url = "/vets/" + Objects.requireNonNull(vet).id();
         HttpResponse<VetDto> updated = client.toBlocking().exchange(HttpRequest.PUT(url,
-                        new VetDto(vet.id(), "Winner", vet.lastName(), Set.of(second), null))
-                .header("If-Match", created.header("ETag")), VetDto.class);
-        assertThat(updated.body().specialities()).containsExactly(second);
+                        new VetForm("Winner", vet.lastName(), Set.of(second.id())))
+                .header("If-Match", etagHeader), VetDto.class);
+        assertThat(Objects.requireNonNull(updated.body()).specialities()).containsExactly(second);
 
-        assertError(HttpRequest.PUT(url, new VetDto(vet.id(), "Loser", "Changed", Set.of(first), null))
-                .header("If-Match", created.header("ETag")), HttpStatus.PRECONDITION_FAILED);
-        assertError(HttpRequest.DELETE(url).header("If-Match", created.header("ETag")), HttpStatus.PRECONDITION_FAILED);
+        assertError(HttpRequest.PUT(url, new VetForm("Loser", "Changed", Set.of(first.id())))
+                .header("If-Match", etagHeader), HttpStatus.PRECONDITION_FAILED);
+        assertError(HttpRequest.DELETE(url).header("If-Match", etagHeader), HttpStatus.PRECONDITION_FAILED);
         VetDto current = client.toBlocking().retrieve(url, VetDto.class);
         assertThat(current).isEqualTo(updated.body());
     }
@@ -117,9 +121,9 @@ class VetCrudTest {
     void requiresAnEtagForJsonMutations() {
         VetDto vet = createVet(Set.of()).body();
         String url = "/vets/" + vet.id();
-        assertError(HttpRequest.PUT(url, vet), HttpStatus.PRECONDITION_REQUIRED);
+        assertError(HttpRequest.PUT(url, new VetForm(vet.firstName(), vet.lastName(), new HashSet<>(vetIds))), HttpStatus.PRECONDITION_REQUIRED);
         assertError(HttpRequest.DELETE(url), HttpStatus.PRECONDITION_REQUIRED);
-        assertJsonError(HttpRequest.PUT(url, new VetDto(vet.id(), "Other", "Name", Set.of(), null)), HttpStatus.PRECONDITION_REQUIRED);
+        assertJsonError(HttpRequest.PUT(url, new VetForm("Other", "Name", Set.of())), HttpStatus.PRECONDITION_REQUIRED);
         assertJsonError(HttpRequest.DELETE(url).header("If-Match", ""), HttpStatus.PRECONDITION_REQUIRED);
         assertThat(vets.findById(vet.id())).isPresent();
     }
@@ -127,20 +131,20 @@ class VetCrudTest {
     @Test
     void rejectsUnknownSpecialitiesWithAnActionableBadRequest() {
         HttpClientResponseException error = assertError(HttpRequest.POST("/vets",
-                        new VetForm(null, "Unknown", "Speciality", Set.of(Integer.MAX_VALUE))),
+                        new VetForm("Unknown", "Speciality", Set.of(Integer.MAX_VALUE))),
                 HttpStatus.BAD_REQUEST);
         assertThat(error.getResponse().getBody(String.class).orElseThrow()).contains("specialities");
     }
 
     @Test
     void rejectsBlankNames() {
-        assertError(HttpRequest.POST("/vets", new VetForm(null, " ", "Name", Set.of())), HttpStatus.BAD_REQUEST);
+        assertError(HttpRequest.POST("/vets", new VetForm(" ", "Name", Set.of())), HttpStatus.BAD_REQUEST);
         assertError(HttpRequest.POST("/vets/specialities", new SpecialityDto(null, " ")), HttpStatus.BAD_REQUEST);
     }
 
     @Test
     void rejectsSpecialitiesWithoutAnIdentifier() {
-        assertError(HttpRequest.POST("/vets", new VetForm(null, "Review", "MissingId",
+        assertError(HttpRequest.POST("/vets", new VetForm("Review", "MissingId",
                 Collections.singleton(null))), HttpStatus.BAD_REQUEST);
     }
 
@@ -170,10 +174,10 @@ class VetCrudTest {
         VetDto vet = created.body();
         String url = "/vets/" + vet.id();
         client.toBlocking().exchange(HttpRequest.PUT(url,
-                        new VetDto(vet.id(), "Winner", vet.lastName(), Set.of(speciality), null))
+                        new VetForm("Winner", vet.lastName(), Set.of(speciality.id())))
                 .header("If-Match", Objects.requireNonNull(created.header("ETag"))), VetDto.class);
         assertJsonError(HttpRequest.PUT(url,
-                new VetDto(vet.id(), "Loser", "Changed", Set.of(), null))
+                new VetForm("Loser", "Changed", Set.of()))
                 .header("If-Match", Objects.requireNonNull(created.header("ETag"))), HttpStatus.PRECONDITION_FAILED);
         assertJsonError(HttpRequest.DELETE(url).header("If-Match", Objects.requireNonNull(created.header("ETag"))), HttpStatus.PRECONDITION_FAILED);
         VetDto current = client.toBlocking().retrieve(url, VetDto.class);
@@ -192,13 +196,13 @@ class VetCrudTest {
         String originalEtag = created.header("ETag");
 
         HttpResponse<VetDto> firstUpdate = client.toBlocking().exchange(HttpRequest.PUT(url,
-                        new VetDto(vet.id(), vet.firstName(), vet.lastName(), Set.of(changedSpeciality), null))
+                        new VetForm(vet.firstName(), vet.lastName(), Set.of(changedSpeciality.id())))
                 .header("If-Match", originalEtag), VetDto.class);
 
         assertThat(firstUpdate.code()).isEqualTo(200);
         assertThat(firstUpdate.header("ETag")).isNotEqualTo(originalEtag);
         assertError(HttpRequest.PUT(url,
-                        new VetDto(vet.id(), vet.firstName(), vet.lastName(), Set.of(originalSpeciality), null))
+                        new VetForm(vet.firstName(), vet.lastName(), Set.of(originalSpeciality.id())))
                 .header("If-Match", originalEtag), HttpStatus.PRECONDITION_FAILED);
         assertThat(client.toBlocking().retrieve(url, VetDto.class).specialities())
                 .containsExactly(changedSpeciality);
@@ -356,7 +360,7 @@ class VetCrudTest {
     void unchangedSaveRetainsTheEtagAndAssignments() {
         HttpResponse<VetDto> created = createVet(Set.of(createSpeciality()));
         VetDto vet = created.body();
-        HttpResponse<VetDto> saved = client.toBlocking().exchange(HttpRequest.PUT("/vets/" + Objects.requireNonNull(vet).id(), vet)
+        HttpResponse<VetDto> saved = client.toBlocking().exchange(HttpRequest.PUT("/vets/" + Objects.requireNonNull(vet).id(), new VetForm(vet.firstName(), vet.lastName(), new HashSet<>(vet.specialityIds())))
                 .header("If-Match", Objects.requireNonNull(created.header("ETag"))), VetDto.class);
         assertThat(saved.body()).isEqualTo(vet);
         assertThat(saved.header("ETag")).isEqualTo(created.header("ETag"));
@@ -386,7 +390,7 @@ class VetCrudTest {
         SpecialityDto second = createSpeciality();
         String url = "/vets/" + Objects.requireNonNull(vet).id();
         HttpResponse<VetDto> response = client.toBlocking().exchange(HttpRequest.PUT(url,
-                new VetDto(vet.id(), "Selected", "Specialities", Set.of(first, second), null))
+                new VetForm("Selected", "Specialities", Set.of(first.id(), second.id())))
                 .header("If-Match", vet.etag()), VetDto.class);
         assertThat(Objects.requireNonNull(response.body()).specialities()).containsExactlyInAnyOrder(first, second);
         assertThat(client.toBlocking().retrieve(url, VetDto.class)).isEqualTo(response.body());
@@ -396,10 +400,10 @@ class VetCrudTest {
     @Test
     void rejectsNamesLongerThanTheDatabaseColumns() {
         String tooLong = "x".repeat(256);
-        assertJsonError(HttpRequest.POST("/vets", new VetForm(null, tooLong, "Name", Set.of())), HttpStatus.BAD_REQUEST);
+        assertJsonError(HttpRequest.POST("/vets", new VetForm(tooLong, "Name", Set.of())), HttpStatus.BAD_REQUEST);
         VetDto vet = createVet(Set.of()).body();
-        assertJsonError(HttpRequest.PUT("/vets/" + vet.id(),
-                new VetDto(vet.id(), vet.firstName(), tooLong, Set.of(), null))
+        assertJsonError(HttpRequest.PUT("/vets/" + Objects.requireNonNull(vet).id(),
+                new VetForm(vet.firstName(), tooLong, Set.of()))
                 .header("If-Match", vet.etag()), HttpStatus.BAD_REQUEST);
         assertJsonError(HttpRequest.POST("/vets/specialities", Map.of("name", tooLong)), HttpStatus.BAD_REQUEST);
         SpecialityDto speciality = createSpeciality();
@@ -423,7 +427,7 @@ class VetCrudTest {
 
     private HttpResponse<VetDto> createVet(Set<SpecialityDto> selected) {
         HttpResponse<VetDto> response = client.toBlocking().exchange(HttpRequest.POST("/vets",
-                new VetForm(null, "Review", "Test", selected.stream().map(SpecialityDto::id).collect(Collectors.toSet()))), VetDto.class);
+                new VetForm("Review", "Test", selected.stream().map(SpecialityDto::id).collect(Collectors.toSet()))), VetDto.class);
         vetIds.add(Objects.requireNonNull(response.body()).id());
         return response;
     }

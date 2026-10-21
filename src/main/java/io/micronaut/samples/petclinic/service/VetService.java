@@ -3,7 +3,6 @@ package io.micronaut.samples.petclinic.service;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.samples.petclinic.dto.SpecialityDto;
-import io.micronaut.samples.petclinic.dto.VetDto;
 import io.micronaut.samples.petclinic.dto.VetForm;
 import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
 import io.micronaut.samples.petclinic.exception.PreconditionFailedException;
@@ -19,8 +18,8 @@ import org.jspecify.annotations.NonNull;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Manages veterinarians, speciality assignments, and ETag-checked mutations.
@@ -59,11 +58,7 @@ public class VetService {
      */
     public Vet findById(Integer id) {
         Vet vet = vetRepository.findById(id).orElseThrow(NotFoundException::new);
-        try {
-            validateEtag(vet.etag());
-        } catch (MissingEtagException e) {
-            throw new IllegalStateException("Fetched vet etag can't be null.");
-        }
+        Objects.requireNonNull(vet.etag());
         return vet;
     }
 
@@ -85,6 +80,21 @@ public class VetService {
      */
     public Speciality findSpecialityById(Integer id) {
         return specialityRepository.findById(id).orElseThrow(NotFoundException::new);
+    }
+
+    /**
+     * Finds a specialities by their identifiers.
+     *
+     * @param  ids specialities identifiers
+     * @return Set of the persisted specialities
+     * @throws NotFoundException if the identifier does not exist
+     */
+    public Set<Speciality> findSpecialityByIds(@NonNull Set<Integer> ids) throws IllegalRequestArgumentException {
+        try {
+            return resolveSpecialities(ids);
+        } catch (DomainValidationException e) {
+            throw new IllegalRequestArgumentException(e.getMessage());
+        }
     }
 
     /**
@@ -136,7 +146,7 @@ public class VetService {
         } catch (DomainValidationException e) {
             throw new IllegalRequestArgumentException(e.getMessage());
         }
-        Vet saved = vetRepository.save(form.toVet(null, selectedSpecialities));
+        Vet saved = vetRepository.save(form.toVet(selectedSpecialities));
         return findById(saved.id());
     }
 
@@ -144,19 +154,17 @@ public class VetService {
      * Updates a vet and its selected speciality links using the ETag loaded by the client.
      *
      * @param vet the current persisted vet
-     * @param vetDto submitted names, speciality identifiers, and ETag
+     * @param vetForm submitted names, speciality identifiers, and ETag
      * @return the updated vet with its newly generated ETag
      * @throws PreconditionRequiredException if the ETag is absent or blank
      * @throws PreconditionFailedException if the veterinarian has changed
      * @throws IllegalRequestArgumentException if a speciality reference is invalid
      */
     @Transactional(rollbackOn = Exception.class)
-    public Vet update(@NonNull Vet vet, @NonNull VetDto vetDto)
+    public Vet update(@NonNull Vet vet, @NonNull VetForm vetForm, String etag)
             throws PreconditionRequiredException, PreconditionFailedException, IllegalRequestArgumentException {
-        Set<Integer> specialityIds = vetDto.specialities().stream()
-                .map(SpecialityDto::id).collect(Collectors.toSet());
         try {
-            return updateVersioned(vet, vetDto.firstName(), vetDto.lastName(), specialityIds, vetDto.etag());
+            return updateVersioned(vet, vetForm.firstName(), vetForm.lastName(), vetForm.specialityIds(), validateAndUnquoteEtag(etag));
         } catch (MissingEtagException e) {
             throw new PreconditionRequiredException(e.getMessage(), e);
         } catch (StaleEtagException e) {
@@ -179,20 +187,13 @@ public class VetService {
     public void delete(Integer id, String expectedEtag)
             throws PreconditionRequiredException, PreconditionFailedException {
         try {
-            expectedEtag = unquoteEtag(expectedEtag);
-            validateEtag(expectedEtag);
+            expectedEtag = validateAndUnquoteEtag(expectedEtag);
             Vet vet = findById(id).withEtag(expectedEtag);
             deleteVet(vet);
         } catch (MissingEtagException e) {
             throw new PreconditionRequiredException(e.getMessage(), e);
         } catch (StaleEtagException e) {
             throw new PreconditionFailedException(e.getMessage(), e);
-        }
-    }
-
-    private void validateEtag(String etag) throws MissingEtagException {
-        if (etag == null || etag.isBlank()) {
-            throw new MissingEtagException();
         }
     }
 
@@ -224,14 +225,16 @@ public class VetService {
                                 String lastName,
                                 Set<Integer> specialityIds,
                                 String expectedEtag) throws StaleEtagException, MissingEtagException, DomainValidationException {
-        expectedEtag = unquoteEtag(expectedEtag);
-        validateEtag(expectedEtag);
+        expectedEtag = validateAndUnquoteEtag(expectedEtag);
         Set<Speciality> selectedSpecialities = resolveSpecialities(specialityIds);
         return updateVersioned(new Vet(current.id(), firstName, lastName, selectedSpecialities, expectedEtag));
     }
 
-    private String unquoteEtag(String etag) {
-        if (etag != null && etag.length() >= 2 && etag.startsWith("\"") && etag.endsWith("\"")) {
+    private String validateAndUnquoteEtag(String etag) throws MissingEtagException {
+        if (etag == null || etag.isBlank()) {
+            throw new MissingEtagException();
+        }
+        if (etag.length() >= 2 && etag.startsWith("\"") && etag.endsWith("\"")) {
             return etag.substring(1, etag.length() - 1);
         }
         return etag;
