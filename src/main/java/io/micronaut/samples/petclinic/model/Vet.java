@@ -49,16 +49,15 @@ public record Vet(
         @GeneratedValue
         Integer id,
 
+        @MappedProperty("FIRST_NAME")
         @NotBlank
         String firstName,
 
+        @MappedProperty("LAST_NAME")
         @NotBlank
         String lastName,
 
-        @Relation(value = Relation.Kind.MANY_TO_MANY, cascade = {
-                Relation.Cascade.PERSIST,
-                Relation.Cascade.UPDATE
-        })
+        @Relation(value = Relation.Kind.MANY_TO_MANY, cascade = Relation.Cascade.PERSIST)
         @JoinTable(
                 name = "VET_SPECIALTIES",
                 joinColumns = @JoinColumn(name = "VET_ID", referencedColumnName = "id"),
@@ -71,6 +70,7 @@ public record Vet(
         @NonNull String specialitiesHash,
 
         @Nullable
+        // Explicit for non-Oracle profiles, which define this function; Oracle already uses it by default.
         @GeneratedETag(function = "SYS_ROW_ETAG")
         String etag
 ) implements Person, VetWither {

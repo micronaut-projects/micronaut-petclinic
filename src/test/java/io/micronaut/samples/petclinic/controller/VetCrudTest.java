@@ -12,6 +12,7 @@ import io.micronaut.samples.petclinic.dto.SpecialityDto;
 import io.micronaut.samples.petclinic.dto.VetDto;
 import io.micronaut.samples.petclinic.dto.VetForm;
 import io.micronaut.samples.petclinic.model.Speciality;
+import io.micronaut.samples.petclinic.model.Vet;
 import io.micronaut.samples.petclinic.repository.SpecialityRepository;
 import io.micronaut.samples.petclinic.repository.VetRepository;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -222,6 +223,21 @@ class VetCrudTest {
         SpecialityDto renamed = client.toBlocking().retrieve(HttpRequest.PUT(url,
                 new SpecialityDto(speciality.id(), speciality.name() + " renamed")), SpecialityDto.class);
         assertThat(client.toBlocking().retrieve("/vets/" + vet.id(), VetDto.class).specialities()).containsExactly(renamed);
+    }
+
+    @Test
+    void updatingAVetDoesNotOverwriteAConcurrentSpecialityRename() {
+        SpecialityDto speciality = createSpeciality();
+        VetDto vet = createVet(Set.of(speciality)).body();
+        Vet loadedVet = vets.findById(vet.id()).orElseThrow();
+
+        Speciality renamed = specialities.update(specialities.findById(speciality.id()).orElseThrow()
+                .withName(speciality.name() + " renamed"));
+        vets.update(loadedVet.withFirstName("Updated"));
+
+        assertThat(specialities.findById(speciality.id()).orElseThrow().name()).isEqualTo(renamed.name());
+        assertThat(vets.findById(vet.id()).orElseThrow().specialities())
+                .extracting(Speciality::name).containsExactly(renamed.name());
     }
 
     @Test

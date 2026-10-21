@@ -7,6 +7,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.samples.petclinic.model.Appointment;
 import io.micronaut.samples.petclinic.model.Pet;
+import io.micronaut.samples.petclinic.model.Vet;
 import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.samples.petclinic.repository.AppointmentRepository;
 import io.micronaut.samples.petclinic.repository.ClinicRepository;
@@ -91,6 +92,55 @@ public final class PostgresRepositories {
     @JdbcRepository(dialect = Dialect.POSTGRES)
     public interface PostgresVetRepository extends VetRepository {
         /**
+         * Finds veterinarians and their specialities using PostgreSQL-safe ETag column quoting.
+         *
+         * @return veterinarians ordered by last name with their ETags and specialities
+         */
+        @Override
+        @Join(value = "specialities", type = Join.Type.LEFT_FETCH)
+        @Query(value = """
+                SELECT vet_."id",
+                       SYS_ROW_ETAG(vet_."id", vet_."FIRST_NAME", vet_."LAST_NAME", vet_."SPECIALITIES_ETAG_HASH") AS etag,
+                       vet_."FIRST_NAME",
+                       vet_."LAST_NAME",
+                       vet_."SPECIALITIES_ETAG_HASH",
+                       vet_specialities_."id" AS specialities_id,
+                       vet_specialities_."NAME" AS specialities_NAME
+                FROM "VETS" vet_
+                LEFT JOIN "VET_SPECIALTIES" vet_specialities_VET_SPECIALTIES_
+                       ON vet_."id" = vet_specialities_VET_SPECIALTIES_."VET_ID"
+                LEFT JOIN "SPECIALTIES" vet_specialities_
+                       ON vet_specialities_VET_SPECIALTIES_."SPECIALTY_ID" = vet_specialities_."id"
+                ORDER BY vet_."LAST_NAME" ASC
+                """, nativeQuery = true)
+        List<Vet> findAll();
+
+        /**
+         * Finds one veterinarian and its specialities using PostgreSQL-safe ETag column quoting.
+         *
+         * @param id veterinarian identifier
+         * @return the veterinarian, or empty if it does not exist
+         */
+        @Override
+        @Join(value = "specialities", type = Join.Type.LEFT_FETCH)
+        @Query(value = """
+                SELECT vet_."id",
+                       SYS_ROW_ETAG(vet_."id", vet_."FIRST_NAME", vet_."LAST_NAME", vet_."SPECIALITIES_ETAG_HASH") AS etag,
+                       vet_."FIRST_NAME",
+                       vet_."LAST_NAME",
+                       vet_."SPECIALITIES_ETAG_HASH",
+                       vet_specialities_."id" AS specialities_id,
+                       vet_specialities_."NAME" AS specialities_NAME
+                FROM "VETS" vet_
+                LEFT JOIN "VET_SPECIALTIES" vet_specialities_VET_SPECIALTIES_
+                       ON vet_."id" = vet_specialities_VET_SPECIALTIES_."VET_ID"
+                LEFT JOIN "SPECIALTIES" vet_specialities_
+                       ON vet_specialities_VET_SPECIALTIES_."SPECIALTY_ID" = vet_specialities_."id"
+                WHERE vet_."id" = :id
+                """, nativeQuery = true)
+        Optional<Vet> findById(Integer id);
+
+        /**
          * {@inheritDoc}
          */
         @Override
@@ -98,6 +148,15 @@ public final class PostgresRepositories {
                 DELETE FROM "VET_SPECIALTIES" WHERE "VET_ID" = :id
                 """, nativeQuery = true)
         void deleteSpecialityLinks(Integer id);
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        @Query(value = """
+                INSERT INTO "VET_SPECIALTIES" ("VET_ID", "SPECIALTY_ID") VALUES (:vetId, :specialityId)
+                """, nativeQuery = true)
+        void insertSpecialityLink(Integer vetId, Integer specialityId);
 
         /**
          * {@inheritDoc}

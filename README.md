@@ -392,9 +392,9 @@ includes a SHA-256 hash of each veterinarian's sorted, comma-separated
 speciality IDs, persisted in `VETS.SPECIALITIES_ETAG_HASH`. Assignment changes
 update that hash with the links, so stale assignment updates are rejected.
 Renaming a speciality does not change the veterinarian's ETag.
-PostgreSQL still needs a Micronaut Data fix: its generated ETag SQL references
-the mapped hash column without quotes, while PostgreSQL created it quoted and
-uppercase.
+PostgreSQL ETag integration tests currently fail because Micronaut Data's
+generated ETag SQL does not quote mapped column names. The fix is tracked in
+[#4150](https://github.com/micronaut-projects/micronaut-data/pull/4150).
 
 ### Oracle transaction priority
 

@@ -39,13 +39,22 @@ public interface VetRepository extends CrudRepository<Vet, Integer> {
     Optional<Vet> findById(Integer id);
 
     /**
-     * Removes old assignments before the update cascade inserts the selected links.
+     * Removes old assignments before the service inserts the selected links.
      * Call within the same transaction as the ETag-checked update so a conflict restores them.
      *
      * @param id veterinarian whose assignments should be replaced
      */
     @Query(value = "DELETE FROM VET_SPECIALTIES WHERE VET_ID = :id", nativeQuery = true)
     void deleteSpecialityLinks(Integer id);
+
+    /**
+     * Inserts one veterinarian-speciality assignment.
+     *
+     * @param vetId veterinarian identifier
+     * @param specialityId speciality identifier
+     */
+    @Query(value = "INSERT INTO VET_SPECIALTIES (VET_ID, SPECIALTY_ID) VALUES (:vetId, :specialityId)", nativeQuery = true)
+    void insertSpecialityLink(Integer vetId, Integer specialityId);
 
     /**
      * Counts speciality assignments stored for a veterinarian.

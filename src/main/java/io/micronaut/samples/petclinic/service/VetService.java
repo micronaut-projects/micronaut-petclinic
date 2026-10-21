@@ -207,10 +207,11 @@ public class VetService {
 
     private Vet updateVersioned(Vet updated) throws StaleEtagException {
         try {
-            // The JDBC update cascade adds links but does not remove deselected ones.
-            // The caller's transaction rolls this back if the ETag check fails.
+            // Replace assignment rows explicitly so updating a vet cannot update speciality records.
             vetRepository.deleteSpecialityLinks(updated.id());
             vetRepository.update(updated);
+            updated.specialities().forEach(speciality ->
+                    vetRepository.insertSpecialityLink(updated.id(), speciality.id()));
             return findById(updated.id());
         } catch (OptimisticLockException stale) {
             throw new StaleEtagException();
