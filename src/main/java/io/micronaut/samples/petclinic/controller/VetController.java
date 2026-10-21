@@ -14,10 +14,12 @@ import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.Put;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.annotation.Status;
+import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.samples.petclinic.dto.SpecialityDto;
 import io.micronaut.samples.petclinic.dto.VetDto;
 import io.micronaut.samples.petclinic.dto.VetForm;
 import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
+import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.exception.PreconditionFailedException;
 import io.micronaut.samples.petclinic.exception.PreconditionRequiredException;
 import io.micronaut.samples.petclinic.mapper.FormMapper;
@@ -32,10 +34,8 @@ import io.micronaut.views.View;
 import jakarta.validation.Valid;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.micronaut.http.HttpStatus.CREATED;
@@ -113,12 +113,18 @@ public class VetController {
      * @param id veterinarian identifier
      * @param saved whether to display the saved notice
      * @return the edit form and available specialities
+     * @throws NotFoundException if the vet isn't found
      */
     @Get("/{id}/edit")
     @View("vets/createOrUpdateVetForm")
     public Map<String, Object> editVetForm(@PathVariable Integer id,
                                            @QueryValue(defaultValue = "false") boolean saved) {
-        Vet vet = vetService.findById(id);
+        Vet vet = null;
+        try {
+            vet = vetService.findById(id);
+        } catch (NotFoundEntityException e) {
+            throw new NotFoundException();
+        }
         VetDto form = new VetDto(vet.id(), vet.firstName(), vet.lastName(),
                 vet.specialities().stream().map(formMapper::toSpecialityDto).collect(Collectors.toSet()),
                 Objects.requireNonNull(vet.etag()));
@@ -158,13 +164,19 @@ public class VetController {
      * @param saved whether to display the saved notice
      * @param duplicate whether to display the duplicate-name notice
      * @return the speciality edit view model
+     * @throws NotFoundException if the speciality isn't found
      */
     @Get("/specialities/{id}/edit")
     @View("vets/createOrUpdateSpecialityForm")
     public Map<String, Object> editSpecialityForm(@PathVariable Integer id,
                                                   @QueryValue(defaultValue = "false") boolean saved,
                                                   @QueryValue(defaultValue = "false") boolean duplicate) {
-        Speciality speciality = vetService.findSpecialityById(id);
+        Speciality speciality = null;
+        try {
+            speciality = vetService.findSpecialityById(id);
+        } catch (NotFoundEntityException e) {
+            throw new NotFoundException();
+        }
         return specialityFormModel(formMapper.toSpecialityDto(speciality), false, saved, duplicate);
     }
 
@@ -174,9 +186,10 @@ public class VetController {
      * @param form submitted names and speciality IDs
      * @return HTTP 201 with the saved veterinarian and ETag
      * @throws IllegalRequestArgumentException if a speciality reference is invalid
+     * @throws NotFoundEntityException if the vet isn't found
      */
     @Post(consumes = MediaType.APPLICATION_JSON)
-    public HttpResponse<VetDto> createVet(@Valid @Body VetForm form) throws IllegalRequestArgumentException {
+    public HttpResponse<VetDto> createVet(@Valid @Body VetForm form) throws IllegalRequestArgumentException, NotFoundEntityException {
         Vet saved = vetService.create(form);
         return response(saved, HttpStatus.CREATED);
     }
@@ -188,7 +201,7 @@ public class VetController {
      * @return HTTP 200 with the veterinarian and quoted ETag header
      */
     @Get("/{id}")
-    public HttpResponse<VetDto> readVet(@PathVariable Integer id) {
+    public HttpResponse<VetDto> readVet(@PathVariable Integer id) throws NotFoundEntityException {
         return response(vetService.findById(id), HttpStatus.OK);
     }
 
@@ -202,12 +215,13 @@ public class VetController {
      * @throws PreconditionRequiredException if the ETag is absent or blank
      * @throws PreconditionFailedException if the veterinarian has changed
      * @throws IllegalRequestArgumentException if a speciality reference is invalid
+     * @throws NotFoundEntityException if the vet isn't found
      */
     @Put(value = "/{id}", consumes = MediaType.APPLICATION_JSON)
     public HttpResponse<VetDto> updateVet(@PathVariable Integer id,
                                           @Nullable @Header("If-Match") String ifMatch,
                                           @Valid @Body VetForm request)
-            throws PreconditionRequiredException, PreconditionFailedException, IllegalRequestArgumentException {
+            throws PreconditionRequiredException, PreconditionFailedException, IllegalRequestArgumentException, NotFoundEntityException {
         Vet current = vetService.findById(id);
         return response(vetService.update(current, request, ifMatch), HttpStatus.OK);
     }
@@ -219,12 +233,13 @@ public class VetController {
      * @param ifMatch the current ETag, optionally enclosed in double quotes
      * @throws PreconditionRequiredException if the ETag is absent or blank
      * @throws PreconditionFailedException if the veterinarian has changed
+     * @throws NotFoundEntityException if the vet isn't found
      */
     @Delete("/{id}")
     @Status(NO_CONTENT)
     public void deleteVet(@PathVariable Integer id,
                           @Nullable @Header("If-Match") String ifMatch)
-            throws PreconditionRequiredException, PreconditionFailedException {
+            throws PreconditionRequiredException, PreconditionFailedException, NotFoundEntityException {
         vetService.delete(id, ifMatch);
     }
 
@@ -259,11 +274,16 @@ public class VetController {
      * @param request submitted speciality name
      * @return HTTP 200 with the updated speciality
      * @throws IllegalRequestArgumentException if another speciality has that name
+     * @throws NotFoundEntityException if the speciality isn't found
      */
     @Put(value = "/specialities/{id}", consumes = MediaType.APPLICATION_JSON)
     public HttpResponse<SpecialityDto> updateSpeciality(@PathVariable Integer id,
-                                                        @Valid @Body SpecialityDto request) throws IllegalRequestArgumentException {
-        Speciality updated = vetService.updateSpeciality(id, request);
+                                                        @Valid @Body SpecialityDto request) throws IllegalRequestArgumentException, NotFoundEntityException {
+        if (!Objects.equals(id, request.id())) {
+            throw new IllegalRequestArgumentException("Id should match the one in the url");
+        }
+        Speciality current = vetService.findSpecialityById(id);
+        Speciality updated = vetService.updateSpeciality(current.id(), request);
         return HttpResponse.ok(formMapper.toSpecialityDto(updated));
     }
 

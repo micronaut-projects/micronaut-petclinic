@@ -297,10 +297,10 @@ class VetCrudTest {
         SpecialityDto second = createSpeciality();
         assertJsonError(HttpRequest.POST("/vets/specialities", first), HttpStatus.BAD_REQUEST);
         String editUrl = "/vets/specialities/" + second.id();
-        assertJsonError(HttpRequest.PUT(editUrl, Map.of("name", first.name())), HttpStatus.BAD_REQUEST);
+        assertJsonError(HttpRequest.PUT(editUrl, new SpecialityDto(second.id(), first.name())), HttpStatus.BAD_REQUEST);
         assertJsonError(HttpRequest.POST("/vets/specialities", Map.of("name", " ")), HttpStatus.BAD_REQUEST);
-        assertJsonError(HttpRequest.PUT(editUrl, Map.of("name", " ")), HttpStatus.BAD_REQUEST);
-        assertJsonError(HttpRequest.PUT("/vets/specialities/2147483647", Map.of("name", "unknown")), HttpStatus.NOT_FOUND);
+        assertJsonError(HttpRequest.PUT(editUrl, new SpecialityDto(second.id(), " ")), HttpStatus.BAD_REQUEST);
+        assertJsonError(HttpRequest.PUT("/vets/specialities/2147483647", new SpecialityDto(2147483647, "UNKNOWN")), HttpStatus.NOT_FOUND);
         assertThat(specialities.findById(second.id()).orElseThrow().name()).isEqualTo(second.name());
     }
 

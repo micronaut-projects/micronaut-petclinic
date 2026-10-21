@@ -5,6 +5,7 @@ import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.samples.petclinic.dto.SpecialityDto;
 import io.micronaut.samples.petclinic.dto.VetForm;
 import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
+import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.exception.PreconditionFailedException;
 import io.micronaut.samples.petclinic.exception.PreconditionRequiredException;
 import io.micronaut.samples.petclinic.model.Speciality;
@@ -56,8 +57,8 @@ public class VetService {
      * @return the veterinarian with its ETag and specialities
      * @throws NotFoundException if the identifier does not exist
      */
-    public Vet findById(Integer id) {
-        Vet vet = vetRepository.findById(id).orElseThrow(NotFoundException::new);
+    public Vet findById(Integer id) throws NotFoundEntityException {
+        Vet vet = vetRepository.findById(id).orElseThrow(NotFoundEntityException::new);
         Objects.requireNonNull(vet.etag());
         return vet;
     }
@@ -78,8 +79,8 @@ public class VetService {
      * @return the persisted speciality
      * @throws NotFoundException if the identifier does not exist
      */
-    public Speciality findSpecialityById(Integer id) {
-        return specialityRepository.findById(id).orElseThrow(NotFoundException::new);
+    public Speciality findSpecialityById(Integer id) throws NotFoundEntityException {
+        return specialityRepository.findById(id).orElseThrow(NotFoundEntityException::new);
     }
 
     /**
@@ -90,11 +91,7 @@ public class VetService {
      * @throws NotFoundException if the identifier does not exist
      */
     public Set<Speciality> findSpecialityByIds(@NonNull Set<Integer> ids) throws IllegalRequestArgumentException {
-        try {
-            return resolveSpecialities(ids);
-        } catch (DomainValidationException e) {
-            throw new IllegalRequestArgumentException(e.getMessage());
-        }
+        return resolveSpecialities(ids);
     }
 
     /**
@@ -105,11 +102,7 @@ public class VetService {
      * @throws IllegalRequestArgumentException if the name already exists
      */
     public Speciality createSpeciality(@NonNull SpecialityDto request) throws IllegalRequestArgumentException {
-        try {
-            ensureUniqueSpecialityName(request.name(), null);
-        } catch (DomainValidationException e) {
-            throw new IllegalRequestArgumentException(e.getMessage());
-        }
+        ensureUniqueSpecialityName(request.name(), null);
         return specialityRepository.save(new Speciality(request.name()));
     }
 
@@ -124,11 +117,7 @@ public class VetService {
      */
     public Speciality updateSpeciality(@NonNull Integer id, @NonNull SpecialityDto request) throws IllegalRequestArgumentException {
         Speciality speciality = specialityRepository.findById(id).orElseThrow(NotFoundException::new);
-        try {
-            ensureUniqueSpecialityName(request.name(), id);
-        } catch (DomainValidationException e) {
-            throw new IllegalRequestArgumentException(e.getMessage());
-        }
+        ensureUniqueSpecialityName(request.name(), id);
         return specialityRepository.update(speciality.withName(request.name()));
     }
 
@@ -139,13 +128,9 @@ public class VetService {
      * @return the saved veterinarian with its generated ETag
      * @throws IllegalRequestArgumentException if a speciality reference is invalid
      */
-    public Vet create(@NonNull VetForm form) throws IllegalRequestArgumentException {
+    public Vet create(@NonNull VetForm form) throws IllegalRequestArgumentException, NotFoundEntityException {
         Set<Speciality> selectedSpecialities;
-        try {
-            selectedSpecialities = resolveSpecialities(form.specialityIds());
-        } catch (DomainValidationException e) {
-            throw new IllegalRequestArgumentException(e.getMessage());
-        }
+        selectedSpecialities = resolveSpecialities(form.specialityIds());
         Vet saved = vetRepository.save(form.toVet(selectedSpecialities));
         return findById(saved.id());
     }
@@ -162,16 +147,8 @@ public class VetService {
      */
     @Transactional(rollbackOn = Exception.class)
     public Vet update(@NonNull Vet vet, @NonNull VetForm vetForm, String etag)
-            throws PreconditionRequiredException, PreconditionFailedException, IllegalRequestArgumentException {
-        try {
-            return updateVersioned(vet, vetForm.firstName(), vetForm.lastName(), vetForm.specialityIds(), validateAndUnquoteEtag(etag));
-        } catch (MissingEtagException e) {
-            throw new PreconditionRequiredException(e.getMessage(), e);
-        } catch (StaleEtagException e) {
-            throw new PreconditionFailedException(e.getMessage(), e);
-        } catch (DomainValidationException e) {
-            throw new IllegalRequestArgumentException(e.getMessage());
-        }
+            throws PreconditionRequiredException, PreconditionFailedException, IllegalRequestArgumentException, NotFoundEntityException {
+        return updateVersioned(vet, vetForm.firstName(), vetForm.lastName(), vetForm.specialityIds(), validateAndUnquoteEtag(etag));
     }
 
     /**
@@ -185,29 +162,22 @@ public class VetService {
      */
     @Transactional(rollbackOn = Exception.class)
     public void delete(Integer id, String expectedEtag)
-            throws PreconditionRequiredException, PreconditionFailedException {
-        try {
-            expectedEtag = validateAndUnquoteEtag(expectedEtag);
-            Vet vet = findById(id).withEtag(expectedEtag);
-            deleteVet(vet);
-        } catch (MissingEtagException e) {
-            throw new PreconditionRequiredException(e.getMessage(), e);
-        } catch (StaleEtagException e) {
-            throw new PreconditionFailedException(e.getMessage(), e);
-        }
+            throws PreconditionRequiredException, PreconditionFailedException, NotFoundEntityException {
+        expectedEtag = validateAndUnquoteEtag(expectedEtag);
+        Vet vet = findById(id).withEtag(expectedEtag);
+        deleteVet(vet);
     }
 
-    private void deleteVet(@NonNull Vet vet) throws StaleEtagException {
+    private void deleteVet(@NonNull Vet vet) throws PreconditionFailedException {
         try {
             vetRepository.deleteSpecialityLinks(vet.id());
             vetRepository.delete(vet);
         } catch (OptimisticLockException e) {
-            throw new StaleEtagException();
+            throw new PreconditionFailedException();
         }
-
     }
 
-    private Vet updateVersioned(Vet updated) throws StaleEtagException {
+    private Vet updateVersioned(Vet updated) throws PreconditionFailedException, NotFoundEntityException {
         try {
             // Replace assignment rows explicitly so updating a vet cannot update speciality records.
             vetRepository.deleteSpecialityLinks(updated.id());
@@ -216,7 +186,7 @@ public class VetService {
                     vetRepository.insertSpecialityLink(updated.id(), speciality.id()));
             return findById(updated.id());
         } catch (OptimisticLockException stale) {
-            throw new StaleEtagException();
+            throw new PreconditionFailedException();
         }
     }
 
@@ -224,15 +194,15 @@ public class VetService {
                                 String firstName,
                                 String lastName,
                                 Set<Integer> specialityIds,
-                                String expectedEtag) throws StaleEtagException, MissingEtagException, DomainValidationException {
+                                String expectedEtag) throws PreconditionFailedException, IllegalRequestArgumentException, PreconditionRequiredException, NotFoundEntityException {
         expectedEtag = validateAndUnquoteEtag(expectedEtag);
         Set<Speciality> selectedSpecialities = resolveSpecialities(specialityIds);
         return updateVersioned(new Vet(current.id(), firstName, lastName, selectedSpecialities, expectedEtag));
     }
 
-    private String validateAndUnquoteEtag(String etag) throws MissingEtagException {
+    private String validateAndUnquoteEtag(String etag) throws PreconditionRequiredException {
         if (etag == null || etag.isBlank()) {
-            throw new MissingEtagException();
+            throw new PreconditionRequiredException();
         }
         if (etag.length() >= 2 && etag.startsWith("\"") && etag.endsWith("\"")) {
             return etag.substring(1, etag.length() - 1);
@@ -240,23 +210,23 @@ public class VetService {
         return etag;
     }
 
-    private Set<Speciality> resolveSpecialities(@NonNull Set<Integer> requestedIds) throws DomainValidationException {
+    private Set<Speciality> resolveSpecialities(@NonNull Set<Integer> requestedIds) throws IllegalRequestArgumentException {
         if (requestedIds.isEmpty()) {
             return Set.of();
         }
         if (requestedIds.stream().anyMatch(java.util.Objects::isNull)) {
-            throw new DomainValidationException("Each speciality must have an id.");
+            throw new IllegalRequestArgumentException("Each speciality must have an id.");
         }
         Set<Speciality> resolved = new HashSet<>(specialityRepository.findAllByIdIn(requestedIds));
         if (resolved.size() != requestedIds.size()) {
-            throw new DomainValidationException("One or more specialities were not found.");
+            throw new IllegalRequestArgumentException("One or more specialities were not found.");
         }
         return resolved;
     }
 
-    private void ensureUniqueSpecialityName(String name, Integer currentId) throws DomainValidationException {
+    private void ensureUniqueSpecialityName(String name, Integer currentId) throws IllegalRequestArgumentException {
         if (specialityRepository.findByName(name).filter(existing -> !existing.id().equals(currentId)).isPresent()) {
-            throw new DomainValidationException("Speciality name already exists.");
+            throw new IllegalRequestArgumentException("Speciality name already exists.");
         }
     }
 

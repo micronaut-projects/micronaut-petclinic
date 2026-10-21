@@ -5,6 +5,11 @@ package io.micronaut.samples.petclinic.exception;
  */
 public final class PreconditionRequiredException extends Exception {
 
+
+    public PreconditionRequiredException() {
+        super("ETag is missing.");
+    }
+
     /**
      * Creates a missing-precondition failure.
      *

@@ -5,6 +5,10 @@ package io.micronaut.samples.petclinic.exception;
  */
 public final class PreconditionFailedException extends Exception {
 
+    public PreconditionFailedException() {
+        super("The entity etag has changed since it was loaded.");
+    }
+
     /**
      * Creates a failed-precondition failure.
      *
