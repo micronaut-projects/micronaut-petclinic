@@ -7,7 +7,6 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Transient;
-import io.micronaut.data.annotation.sql.ETagValue;
 import io.micronaut.data.annotation.sql.ETaggable;
 import io.micronaut.data.annotation.sql.GeneratedETag;
 import io.micronaut.data.annotation.sql.JoinColumn;
@@ -18,12 +17,17 @@ import jakarta.validation.constraints.NotBlank;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HexFormat;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Entity representing a veterinarian.
@@ -33,6 +37,7 @@ import java.util.Set;
  * @param firstName the vet's first name
  * @param lastName the vet's last name
  * @param specialities the specialities associated with the vet
+ * @param specialitiesHash the persisted hash of its sorted speciality IDs
  * @param etag the generated optimistic-locking value
  */
 @MappedEntity("VETS")
@@ -42,14 +47,11 @@ import java.util.Set;
 public record Vet(
         @Id
         @GeneratedValue
-        @ETagValue
         Integer id,
 
-        @ETagValue
         @NotBlank
         String firstName,
 
-        @ETagValue
         @NotBlank
         String lastName,
 
@@ -65,6 +67,9 @@ public record Vet(
         @NonNull
         Set<Speciality> specialities,
 
+        @MappedProperty("SPECIALITIES_ETAG_HASH")
+        @NonNull String specialitiesHash,
+
         @Nullable
         @GeneratedETag(function = "SYS_ROW_ETAG")
         String etag
@@ -77,29 +82,33 @@ public record Vet(
      * @param firstName veterinarian first name
      * @param lastName veterinarian last name
      * @param specialities speciality references; omitted selections become an empty set
+     * @param specialitiesHash persisted hash; the constructor derives it from the speciality IDs
      * @param etag the loaded ETag, or {@code null} for a new veterinarian
      */
     @Creator
     public Vet {
-        specialities = specialities == null ? Set.of() : Set.copyOf(specialities);
+        specialities = Set.copyOf(specialities);
+        specialitiesHash = hashSpecialityIds(specialities);
+    }
+
+    /**
+     * Creates a veterinarian and computes its speciality hash from the assigned IDs.
+     *
+     * @param id veterinarian identifier
+     * @param firstName veterinarian first name
+     * @param lastName veterinarian last name
+     * @param specialities speciality references
+     * @param etag current ETag, or {@code null} for a new veterinarian
+     */
+    public Vet(Integer id, String firstName, String lastName, Set<Speciality> specialities, String etag) {
+        this(id, firstName, lastName, specialities, hashSpecialityIds(specialities), etag);
     }
 
     /**
      * Creates an empty vet for framework binding.
      */
     public Vet() {
-        this(null, null, null, Set.of(), null);
-    }
-
-    /**
-     * Creates a vet from persisted columns only.
-     *
-     * @param id the database identifier
-     * @param firstName the vet's first name
-     * @param lastName the vet's last name
-     */
-    public Vet(Integer id, String firstName, String lastName) {
-        this(id, firstName, lastName, Set.of(), null);
+        this(null, null, null, Set.of(), hashSpecialityIds(Set.of()), null);
     }
 
     /**
@@ -109,7 +118,22 @@ public record Vet(
      * @param lastName the vet's last name
      */
     public Vet(String firstName, String lastName) {
-        this(null, firstName, lastName, Set.of(), null);
+        this(null, firstName, lastName, Set.of(), hashSpecialityIds(Set.of()), null);
+    }
+
+    private static String hashSpecialityIds(Set<Speciality> specialities) {
+        String sortedIds = specialities.stream()
+                .map(Speciality::id)
+                .sorted()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+        try {
+            byte[] hash = MessageDigest.getInstance("SHA-256")
+                    .digest(sortedIds.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash).toUpperCase(java.util.Locale.ROOT);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is not available.", e);
+        }
     }
 
     /**

@@ -387,9 +387,14 @@ Create and update responses include the vet and its ETag; delete has no body and
 returns 204. Missing and stale ETags return 428 and 412 respectively. Reload after
 a conflict.
 
-ETags cover only the vet's ID and names; speciality edits are not protected.
-Oracle uses `SYS_ROW_ETAG`; other profiles define a local equivalent.
-PostgreSQL currently requires a Micronaut Data fix for quoting ETag columns.
+Oracle uses `SYS_ROW_ETAG`; other profiles define a local equivalent. The ETag
+includes a SHA-256 hash of each veterinarian's sorted, comma-separated
+speciality IDs, persisted in `VETS.SPECIALITIES_ETAG_HASH`. Assignment changes
+update that hash with the links, so stale assignment updates are rejected.
+Renaming a speciality does not change the veterinarian's ETag.
+PostgreSQL still needs a Micronaut Data fix: its generated ETag SQL references
+the mapped hash column without quotes, while PostgreSQL created it quoted and
+uppercase.
 
 ### Oracle transaction priority
 

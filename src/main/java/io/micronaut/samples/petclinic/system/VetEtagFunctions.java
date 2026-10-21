@@ -16,20 +16,22 @@ public final class VetEtagFunctions {
     }
 
     /**
-     * Produces a stable 128-bit tag for the Vet scalar ETag inputs.
+     * Produces a stable 128-bit tag for the Vet row values used for optimistic locking.
      *
      * @param id vet identifier
      * @param firstName first name
      * @param lastName last name
+     * @param specialitiesHash persisted SHA-256 hash of sorted speciality IDs
      * @return uppercase 32-character hexadecimal hash
      */
     @ReflectiveAccess // H2 resolves the SQL alias by class and method name in native images.
-    public static String sysRowEtag(Integer id, String firstName, String lastName) {
+    public static String sysRowEtag(Integer id, String firstName, String lastName, String specialitiesHash) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             addValue(digest, id == null ? null : id.toString());
             addValue(digest, firstName);
             addValue(digest, lastName);
+            addValue(digest, specialitiesHash);
             byte[] hash = digest.digest();
             StringBuilder result = new StringBuilder(32);
             for (int i = 0; i < 16; i++) {

@@ -8,7 +8,7 @@ datasources:
       # Include shared entities only; exclude Oracle-only JSON duality views.
       - io.micronaut.samples.petclinic.model
     connection-init-sql: >-
-      CREATE OR REPLACE FUNCTION SYS_ROW_ETAG(INTEGER, VARCHAR, VARCHAR)
+      CREATE OR REPLACE FUNCTION SYS_ROW_ETAG(INTEGER, VARCHAR, VARCHAR, VARCHAR)
       RETURNS VARCHAR
       LANGUAGE SQL
       IMMUTABLE
@@ -16,7 +16,8 @@ datasources:
       SELECT upper(md5(
         CASE WHEN $1 IS NULL THEN '-1:' ELSE length($1::text)::text || ':' || $1::text END ||
         CASE WHEN $2 IS NULL THEN '-1:' ELSE length($2)::text || ':' || $2 END ||
-        CASE WHEN $3 IS NULL THEN '-1:' ELSE length($3)::text || ':' || $3 END
+        CASE WHEN $3 IS NULL THEN '-1:' ELSE length($3)::text || ':' || $3 END ||
+        CASE WHEN $4 IS NULL THEN '-1:' ELSE length($4)::text || ':' || $4 END
       ))::varchar
       $$
 

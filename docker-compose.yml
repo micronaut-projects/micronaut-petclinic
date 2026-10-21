@@ -109,6 +109,7 @@ services:
       - |
         sqlplus -L -s petclinic/petclinic@oracle:1521/FREEPDB1 <<SQL
         @/opt/oracle/scripts/deepsec/00-initialize-petclinic.sql
+        @/opt/oracle/scripts/deepsec/03-vet-specialities-etag.sql
         exit
         SQL
         db_password="$$(cat /run/secrets/oracle_pwd)"
@@ -135,6 +136,7 @@ services:
       DEEPSEC_CLINIC_STAFF_EMAIL: ${DEEPSEC_CLINIC_STAFF_EMAIL:-}
     volumes:
       - ./docker/oracle/deepsec/00-initialize-petclinic.sql:/opt/oracle/scripts/deepsec/00-initialize-petclinic.sql:ro
+      - ./docker/oracle/deepsec/03-vet-specialities-etag.sql:/opt/oracle/scripts/deepsec/03-vet-specialities-etag.sql:ro
       - ./docker/oracle/deepsec/01-configure-deepsec.sql:/opt/oracle/scripts/deepsec/01-configure-deepsec.sql:ro
       - ./docker/oracle/deepsec/02-seed-demo-identities.sql:/opt/oracle/scripts/deepsec/02-seed-demo-identities.sql:ro
     secrets:

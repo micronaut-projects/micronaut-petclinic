@@ -182,6 +182,37 @@ class VetCrudTest {
     }
 
     @Test
+    void specialityOnlyUpdateChangesEtagAndRejectsAnotherUpdateWithTheOldEtag() {
+        SpecialityDto originalSpeciality = createSpeciality();
+        SpecialityDto changedSpeciality = createSpeciality();
+        HttpResponse<VetDto> created = createVet(Set.of(originalSpeciality));
+        VetDto vet = created.body();
+        String url = "/vets/" + vet.id();
+        String originalEtag = created.header("ETag");
+
+        HttpResponse<VetDto> firstUpdate = client.toBlocking().exchange(HttpRequest.PUT(url,
+                        new VetDto(vet.id(), vet.firstName(), vet.lastName(), Set.of(changedSpeciality), null))
+                .header("If-Match", originalEtag), VetDto.class);
+
+        assertThat(firstUpdate.code()).isEqualTo(200);
+        assertThat(firstUpdate.header("ETag")).isNotEqualTo(originalEtag);
+        assertError(HttpRequest.PUT(url,
+                        new VetDto(vet.id(), vet.firstName(), vet.lastName(), Set.of(originalSpeciality), null))
+                .header("If-Match", originalEtag), HttpStatus.PRECONDITION_FAILED);
+        assertThat(client.toBlocking().retrieve(url, VetDto.class).specialities())
+                .containsExactly(changedSpeciality);
+    }
+
+    @Test
+    void specialityHashIsNotExposedByTheVetJsonList() {
+        createVet(Set.of(createSpeciality()));
+
+        String vetsJson = client.toBlocking().retrieve("/vets/json");
+
+        assertThat(vetsJson).doesNotContain("specialitiesHash", "SPECIALITIES_ETAG_HASH");
+    }
+
+    @Test
     void specialityCanKeepItsNameAndRenameWithoutLosingAssignments() {
         SpecialityDto speciality = createSpeciality();
         VetDto vet = createVet(Set.of(speciality)).body();

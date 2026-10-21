@@ -85,13 +85,13 @@ public class VetController {
     }
 
     /**
-     * Lists veterinarians with their fetched specialities as JSON.
+     * Lists veterinarians with their fetched specialities as DTOs in JSON.
      *
-     * @return the current veterinarians
+     * @return the current veterinarian DTOs
      */
     @Get("/json")
-    public Collection<Vet> showResourcesVetListJson() {
-        return vetService.findAll();
+    public Collection<VetDto> showResourcesVetListJson() {
+        return vetService.findAll().stream().map(formMapper::toVetDto).toList();
     }
 
     /**
@@ -295,13 +295,4 @@ public class VetController {
                                                            boolean duplicate) {
         return Map.of("specialityForm", form, "isNew", isNew, "saved", saved, "duplicate", duplicate);
     }
-
-
-    private static String requiredEtag(String etag) throws PreconditionRequiredException {
-        if (etag == null || etag.isBlank()) {
-            throw new PreconditionRequiredException("Send the ETag from the loaded vet in the If-Match header.");
-        }
-        return etag.trim();
-    }
-
 }
