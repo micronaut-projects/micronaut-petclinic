@@ -14,7 +14,6 @@ import org.jspecify.annotations.NonNull;
  *
  * @param id the database identifier, or {@code null} for a new speciality
  * @param name the display name of the speciality
- * @param vets inverse veterinarian assignments, when loaded
  */
 @MappedEntity("SPECIALTIES")
 @Serdeable
