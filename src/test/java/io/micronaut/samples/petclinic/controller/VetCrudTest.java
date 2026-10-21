@@ -63,7 +63,7 @@ class VetCrudTest {
         String url = "/vets/" + vet.id();
         String etag = created.header("ETag");
         assertThat((Object) created.status()).isEqualTo(HttpStatus.CREATED);
-        assertThat(etag).isEqualTo(vet.etag());
+        assertThat(etag).isEqualTo("\"" + vet.etag() + "\"");
         assertThat(created.header("Cache-Control")).isEqualTo("no-store");
 
         HttpResponse<VetDto> loaded = client.toBlocking().exchange(HttpRequest.GET(url), VetDto.class);
@@ -322,7 +322,7 @@ class VetCrudTest {
         assertThat(Objects.requireNonNull(updated.body()).lastName()).isEqualTo("Updated");
         assertThat(Objects.requireNonNull(updated.body()).specialities()).isEmpty();
         assertThat(Objects.requireNonNull(updated.body()).etag()).isNotEqualTo(vet.etag());
-        assertThat(updated.header("ETag")).isEqualTo(Objects.requireNonNull(updated.body()).etag());
+        assertThat(updated.header("ETag")).isEqualTo("\"" + Objects.requireNonNull(updated.body()).etag() + "\"");
         assertThat(vets.findById(vet.id()).orElseThrow().specialities()).isEmpty();
         assertJsonError(HttpRequest.PUT(url, form).header("If-Match", vet.etag()), HttpStatus.PRECONDITION_FAILED);
     }

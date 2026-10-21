@@ -179,6 +179,7 @@ public class VetService {
     public void delete(Integer id, String expectedEtag)
             throws PreconditionRequiredException, PreconditionFailedException {
         try {
+            expectedEtag = unquoteEtag(expectedEtag);
             validateEtag(expectedEtag);
             Vet vet = findById(id).withEtag(expectedEtag);
             deleteVet(vet);
@@ -223,9 +224,17 @@ public class VetService {
                                 String lastName,
                                 Set<Integer> specialityIds,
                                 String expectedEtag) throws StaleEtagException, MissingEtagException, DomainValidationException {
+        expectedEtag = unquoteEtag(expectedEtag);
         validateEtag(expectedEtag);
         Set<Speciality> selectedSpecialities = resolveSpecialities(specialityIds);
         return updateVersioned(new Vet(current.id(), firstName, lastName, selectedSpecialities, expectedEtag));
+    }
+
+    private String unquoteEtag(String etag) {
+        if (etag != null && etag.length() >= 2 && etag.startsWith("\"") && etag.endsWith("\"")) {
+            return etag.substring(1, etag.length() - 1);
+        }
+        return etag;
     }
 
     private Set<Speciality> resolveSpecialities(@NonNull Set<Integer> requestedIds) throws DomainValidationException {

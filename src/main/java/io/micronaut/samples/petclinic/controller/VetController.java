@@ -272,7 +272,7 @@ public class VetController {
     private HttpResponse<VetDto> response(Vet vet, HttpStatus status) {
         VetDto dto = formMapper.toVetDto(vet);
         return HttpResponse.status(status)
-                .header("ETag", dto.etag())
+                .header("ETag", "\"" + dto.etag() + "\"")
                 .header("Cache-Control", "no-store")
                 .body(dto);
     }

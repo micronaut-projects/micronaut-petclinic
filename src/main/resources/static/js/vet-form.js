@@ -26,7 +26,7 @@
         if (deleting) {
             request = {
                 method: 'DELETE',
-                headers: {'If-Match': fields.get('etag'), 'Accept': 'application/json'}
+                headers: {'If-Match': '"' + fields.get('etag') + '"', 'Accept': 'application/json'}
             };
         } else if (isNew) {
             request = {
@@ -42,7 +42,7 @@
         } else {
             request = {
                 method: 'PUT',
-                headers: {'Content-Type': 'application/json', 'Accept': 'application/json', 'If-Match': fields.get('etag')},
+                headers: {'Content-Type': 'application/json', 'Accept': 'application/json', 'If-Match': '"' + fields.get('etag') + '"'},
                 body: JSON.stringify({
                     id: Number(fields.get('id')),
                     firstName: fields.get('firstName'),
