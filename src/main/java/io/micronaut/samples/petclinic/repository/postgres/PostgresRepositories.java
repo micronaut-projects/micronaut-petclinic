@@ -52,8 +52,13 @@ public final class PostgresRepositories {
          * @return pets belonging to the owner
          */
         @Override
+        @Join(value = "type", type = Join.Type.LEFT_FETCH)
         @Query(value = """
-                SELECT p.* FROM "PETS" p WHERE p."OWNER_ID" = :ownerId ORDER BY p."NAME"
+                SELECT p.*, pet_type_."id" AS type_id, pet_type_."NAME" AS type_NAME
+                FROM "PETS" p
+                LEFT JOIN "TYPES" pet_type_ ON p."TYPE_ID" = pet_type_."id"
+                WHERE p."OWNER_ID" = :ownerId
+                ORDER BY p."NAME"
                 """, nativeQuery = true)
         Collection<Pet> findByOwnerId(Integer ownerId);
 
@@ -63,8 +68,13 @@ public final class PostgresRepositories {
          * @param ownerIds owner ids to match
          * @return pets belonging to the supplied owners
          */
+        @Join(value = "type", type = Join.Type.LEFT_FETCH)
         @Query(value = """
-                SELECT p.* FROM "PETS" p WHERE p."OWNER_ID" IN (:ownerIds) ORDER BY p."OWNER_ID", p."NAME"
+                SELECT p.*, pet_type_."id" AS type_id, pet_type_."NAME" AS type_NAME
+                FROM "PETS" p
+                LEFT JOIN "TYPES" pet_type_ ON p."TYPE_ID" = pet_type_."id"
+                WHERE p."OWNER_ID" IN (:ownerIds)
+                ORDER BY p."OWNER_ID", p."NAME"
                 """, nativeQuery = true)
         List<Pet> findByOwnerIdIn(List<Integer> ownerIds);
     }
