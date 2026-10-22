@@ -3,7 +3,7 @@ package io.micronaut.samples.petclinic.service;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.OptimisticLockException;
-import io.micronaut.http.server.exceptions.NotFoundException;
+import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.oracle.model.OwnerCareView;
 import io.micronaut.samples.petclinic.repository.OwnerCareViewRepository;
 import jakarta.inject.Singleton;
@@ -46,9 +46,10 @@ public class OwnerCareViewService {
      * Finds OwnerCareView by id.
      * @param ownerId owner id.
      * @return OwnerCareView matching the provided owner id.
+     * @throws NotFoundEntityException if the owner does not exist
      */
-    public OwnerCareView findById(Integer ownerId) {
-        return repository.findById(ownerId).orElseThrow(NotFoundException::new);
+    public OwnerCareView findById(Integer ownerId) throws NotFoundEntityException {
+        return repository.findById(ownerId).orElseThrow(NotFoundEntityException::new);
     }
 
     /**
@@ -56,8 +57,9 @@ public class OwnerCareViewService {
      *
      * @param updated edited document
      * @return the persisted document with a fresh ETAG
+     * @throws NotFoundEntityException if the owner does not exist after the update
      */
-    public OwnerCareView update(OwnerCareView updated) {
+    public OwnerCareView update(OwnerCareView updated) throws NotFoundEntityException {
         try {
             repository.update(updated);
         } catch (OptimisticLockException e) {

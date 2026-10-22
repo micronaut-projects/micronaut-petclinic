@@ -10,6 +10,7 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.oracle.model.OwnerCareView;
 import io.micronaut.samples.petclinic.repository.OwnerRepository;
@@ -38,7 +39,7 @@ class OwnerCareRecordControllerTest {
     private OwnerCareView originalDocument;
 
     @BeforeEach
-    void loadSampleDocument() {
+    void loadSampleDocument() throws NotFoundEntityException {
         Collection<Owner> matches = ownerRepository.findByLastNameContainsIgnoreCase(
                 "Coleman", Sort.of(Sort.Order.asc("lastName")));
         Owner owner = matches.stream().findFirst().orElseThrow();
@@ -46,7 +47,7 @@ class OwnerCareRecordControllerTest {
     }
 
     @AfterEach
-    void restoreSampleDocument() {
+    void restoreSampleDocument() throws NotFoundEntityException {
         if (originalDocument == null) {
             return;
         }
@@ -126,6 +127,8 @@ class OwnerCareRecordControllerTest {
                 HttpRequest.GET("/owners/999999999/care-record")
                         .accept(MediaType.APPLICATION_JSON_TYPE), Argument.of(Map.class), Argument.of(Map.class));
         assertThat(response.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        assertThat(response.getContentType()).contains(MediaType.APPLICATION_JSON_TYPE);
+        assertThat(response.body()).containsEntry("message", "Entity not found.");
     }
 
     @Test
@@ -141,6 +144,8 @@ class OwnerCareRecordControllerTest {
                 Argument.of(Map.class), Argument.of(Map.class));
 
         assertThat(response.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        assertThat(response.getContentType()).contains(MediaType.APPLICATION_JSON_TYPE);
+        assertThat(response.body()).containsEntry("message", "Entity not found.");
     }
 
     @Test
@@ -152,20 +157,20 @@ class OwnerCareRecordControllerTest {
     }
 
     @Test
-    void rejectsMismatchedDocumentId() {
+    void rejectsMismatchedDocumentId() throws NotFoundEntityException {
         assertRejectedDocument(new OwnerCareView(999999999, originalDocument.firstName(),
                 originalDocument.lastName(), originalDocument.address(), originalDocument.city(),
                 originalDocument.telephone(), originalDocument.pets(), originalDocument.metadata()));
     }
 
     @Test
-    void rejectsMissingMetadataAndBlankEtag() {
+    void rejectsMissingMetadataAndBlankEtag() throws NotFoundEntityException {
         assertRejectedDocument(copyWithMetadata(originalDocument, null));
         assertRejectedDocument(copyWithMetadata(originalDocument, new OwnerCareView.DualityMetadata("", null)));
     }
 
     @Test
-    void rejectsInvalidNestedFields() {
+    void rejectsInvalidNestedFields() throws NotFoundEntityException {
         var pet = originalDocument.pets().getFirst();
         var visit = pet.visits().getFirst();
         for (var invalidPet : java.util.List.of(
@@ -181,7 +186,7 @@ class OwnerCareRecordControllerTest {
         }
     }
 
-    private void assertRejectedDocument(OwnerCareView document) {
+    private void assertRejectedDocument(OwnerCareView document) throws NotFoundEntityException {
         HttpResponse<Map> response = putDocument(document);
         assertThat(response.code()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
         assertThat(response.getContentType()).contains(MediaType.APPLICATION_JSON_TYPE);

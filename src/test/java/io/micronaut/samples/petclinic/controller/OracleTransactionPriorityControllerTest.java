@@ -19,6 +19,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -87,6 +88,18 @@ class OracleTransactionPriorityControllerTest {
 
         assertBookingResponse(response, HttpStatus.CONFLICT, TAKEN, BOOKED_FOR_EMERGENCY);
         assertThat(appointments.findById(originalAppointment.id()).orElseThrow().status()).isEqualTo(BOOKED_FOR_EMERGENCY);
+    }
+
+    @Test
+    void unknownAppointmentReturnsJsonEntityNotFound() {
+        HttpResponse<Map> response = client.toBlocking().exchange(
+                HttpRequest.POST("/oracle/transaction-priority/book?appointmentId=2147483647&type=regular", "")
+                        .accept(MediaType.APPLICATION_JSON_TYPE),
+                Argument.of(Map.class), Argument.of(Map.class));
+
+        assertThat(response.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        assertThat(response.getContentType()).contains(MediaType.APPLICATION_JSON_TYPE);
+        assertThat(response.body()).containsEntry("message", "Appointment not found.");
     }
 
     private HttpResponse<OracleBookingResult> postBooking(String type) {

@@ -8,6 +8,7 @@ import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.samples.petclinic.dto.OwnerData;
+import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.repository.oracle.DeepSecOwnerRepository;
 import io.micronaut.samples.petclinic.service.ClinicService;
@@ -115,10 +116,10 @@ class DeepDataSecurityController {
     @Get("/owners/{ownerId}/support-contact")
     @ExecuteOn(TaskExecutors.BLOCKING)
     @Secured("CLINIC_STAFF")
-    public HttpResponse<OwnerData> supportContact(@PathVariable Integer ownerId) {
-        return deepSecOwnerRepository.findByIdWithSupport(ownerId)
-                .map(owner -> HttpResponse.ok(OwnerData.from(owner)))
-                .orElseGet(HttpResponse::notFound);
+    public HttpResponse<OwnerData> supportContact(@PathVariable Integer ownerId) throws NotFoundEntityException {
+        Owner owner = deepSecOwnerRepository.findByIdWithSupport(ownerId)
+                .orElseThrow(NotFoundEntityException::new);
+        return HttpResponse.ok(OwnerData.from(owner));
     }
 
     /**

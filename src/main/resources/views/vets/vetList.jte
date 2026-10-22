@@ -3,16 +3,24 @@
 @param io.micronaut.http.HttpRequest<?> request
 @param java.util.Locale locale
 @param java.util.Set<String> activeNames
+@param boolean saved
 
 @template.layout(content = @`
     <div class="page-header">
         <div class="container">
             <h1><i class="fas fa-user-md me-3"></i>${msg.text("vet.ourVeterinarians")}</h1>
             <p>${msg.text("vet.meetTeam")}</p>
+            <div class="d-flex gap-2 flex-wrap mt-3">
+                <a class="btn btn-light" href="/vets/new"><i class="fas fa-plus me-1"></i>${msg.text("vet.add")}</a>
+                <a class="btn btn-outline-light" href="/vets/specialities"><i class="fas fa-list me-1"></i>${msg.text("speciality.manage")}</a>
+            </div>
         </div>
     </div>
 
     <main class="container flex-grow-1 py-4">
+        @if(saved)
+            <div class="alert alert-success" role="status">${msg.text("vet.saved")}</div>
+        @endif
         <div class="row g-4 mb-5">
             <div class="col-md-4">
                 <div class="card h-100">
@@ -76,9 +84,9 @@
                             <div class="vet-card-body">
                                 <h5>${vet.getFirstName()} ${vet.getLastName()}</h5>
 
-                                @if (vet.getSpecialities() != null && !vet.getSpecialities().isEmpty())
+                                @if (!vet.specialities().isEmpty())
                                     <div class="mt-3">
-                                        @for (io.micronaut.samples.petclinic.model.Speciality s : vet.getSpecialities())
+                                        @for (io.micronaut.samples.petclinic.model.Speciality s : vet.specialities())
                                             <span class="speciality-badge">${s.name()}</span>
                                         @endfor
                                     </div>
@@ -96,6 +104,11 @@
                                         <span class="text-muted small">
                                             <i class="fas fa-star text-warning me-1"></i>${msg.text("vet.topRated")}
                                         </span>
+                                    </div>
+                                    <div class="mt-3">
+                                        <a class="btn btn-sm btn-outline-primary" href="/vets/${vet.id()}/edit">
+                                            <i class="fas fa-pen me-1"></i>${msg.text("vet.edit")}
+                                        </a>
                                     </div>
                                 </div>
                             </div>

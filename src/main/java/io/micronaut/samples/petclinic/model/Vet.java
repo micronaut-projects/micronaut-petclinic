@@ -1,22 +1,33 @@
 package io.micronaut.samples.petclinic.model;
 
+import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Transient;
-import io.micronaut.core.annotation.Creator;
+import io.micronaut.data.annotation.sql.ETaggable;
+import io.micronaut.data.annotation.sql.GeneratedETag;
+import io.micronaut.data.annotation.sql.JoinColumn;
+import io.micronaut.data.annotation.sql.JoinTable;
 import io.micronaut.serde.annotation.Serdeable;
 import io.micronaut.sourcegen.annotations.Wither;
 import jakarta.validation.constraints.NotBlank;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HexFormat;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * Entity representing a veterinarian.
@@ -25,11 +36,14 @@ import java.util.TreeSet;
  * @param id the database identifier, or {@code null} for a new vet
  * @param firstName the vet's first name
  * @param lastName the vet's last name
- * @param specialities the transient specialities associated with the vet
+ * @param specialities the specialities associated with the vet
+ * @param specialitiesHash the hash of its sorted persisted speciality IDs
+ * @param etag the generated optimistic-locking value
  */
 @MappedEntity("VETS")
 @Serdeable
 @Wither
+@ETaggable
 public record Vet(
         @Id
         @GeneratedValue
@@ -43,34 +57,62 @@ public record Vet(
         @NotBlank
         String lastName,
 
-        @Transient
-        Set<Speciality> specialities
+        @Relation(value = Relation.Kind.MANY_TO_MANY, cascade = Relation.Cascade.PERSIST)
+        @JoinTable(
+                name = "VET_SPECIALTIES",
+                joinColumns = @JoinColumn(name = "VET_ID", referencedColumnName = "id"),
+                inverseJoinColumns = @JoinColumn(name = "SPECIALTY_ID", referencedColumnName = "id")
+        )
+        @NonNull
+        Set<Speciality> specialities,
+
+        @MappedProperty("SPECIALITIES_ETAG_HASH")
+        @NonNull String specialitiesHash,
+
+        @Nullable
+        // Explicit for non-Oracle profiles, which define this function; Oracle already uses it by default.
+        // The emulated function signatures are positional and must match Vet's ETag inputs exactly:
+        // id, firstName, lastName, specialitiesHash. Changing persisted ETag inputs, including @ETagValue exclusions,
+        // makes runtime function lookup fail.
+        @GeneratedETag(function = "SYS_ROW_ETAG")
+        String etag
 ) implements Person, VetWither {
 
     /**
-     * Creates a vet and normalizes a {@code null} speciality set to an empty immutable set.
+     * Creates an immutable veterinarian with an independent speciality set.
+     *
+     * @param id veterinarian identifier, or {@code null} when creating
+     * @param firstName veterinarian first name
+     * @param lastName veterinarian last name
+     * @param specialities speciality references; omitted selections become an empty set
+     * @param specialitiesHash persisted hash; it is recomputed from the loaded speciality IDs
+     * @param etag the loaded ETag, or {@code null} for a new veterinarian
      */
+    @Creator
     public Vet {
-        specialities = specialities != null ? Set.copyOf(specialities) : Set.of();
+        specialities = specialities == null ? Set.of() : Set.copyOf(specialities);
+        // The ETag input must include every link, so compute it from fully loaded specialities with persisted IDs.
+        specialitiesHash = hashSpecialityIds(specialities);
+    }
+
+    /**
+     * Creates a veterinarian and computes its speciality hash from the assigned IDs.
+     *
+     * @param id veterinarian identifier
+     * @param firstName veterinarian first name
+     * @param lastName veterinarian last name
+     * @param specialities speciality references
+     * @param etag current ETag, or {@code null} for a new veterinarian
+     */
+    public Vet(Integer id, String firstName, String lastName, Set<Speciality> specialities, String etag) {
+        this(id, firstName, lastName, specialities, hashSpecialityIds(specialities), etag);
     }
 
     /**
      * Creates an empty vet for framework binding.
      */
     public Vet() {
-        this(null, null, null, Set.of());
-    }
-
-    /**
-     * Creates a vet from persisted columns only.
-     *
-     * @param id the database identifier
-     * @param firstName the vet's first name
-     * @param lastName the vet's last name
-     */
-    @Creator
-    public Vet(Integer id, String firstName, String lastName) {
-        this(id, firstName, lastName, Set.of());
+        this(null, null, null, Set.of(), hashSpecialityIds(Set.of()), null);
     }
 
     /**
@@ -80,110 +122,40 @@ public record Vet(
      * @param lastName the vet's last name
      */
     public Vet(String firstName, String lastName) {
-        this(null, firstName, lastName, Set.of());
+        this(null, firstName, lastName, Set.of(), hashSpecialityIds(Set.of()), null);
+    }
+
+    private static String hashSpecialityIds(Set<Speciality> specialities) {
+        Set<Speciality> loadedSpecialities = specialities == null ? Set.of() : specialities;
+        String sortedIds = loadedSpecialities.stream()
+                .map(speciality -> {
+                    Integer id = speciality.id();
+                    if (id == null) {
+                        throw new IllegalStateException("ETag hashing requires specialities with persisted IDs.");
+                    }
+                    return id;
+                })
+                .sorted()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+        try {
+            byte[] hash = MessageDigest.getInstance("SHA-256")
+                    .digest(sortedIds.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash).toUpperCase(java.util.Locale.ROOT);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is not available.", e);
+        }
     }
 
     /**
-     * Returns the transient specialities associated with this vet.
-     *
-     * @return the immutable speciality set
-     */
-    @Override
-    @Transient
-    public Set<Speciality> specialities() {
-        return specialities;
-    }
-
-    /**
-     * Returns the vet specialities sorted by name.
+     * Returns the vet specialities sorted by name, with unresolved names first.
      *
      * @return an immutable sorted speciality set
      */
-    @Transient
-    public Set<Speciality> getSpecialities() {
-        List<Speciality> sortedSpecialities = new ArrayList<>(specialities());
-        sortedSpecialities.sort(Comparator.comparing(Speciality::name));
+    public Set<Speciality> specialities() {
+        List<Speciality> sortedSpecialities = new ArrayList<>(this.specialities);
+        sortedSpecialities.sort(Comparator.comparing(Speciality::name, Comparator.nullsFirst(Comparator.naturalOrder())));
         return Collections.unmodifiableSet(new LinkedHashSet<>(sortedSpecialities));
-    }
-
-    /**
-     * Returns the number of specialities associated with this vet.
-     *
-     * @return the speciality count
-     */
-    @Transient
-    public int getNrOfSpecialities() {
-        return specialities.size();
-    }
-
-    /**
-     * Returns a copy of this vet with a different id.
-     *
-     * @param id the replacement id
-     * @return a vet copy with the supplied id
-     */
-    @Override
-    public Vet withId(Integer id) {
-        return new Vet(id, firstName, lastName, specialities);
-    }
-
-    /**
-     * Returns a copy of this vet with a different first name.
-     *
-     * @param firstName the replacement first name
-     * @return a vet copy with the supplied first name
-     */
-    @Override
-    public Vet withFirstName(String firstName) {
-        return new Vet(id, firstName, lastName, specialities);
-    }
-
-    /**
-     * Returns a copy of this vet with a different last name.
-     *
-     * @param lastName the replacement last name
-     * @return a vet copy with the supplied last name
-     */
-    @Override
-    public Vet withLastName(String lastName) {
-        return new Vet(id, firstName, lastName, specialities);
-    }
-
-    /**
-     * Returns a copy of this vet with a different speciality set.
-     *
-     * @param specialities the replacement specialities
-     * @return a vet copy with the supplied specialities
-     */
-    @Override
-    public Vet withSpecialities(Set<Speciality> specialities) {
-        return new Vet(id, firstName, lastName, specialities);
-    }
-
-    /**
-     * Returns a copy of this vet with a speciality added.
-     *
-     * @param speciality the speciality to add
-     * @return a vet copy containing the speciality
-     */
-    public Vet withSpecialityAdded(Speciality speciality) {
-        Set<Speciality> updatedSpecialities = new TreeSet<>(Comparator.comparing(Speciality::name));
-        updatedSpecialities.addAll(specialities);
-        updatedSpecialities.add(speciality);
-        return withSpecialities(updatedSpecialities);
-    }
-
-    /**
-     * Returns a copy of this vet with a speciality removed.
-     *
-     * @param speciality the speciality to remove
-     * @return a vet copy without the speciality
-     */
-    public Vet withoutSpeciality(Speciality speciality) {
-        Set<Speciality> updatedSpecialities = new TreeSet<>(Comparator.comparing(Speciality::name));
-        updatedSpecialities.addAll(specialities);
-        updatedSpecialities.remove(speciality);
-        return withSpecialities(updatedSpecialities);
     }
 
     /**
@@ -197,7 +169,7 @@ public record Vet(
             return "none";
         }
         List<String> names = new ArrayList<>();
-        for (Speciality speciality : getSpecialities()) {
+        for (Speciality speciality : specialities()) {
             names.add(speciality.name());
         }
         return String.join(", ", names);

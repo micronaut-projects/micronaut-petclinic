@@ -4,6 +4,7 @@ import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.samples.petclinic.model.Speciality;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Repository for {@link Speciality} entities.
@@ -24,4 +25,20 @@ public interface SpecialityRepository extends CrudRepository<Speciality, Integer
      * @return the speciality, if found
      */
     Optional<Speciality> findByName(String name);
+
+    /**
+     * Finds the existing specialities among the requested identifiers.
+     *
+     * @param ids requested speciality identifiers
+     * @return matching specialities; unknown identifiers are omitted
+     */
+    Set<Speciality> findAllByIdIn(Set<Integer> ids);
+
+    /**
+     * Checks for a speciality with the supplied name.
+     *
+     * @param name name compared using the database collation
+     * @return whether a matching speciality exists
+     */
+    boolean existsByName(String name);
 }

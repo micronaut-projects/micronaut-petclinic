@@ -3,6 +3,7 @@ package io.micronaut.samples.petclinic.repository;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.model.Sort;
+import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.oracle.model.OwnerCareView;
 import io.micronaut.samples.petclinic.oracle.model.OwnerCareView.PetCareSubView;
@@ -55,7 +56,7 @@ class OracleOwnerCareViewRepositoryTest {
     }
 
     @Test
-    void updatesOwnerPetAndVisitRowsThroughTheDocumentRepository() {
+    void updatesOwnerPetAndVisitRowsThroughTheDocumentRepository() throws NotFoundEntityException {
         Owner owner = sampleOwner();
         OwnerCareView original = ownerCareViewRepository.findById(owner.id()).orElseThrow();
         PetCareSubView originalPet = original.pets().getFirst();

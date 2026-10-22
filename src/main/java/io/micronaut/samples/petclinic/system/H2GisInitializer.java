@@ -10,12 +10,19 @@ import jakarta.inject.Singleton;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 
-/** Initializes spatial functions before the datasource is exposed to schema generation or repositories. */
+/** Initializes H2 spatial and ETag functions before the datasource is exposed to schema generation or repositories. */
 @Singleton
 @Requires(property = "datasources.default.dialect", value = "H2")
 @Order(Ordered.HIGHEST_PRECEDENCE) // Run before Micronaut wraps the datasource for transaction-aware access.
 public class H2GisInitializer implements BeanCreatedEventListener<DataSource> {
 
+    /**
+     * Initializes H2GIS and the ETag alias before schema generation.
+     *
+     * @param event the newly created datasource
+     * @return the initialized datasource
+     * @throws IllegalStateException if function initialization fails
+     */
     @Override
     public DataSource onCreated(BeanCreatedEvent<DataSource> event) {
         DataSource dataSource = event.getBean();
@@ -24,6 +31,7 @@ public class H2GisInitializer implements BeanCreatedEventListener<DataSource> {
                 try (var statement = connection.createStatement()) {
                     statement.execute("CREATE ALIAS IF NOT EXISTS H2GIS_SPATIAL FOR 'org.h2gis.functions.factory.H2GISFunctions.load'");
                     statement.execute("CALL H2GIS_SPATIAL()");
+                    statement.execute("CREATE ALIAS IF NOT EXISTS SYS_ROW_ETAG FOR 'io.micronaut.samples.petclinic.system.VetEtagFunctions.sysRowEtag'");
                 }
             }
         } catch (SQLException e) {

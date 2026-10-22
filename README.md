@@ -374,6 +374,33 @@ curl -X POST http://localhost:8080/knowledge/search \
 
 The vector service is intentionally an interface, making it straightforward to replace the checked-in catalog with another vector source while keeping Oracle retrieval unchanged. The sample query vectors are cataloged alongside the chunk vectors, so queries outside the demo catalog return no matches.
 
+### Veterinarian ETags
+
+Manage vets at `/vets` and specialities at `/vets/specialities`. Edit forms
+submit JSON and display errors inline.
+
+`Vet` uses Micronaut Data's `@GeneratedETag`. Send the returned ETag in an
+`If-Match` header for `PUT /vets/{id}` and `DELETE /vets/{id}`; do not put it in
+the request body. Create a vet with `POST /vets` and a JSON body containing
+`firstName`, `lastName`, and `specialityIds`; creation does not require an ETag.
+Create and update responses include the vet and its ETag; delete has no body and
+returns 204. Missing and stale ETags return 428 and 412 respectively. Reload after
+a conflict.
+
+Oracle uses `SYS_ROW_ETAG`; other profiles define a local equivalent. The name
+is arbitrary outside Oracle; it is shared so the single `@GeneratedETag`
+mapping also resolves to Oracle's built-in function. The ETag includes a
+SHA-256 hash of each veterinarian's sorted, comma-separated
+speciality IDs, persisted in `VETS.SPECIALITIES_ETAG_HASH`. Assignment changes
+update that hash with the links, so stale assignment updates are rejected.
+Renaming a speciality does not change the veterinarian's ETag.
+MySQL prerequisite: startup replaces `SYS_ROW_ETAG`, so the application database
+user needs `CREATE ROUTINE` and `ALTER ROUTINE`. If binary logging is enabled, set
+`log_bin_trust_function_creators=ON` or grant the required `SUPER` privilege;
+startup fails if MySQL rejects function creation. Docker Compose and Test
+Resources enable the trust setting for their local MySQL servers. Configure the
+same prerequisite on external MySQL servers before starting the app.
+
 ### Oracle transaction priority
 
 With the Oracle profile running, open http://localhost:8080/oracle/transaction-priority.
