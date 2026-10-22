@@ -3,7 +3,7 @@ micronaut-platform = "5.2.3"
 #TODO: temperory, Remove once the micronaut platform v5.2.3 is published
 micronaut-data = "5.2.4"
 micronaut-gradle-plugin = "5.0.2"
-micronaut-sourcegen = "2.2.3"
+micronaut-sourcegen = "2.2.4"
 # Azure provider 1.1.0 uses oracle.jdbc.util.OracleConfigurationCache,
 # which moved to oracle.jdbc.util.configuration in driver 23.26.2.0.0.
 # TODO: Remove once ojdbc-provider-azure is upgraded to latest versions & this issue [https://github.com/oracle/ojdbc-extensions/issues/286] is addressed.

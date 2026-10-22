@@ -24,7 +24,7 @@
         <release.version>25</release.version>
         <micronaut.version>5.1.0</micronaut.version>
         <micronaut.data.version>5.2.4</micronaut.data.version>
-        <micronaut.sourcegen.version>2.2.3</micronaut.sourcegen.version>
+        <micronaut.sourcegen.version>2.2.4</micronaut.sourcegen.version>
         <micronaut.runtime>netty</micronaut.runtime>
         <micronaut.aot.enabled>false</micronaut.aot.enabled>
         <exec.mainClass>io.micronaut.samples.petclinic.Application</exec.mainClass>
