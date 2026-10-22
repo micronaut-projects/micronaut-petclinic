@@ -1,7 +1,6 @@
 package io.micronaut.samples.petclinic.service;
 
 import io.micronaut.data.exceptions.OptimisticLockException;
-import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.samples.petclinic.dto.SpecialityDto;
 import io.micronaut.samples.petclinic.dto.VetForm;
 import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
@@ -55,7 +54,7 @@ public class VetService {
      * Find a vet by ID.
      * @param id the vet ID
      * @return the veterinarian with its ETag and specialities
-     * @throws NotFoundException if the identifier does not exist
+     * @throws NotFoundEntityException if the identifier does not exist
      */
     public Vet findById(Integer id) throws NotFoundEntityException {
         Vet vet = vetRepository.findById(id).orElseThrow(NotFoundEntityException::new);
@@ -77,7 +76,7 @@ public class VetService {
      *
      * @param id speciality identifier
      * @return the persisted speciality
-     * @throws NotFoundException if the identifier does not exist
+     * @throws NotFoundEntityException if the identifier does not exist
      */
     public Speciality findSpecialityById(Integer id) throws NotFoundEntityException {
         return specialityRepository.findById(id).orElseThrow(NotFoundEntityException::new);
@@ -88,7 +87,7 @@ public class VetService {
      *
      * @param  ids specialities identifiers
      * @return Set of the persisted specialities
-     * @throws NotFoundException if the identifier does not exist
+     * @throws NotFoundEntityException if the identifier does not exist
      */
     public Set<Speciality> findSpecialityByIds(@NonNull Set<Integer> ids) throws IllegalRequestArgumentException {
         return resolveSpecialities(ids);
@@ -112,11 +111,11 @@ public class VetService {
      * @param id speciality identifier
      * @param request the new name
      * @return the updated speciality
-     * @throws NotFoundException if the identifier does not exist
+     * @throws NotFoundEntityException if the speciality with the id does not exist
      * @throws IllegalRequestArgumentException if another speciality has that name
      */
-    public Speciality updateSpeciality(@NonNull Integer id, @NonNull SpecialityDto request) throws IllegalRequestArgumentException {
-        Speciality speciality = specialityRepository.findById(id).orElseThrow(NotFoundException::new);
+    public Speciality updateSpeciality(@NonNull Integer id, @NonNull SpecialityDto request) throws IllegalRequestArgumentException, NotFoundEntityException {
+        Speciality speciality = findSpecialityById(id);
         ensureUniqueSpecialityName(request.name(), id);
         return specialityRepository.update(speciality.withName(request.name()));
     }
@@ -156,7 +155,7 @@ public class VetService {
      *
      * @param id veterinarian identifier
      * @param expectedEtag the loaded ETag, optionally enclosed in double quotes
-     * @throws NotFoundException if the identifier does not exist
+     * @throws NotFoundEntityException if the identifier does not exist
      * @throws PreconditionRequiredException if the ETag is absent or blank
      * @throws PreconditionFailedException if the veterinarian has changed
      */

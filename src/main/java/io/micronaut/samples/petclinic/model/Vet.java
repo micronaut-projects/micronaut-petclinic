@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
  * @param firstName the vet's first name
  * @param lastName the vet's last name
  * @param specialities the specialities associated with the vet
- * @param specialitiesHash the persisted hash of its sorted speciality IDs
+ * @param specialitiesHash the hash of its sorted persisted speciality IDs
  * @param etag the generated optimistic-locking value
  */
 @MappedEntity("VETS")
@@ -85,12 +85,13 @@ public record Vet(
      * @param firstName veterinarian first name
      * @param lastName veterinarian last name
      * @param specialities speciality references; omitted selections become an empty set
-     * @param specialitiesHash persisted hash; the constructor derives it from the speciality IDs
+     * @param specialitiesHash persisted hash; it is recomputed from the loaded speciality IDs
      * @param etag the loaded ETag, or {@code null} for a new veterinarian
      */
     @Creator
     public Vet {
-        specialities = Set.copyOf(specialities);
+        specialities = specialities == null ? Set.of() : Set.copyOf(specialities);
+        // The ETag input must include every link, so compute it from fully loaded specialities with persisted IDs.
         specialitiesHash = hashSpecialityIds(specialities);
     }
 
@@ -125,8 +126,15 @@ public record Vet(
     }
 
     private static String hashSpecialityIds(Set<Speciality> specialities) {
-        String sortedIds = specialities.stream()
-                .map(Speciality::id)
+        Set<Speciality> loadedSpecialities = specialities == null ? Set.of() : specialities;
+        String sortedIds = loadedSpecialities.stream()
+                .map(speciality -> {
+                    Integer id = speciality.id();
+                    if (id == null) {
+                        throw new IllegalStateException("ETag hashing requires specialities with persisted IDs.");
+                    }
+                    return id;
+                })
                 .sorted()
                 .map(String::valueOf)
                 .collect(Collectors.joining(","));

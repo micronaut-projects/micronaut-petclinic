@@ -47,7 +47,6 @@ public class ClinicService {
     private final PetRepository petRepository;
     private final PetTypeRepository petTypeRepository;
     private final VisitRepository visitRepository;
-    private final SpecialityRepository specialityRepository;
     private final ClinicRepository clinicRepository;
 
     /**
@@ -57,20 +56,17 @@ public class ClinicService {
      * @param petRepository repository for pets
      * @param petTypeRepository repository for pet types
      * @param visitRepository repository for visits
-     * @param specialityRepository repository for specialities
      * @param clinicRepository repository for clinic locations
      */
     public ClinicService(OwnerRepository ownerRepository,
                          PetRepository petRepository,
                          PetTypeRepository petTypeRepository,
                          VisitRepository visitRepository,
-                         SpecialityRepository specialityRepository,
                          ClinicRepository clinicRepository) {
         this.ownerRepository = ownerRepository;
         this.petRepository = petRepository;
         this.petTypeRepository = petTypeRepository;
         this.visitRepository = visitRepository;
-        this.specialityRepository = specialityRepository;
         this.clinicRepository = clinicRepository;
     }
 
@@ -242,25 +238,6 @@ public class ClinicService {
     @Transactional
     public void deleteVisit(Integer id) {
         visitRepository.deleteById(id);
-    }
-
-    // ========== Speciality Operations ==========
-
-    /**
-     * Find all specialities.
-     * @return list of all specialities
-     */
-    public List<Speciality> findAllSpecialities() {
-        return specialityRepository.findAllOrderByName();
-    }
-
-    /**
-     * Find a speciality by ID.
-     * @param id the speciality ID
-     * @return the speciality, if found
-     */
-    public Optional<Speciality> findSpecialityById(Integer id) {
-        return specialityRepository.findById(id);
     }
 
     /**

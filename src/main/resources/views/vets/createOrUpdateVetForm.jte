@@ -44,7 +44,7 @@
                         </div>
                         <div class="col-md-6">
                             <label for="vet-last-name" class="form-label">${msg.text("vet.lastName")}</label>
-                            <input id="vet-last-name" name="lastName" class="form-control" maxlength="80" required
+                            <input id="vet-last-name" name="lastName" class="form-control" maxlength="255" required
                                    value="${vetForm.lastName() != null ? vetForm.lastName() : ""}">
                         </div>
                         <div class="col-12">

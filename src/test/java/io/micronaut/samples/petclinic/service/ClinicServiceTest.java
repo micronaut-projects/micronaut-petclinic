@@ -157,7 +157,7 @@ class ClinicServiceTest {
 
     @Test
     void shouldFindAllSpecialities() {
-        Collection<Speciality> specialities = clinicService.findAllSpecialities();
+        Collection<Speciality> specialities = vetService.findSpecialities();
         assertThat(specialities).isNotEmpty();
         assertThat(specialities.size()).isGreaterThanOrEqualTo(3);
     }
