@@ -47,7 +47,7 @@
                     id: Number(fields.get('id')),
                     firstName: fields.get('firstName'),
                     lastName: fields.get('lastName'),
-                    specialities: specialityIds.map(id => ({id, name: null}))
+                    specialityIds
                 })
             };
         }

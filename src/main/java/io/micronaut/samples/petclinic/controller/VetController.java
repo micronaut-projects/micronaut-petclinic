@@ -1,12 +1,14 @@
 package io.micronaut.samples.petclinic.controller;
 
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Delete;
+import io.micronaut.http.annotation.Error;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Header;
 import io.micronaut.http.annotation.PathVariable;
@@ -31,6 +33,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -39,6 +42,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static io.micronaut.http.HttpStatus.CREATED;
+import static io.micronaut.http.HttpStatus.NOT_FOUND;
 import static io.micronaut.http.HttpStatus.NO_CONTENT;
 
 /** Veterinarian and speciality pages and operations. */
@@ -311,5 +315,30 @@ public class VetController {
                                                            boolean saved,
                                                            boolean duplicate) {
         return Map.of("specialityForm", form, "isNew", isNew, "saved", saved, "duplicate", duplicate);
+    }
+    /**
+     * Reports invalid request data.
+     *
+     * @param error the request failure
+     * @return HTTP 400 with a JSON message
+     */
+    @Error(exception = ConstraintViolationException.class)
+    public HttpResponse<Map<String, String>> validationError(ConstraintViolationException error) {
+        return HttpResponse.badRequest(Map.of("message", "Invalid request."));
+    }
+    //TODO: Remove once the global not found exception handler is fixed
+    /**
+     * Handle 404 Not Found errors.
+     * @param request the original request
+     * @return the error view
+     */
+    @Error(exception = NotFoundException.class)
+    @View("error/404")
+    @Status(NOT_FOUND)
+    public Map<String, Object> notFound(HttpRequest<?> request) {
+        return Map.of(
+                "path", request.getPath(),
+                "message", "Page not found"
+        );
     }
 }

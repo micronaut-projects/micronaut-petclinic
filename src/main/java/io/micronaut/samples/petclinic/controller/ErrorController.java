@@ -7,7 +7,6 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Error;
 import io.micronaut.http.annotation.Status;
-import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.json.JsonSyntaxException;
 import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
 import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
@@ -17,11 +16,9 @@ import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.authentication.AuthorizationException;
 import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
-import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.text.html.HTML;
 import java.util.Map;
 
 import static io.micronaut.http.HttpStatus.NOT_FOUND;
@@ -60,17 +57,6 @@ public class ErrorController {
                 "path", request.getPath(),
                 "message", "Forbidden"
         );
-    }
-
-    /**
-     * Reports invalid request data.
-     *
-     * @param error the request failure
-     * @return HTTP 400 with a JSON message
-     */
-    @Error(exception = ConstraintViolationException.class, global = true)
-    public HttpResponse<Map<String, String>> validationError(ConstraintViolationException error) {
-        return HttpResponse.badRequest(Map.of("message", message(error, "Invalid request.")));
     }
 
     /**

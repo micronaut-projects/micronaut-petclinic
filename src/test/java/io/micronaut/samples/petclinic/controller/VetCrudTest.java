@@ -64,7 +64,8 @@ class VetCrudTest {
         SpecialityDto speciality = createSpeciality();
         HttpResponse<VetDto> created = createVet(Set.of(speciality));
         VetDto vet = created.body();
-        String url = "/vets/" + Objects.requireNonNull(vet).id();
+        assertThat(vet).isNotNull();
+        String url = "/vets/" + vet.id();
         String etag = created.header("ETag");
         Objects.requireNonNull(etag);
         assertThat((Object) created.status()).isEqualTo(HttpStatus.CREATED);
@@ -199,7 +200,8 @@ class VetCrudTest {
         String originalEtag = created.header("ETag");
 
         HttpResponse<VetDto> firstUpdate = client.toBlocking().exchange(HttpRequest.PUT(url,
-                        new VetForm(vet.firstName(), vet.lastName(), Set.of(changedSpeciality.id())))
+                        Map.of("firstName", vet.firstName(), "lastName", vet.lastName(),
+                                "specialityIds", List.of(changedSpeciality.id())))
                 .header("If-Match", originalEtag), VetDto.class);
 
         assertThat(firstUpdate.code()).isEqualTo(200);
@@ -272,16 +274,20 @@ class VetCrudTest {
                 .contains("Speciality created.", name);
         VetDto vet = createVet(Set.of(speciality)).body();
 
+
         String editUrl = "/vets/specialities/" + speciality.id();
         HttpResponse<SpecialityDto> unchanged = client.toBlocking().exchange(
                 HttpRequest.PUT(editUrl, speciality), SpecialityDto.class);
         assertThat(unchanged.body()).isEqualTo(speciality);
+
+        SpecialityDto specialityDto = new SpecialityDto(speciality.id(), name + " renamed");
+
         HttpResponse<SpecialityDto> updated = client.toBlocking().exchange(
-                HttpRequest.PUT(editUrl, Map.of("name", name + " renamed")), SpecialityDto.class);
+                HttpRequest.PUT(editUrl, specialityDto), SpecialityDto.class);
         assertThat(updated.code()).isEqualTo(200);
         assertThat(updated.getContentType()).contains(MediaType.APPLICATION_JSON_TYPE);
         assertThat(updated.header("Location")).isNull();
-        assertThat(updated.body()).isEqualTo(new SpecialityDto(speciality.id(), name + " renamed"));
+        assertThat(updated.body()).isEqualTo(specialityDto);
         assertThat(client.toBlocking().retrieve("/vets/" + vet.id(), VetDto.class).specialities())
                 .containsExactly(updated.body());
         assertThat(client.toBlocking().retrieve("/vets/specialities?changed=true"))
@@ -373,7 +379,7 @@ class VetCrudTest {
     void returnsNotFoundForUnknownVetsAndSpecialities() {
         assertError(HttpRequest.GET("/vets/2147483647"), HttpStatus.NOT_FOUND);
         assertError(HttpRequest.GET("/vets/2147483647/edit"), HttpStatus.NOT_FOUND);
-        assertError(HttpRequest.PUT("/vets/specialities/2147483647", new SpecialityDto(null, "unknown")), HttpStatus.NOT_FOUND);
+        assertError(HttpRequest.PUT("/vets/specialities/2147483647", new SpecialityDto(2147483647, "unknown")), HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -446,7 +452,7 @@ class VetCrudTest {
         HttpClientResponseException error = assertThrows(HttpClientResponseException.class,
                 () -> client.toBlocking().exchange(request, String.class));
         assertThat((Object) error.getStatus()).isEqualTo(status);
-        throw error;
+        return error;
     }
 
 }

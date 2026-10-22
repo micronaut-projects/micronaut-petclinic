@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  */
 @Serdeable
 public record VetDto(
-        @Nullable Integer id,
+        @NonNull Integer id,
         @NotBlank @Size(max = 255) String firstName,
         @NotBlank @Size(max = 255) String lastName,
         @NonNull Set<SpecialityDto> specialities,
