@@ -9,10 +9,6 @@ micronaut:
         enabled: true
         mapping: /resources/**
         paths: classpath:static
-  caches:
-    vets:
-      expire-after-write: 60s
-      maximum-size: 100
   views:
     jte:
       dynamic: false

@@ -39,7 +39,7 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label for="vet-first-name" class="form-label">${msg.text("vet.firstName")}</label>
-                            <input id="vet-first-name" name="firstName" class="form-control" maxlength="80" required
+                            <input id="vet-first-name" name="firstName" class="form-control" maxlength="255" required
                                    value="${vetForm.firstName() != null ? vetForm.firstName() : ""}">
                         </div>
                         <div class="col-md-6">
