@@ -12,13 +12,13 @@ import java.sql.SQLException;
 
 /** Initializes the MySQL ETag function before repositories use the datasource. */
 @Singleton
-@Requires(env = "mysql")
+@Requires(property = "datasources.default.dialect", value = "mysql")
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class MySqlEtagInitializer implements BeanCreatedEventListener<DataSource> {
 
     // Keep this positional signature aligned with Vet's ETag inputs: id, firstName, lastName, specialitiesHash.
     private static final String CREATE_ETAG_FUNCTION = """
-            CREATE FUNCTION IF NOT EXISTS SYS_ROW_ETAG(
+            CREATE FUNCTION SYS_ROW_ETAG(
                 vet_id INT,
                 first_name VARCHAR(255),
                 last_name VARCHAR(255),
@@ -34,8 +34,10 @@ public class MySqlEtagInitializer implements BeanCreatedEventListener<DataSource
             ), 256), 32))
             """;
 
+    private static final String DROP_ETAG_FUNCTION = "DROP FUNCTION IF EXISTS SYS_ROW_ETAG";
+
     /**
-     * Creates the ETag function once when the MySQL datasource is created.
+     * Recreates the ETag function when the MySQL datasource is created.
      *
      * @param event the newly created datasource
      * @return the initialized datasource
@@ -43,10 +45,14 @@ public class MySqlEtagInitializer implements BeanCreatedEventListener<DataSource
      */
     @Override
     public DataSource onCreated(BeanCreatedEvent<DataSource> event) {
-        DataSource dataSource = event.getBean();
+        return initialize(event.getBean());
+    }
+
+    DataSource initialize(DataSource dataSource) {
         try (var connection = dataSource.getConnection()) {
             if ("MySQL".equals(connection.getMetaData().getDatabaseProductName())) {
                 try (var statement = connection.createStatement()) {
+                    statement.execute(DROP_ETAG_FUNCTION);
                     statement.execute(CREATE_ETAG_FUNCTION);
                 }
             }

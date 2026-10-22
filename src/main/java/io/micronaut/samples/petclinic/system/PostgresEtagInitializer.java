@@ -12,7 +12,7 @@ import java.sql.SQLException;
 
 /** Initializes the PostgreSQL ETag function before repositories use the datasource. */
 @Singleton
-@Requires(env = "postgres")
+@Requires(property = "datasources.default.dialect", value = "POSTGRES")
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class PostgresEtagInitializer implements BeanCreatedEventListener<DataSource> {
 
