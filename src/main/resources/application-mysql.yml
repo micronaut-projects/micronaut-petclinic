@@ -7,4 +7,3 @@ datasources:
     # Include shared entities only; exclude Oracle-only JSON duality views.
     packages:
       - io.micronaut.samples.petclinic.model
-
