@@ -42,7 +42,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static io.micronaut.http.HttpStatus.CREATED;
-import static io.micronaut.http.HttpStatus.NOT_FOUND;
 import static io.micronaut.http.HttpStatus.NO_CONTENT;
 
 /** Veterinarian and speciality pages and operations. */
@@ -281,14 +280,13 @@ public class VetController {
      * @throws NotFoundEntityException if the speciality isn't found
      */
     @Put(value = "/specialities/{id}", consumes = MediaType.APPLICATION_JSON)
-    public HttpResponse<SpecialityDto> updateSpeciality(@PathVariable Integer id,
+    public SpecialityDto updateSpeciality(@PathVariable Integer id,
                                                         @Valid @Body SpecialityDto request) throws IllegalRequestArgumentException, NotFoundEntityException {
         if (request.id() != null && !Objects.equals(id, request.id())) {
             throw new IllegalRequestArgumentException("Id should match the one in the url");
         }
-        Speciality current = vetService.findSpecialityById(id);
-        Speciality updated = vetService.updateSpeciality(current.id(), request);
-        return HttpResponse.ok(formMapper.toSpecialityDto(updated));
+        Speciality updated = vetService.updateSpeciality(id, request);
+        return formMapper.toSpecialityDto(updated);
     }
 
     private HttpResponse<VetDto> response(Vet vet, HttpStatus status) {
