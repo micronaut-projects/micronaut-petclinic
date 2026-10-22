@@ -14,6 +14,8 @@ services:
 
   mysql:
     image: mysql:26.10
+    # Permit the application startup initializer to create its deterministic ETag function with binlogging enabled.
+    command: ["--log-bin-trust-function-creators=ON"]
     ports:
       - "3306:3306"
     environment:

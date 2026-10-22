@@ -392,9 +392,12 @@ includes a SHA-256 hash of each veterinarian's sorted, comma-separated
 speciality IDs, persisted in `VETS.SPECIALITIES_ETAG_HASH`. Assignment changes
 update that hash with the links, so stale assignment updates are rejected.
 Renaming a speciality does not change the veterinarian's ETag.
-PostgreSQL ETag integration tests currently fail because Micronaut Data's
-generated ETag SQL does not quote mapped column names. The fix is tracked in
-[#4150](https://github.com/micronaut-projects/micronaut-data/pull/4150).
+MySQL prerequisite: startup creates `SYS_ROW_ETAG`, so the application database
+user needs `CREATE ROUTINE`. If binary logging is enabled, set
+`log_bin_trust_function_creators=ON` or grant the required `SUPER` privilege;
+startup fails if MySQL rejects function creation. Docker Compose and Test
+Resources enable the trust setting for their local MySQL servers. Configure the
+same prerequisite on external MySQL servers before starting the app.
 
 ### Oracle transaction priority
 

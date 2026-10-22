@@ -7,15 +7,4 @@ datasources:
     # Include shared entities only; exclude Oracle-only JSON duality views.
     packages:
       - io.micronaut.samples.petclinic.model
-    # Keep this positional signature aligned with Vet's ETag inputs: id, firstName, lastName, specialitiesHash.
-    connection-init-sql: >-
-      CREATE FUNCTION IF NOT EXISTS SYS_ROW_ETAG(vet_id INT, first_name VARCHAR(255), last_name VARCHAR(255), specialities_hash VARCHAR(64))
-      RETURNS CHAR(32) CHARACTER SET ascii
-      DETERMINISTIC
-      RETURN UPPER(LEFT(SHA2(CONCAT(
-        IF(vet_id IS NULL, '-1:', CONCAT(CHAR_LENGTH(CAST(vet_id AS CHAR)), ':', CAST(vet_id AS CHAR))),
-        IF(first_name IS NULL, '-1:', CONCAT(CHAR_LENGTH(first_name), ':', first_name)),
-        IF(last_name IS NULL, '-1:', CONCAT(CHAR_LENGTH(last_name), ':', last_name)),
-        IF(specialities_hash IS NULL, '-1:', CONCAT(CHAR_LENGTH(specialities_hash), ':', specialities_hash))
-      ), 256), 32))
 
