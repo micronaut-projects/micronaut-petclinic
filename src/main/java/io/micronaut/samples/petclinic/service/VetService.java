@@ -148,7 +148,7 @@ public class VetService {
     @Transactional(rollbackOn = Exception.class)
     public Vet update(@NonNull Vet vet, @NonNull VetForm vetForm, String etag)
             throws PreconditionRequiredException, PreconditionFailedException, IllegalRequestArgumentException, NotFoundEntityException {
-        return updateVersioned(vet, vetForm.firstName(), vetForm.lastName(), vetForm.specialityIds(), validateAndUnquoteEtag(etag));
+        return updateVersioned(vet, vetForm.firstName(), vetForm.lastName(), vetForm.specialityIds(), etag);
     }
 
     /**
