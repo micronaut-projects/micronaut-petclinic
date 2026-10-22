@@ -384,7 +384,9 @@ class VetCrudTest {
     @Test
     void returnsNotFoundForUnknownVetsAndSpecialities() {
         assertError(HttpRequest.GET("/vets/2147483647"), HttpStatus.NOT_FOUND);
-        assertError(HttpRequest.GET("/vets/2147483647/edit"), HttpStatus.NOT_FOUND);
+        HttpClientResponseException editPageError = assertError(
+                HttpRequest.GET("/vets/2147483647/edit"), HttpStatus.NOT_FOUND);
+        assertThat(editPageError.getResponse().getBody(String.class).orElseThrow()).contains("Page Not Found");
         assertError(HttpRequest.PUT("/vets/specialities/2147483647", new SpecialityDto(2147483647, "unknown")), HttpStatus.NOT_FOUND);
     }
 

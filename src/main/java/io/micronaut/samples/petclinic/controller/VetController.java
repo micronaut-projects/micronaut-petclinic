@@ -328,9 +328,10 @@ public class VetController {
     }
     //TODO: Remove once the global not found exception handler is fixed
     /**
-     * Handle 404 Not Found errors.
+     * Renders the not-found page for a missing veterinarian or speciality.
+     *
      * @param request the original request
-     * @return the error view
+     * @return the error view with HTTP 404
      */
     @Error(exception = NotFoundException.class)
     @View("error/404")
