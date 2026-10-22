@@ -36,30 +36,6 @@ public class ErrorController {
     private final static Logger LOG = LoggerFactory.getLogger(ErrorController.class);
 
     /**
-     * Handle authorization failures raised by the security filter.
-     *
-     * @param request the original request
-     * @return the error view with the correct status
-     */
-    @Error(exception = AuthorizationException.class, global = true)
-    @View("error/401")
-    public Map<String, Object> unauthorised(HttpRequest<?> request) {
-        return Map.of(
-                "path", request.getPath(),
-                "message", "unauthorized"
-        );
-    }
-
-    @Error(status = HttpStatus.FORBIDDEN, global = true)
-    @View("error/401")
-    public Map<String, Object> forbidden(HttpRequest<?> request) {
-        return Map.of(
-                "path", request.getPath(),
-                "message", "Forbidden"
-        );
-    }
-
-    /**
      * Reports bean-validation failures from any controller.
      *
      * @param error the request failure
