@@ -167,15 +167,6 @@ public final class PostgresRepositories {
                 INSERT INTO "VET_SPECIALTIES" ("VET_ID", "SPECIALTY_ID") VALUES (:vetId, :specialityId)
                 """, nativeQuery = true)
         void insertSpecialityLink(Integer vetId, Integer specialityId);
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        @Query(value = """
-                SELECT COUNT(*) FROM "VET_SPECIALTIES" WHERE "VET_ID" = :id
-                """, nativeQuery = true)
-        long countSpecialityLinks(Integer id);
     }
 
     /**

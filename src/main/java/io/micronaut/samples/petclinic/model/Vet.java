@@ -71,6 +71,9 @@ public record Vet(
 
         @Nullable
         // Explicit for non-Oracle profiles, which define this function; Oracle already uses it by default.
+        // The emulated function signatures are positional and must match Vet's ETag inputs exactly:
+        // id, firstName, lastName, specialitiesHash. Changing persisted ETag inputs, including @ETagValue exclusions,
+        // makes runtime function lookup fail.
         @GeneratedETag(function = "SYS_ROW_ETAG")
         String etag
 ) implements Person, VetWither {

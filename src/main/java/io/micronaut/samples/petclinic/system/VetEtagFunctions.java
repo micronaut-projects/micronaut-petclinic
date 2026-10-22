@@ -17,6 +17,8 @@ public final class VetEtagFunctions {
 
     /**
      * Produces a stable 128-bit tag for the Vet row values used for optimistic locking.
+     * This positional signature must match the ETag inputs Micronaut Data generates for
+     * {@link io.micronaut.samples.petclinic.model.Vet}.
      *
      * @param id vet identifier
      * @param firstName first name

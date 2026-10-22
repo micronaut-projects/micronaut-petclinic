@@ -55,13 +55,4 @@ public interface VetRepository extends CrudRepository<Vet, Integer> {
      */
     @Query(value = "INSERT INTO VET_SPECIALTIES (VET_ID, SPECIALTY_ID) VALUES (:vetId, :specialityId)", nativeQuery = true)
     void insertSpecialityLink(Integer vetId, Integer specialityId);
-
-    /**
-     * Counts speciality assignments stored for a veterinarian.
-     *
-     * @param id veterinarian identifier
-     * @return the number of assignment rows
-     */
-    @Query(value = "SELECT COUNT(*) FROM VET_SPECIALTIES WHERE VET_ID = :id", nativeQuery = true)
-    long countSpecialityLinks(Integer id);
 }

@@ -14,6 +14,7 @@ import io.micronaut.samples.petclinic.dto.VetForm;
 import io.micronaut.samples.petclinic.model.Speciality;
 import io.micronaut.samples.petclinic.model.Vet;
 import io.micronaut.samples.petclinic.repository.SpecialityRepository;
+import io.micronaut.samples.petclinic.repository.TestRepositories.VetTestRepository;
 import io.micronaut.samples.petclinic.repository.VetRepository;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -43,6 +44,8 @@ class VetCrudTest {
     VetRepository vets;
     @Inject
     SpecialityRepository specialities;
+    @Inject
+    VetTestRepository vetLinkCounts;
 
     private final List<Integer> vetIds = new ArrayList<>();
     private final List<Integer> specialityIds = new ArrayList<>();
@@ -162,8 +165,8 @@ class VetCrudTest {
         client.toBlocking().exchange(HttpRequest.DELETE("/vets/" + first.body().id())
                 .header("If-Match", Objects.requireNonNull(first.header("Etag"))));
         assertThat(vets.findById(first.body().id())).isEmpty();
-        assertThat(vets.countSpecialityLinks(first.body().id())).isZero();
-        assertThat(vets.countSpecialityLinks(second.id())).isEqualTo(1);
+        assertThat(vetLinkCounts.countSpecialityLinks(first.body().id())).isZero();
+        assertThat(vetLinkCounts.countSpecialityLinks(second.id())).isEqualTo(1);
         assertThat(client.toBlocking().retrieve("/vets/" + second.id(), VetDto.class).specialities()).containsExactly(speciality);
     }
 
@@ -183,7 +186,7 @@ class VetCrudTest {
         VetDto current = client.toBlocking().retrieve(url, VetDto.class);
         assertThat(current.firstName()).isEqualTo("Winner");
         assertThat(current.specialities()).containsExactly(speciality);
-        assertThat(vets.countSpecialityLinks(vet.id())).isEqualTo(1);
+        assertThat(vetLinkCounts.countSpecialityLinks(vet.id())).isEqualTo(1);
     }
 
     @Test
@@ -443,7 +446,7 @@ class VetCrudTest {
         HttpClientResponseException error = assertThrows(HttpClientResponseException.class,
                 () -> client.toBlocking().exchange(request, String.class));
         assertThat((Object) error.getStatus()).isEqualTo(status);
-        return error;
+        throw error;
     }
 
 }

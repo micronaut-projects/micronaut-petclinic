@@ -96,18 +96,7 @@ public interface FormMapper {
     }
 
     /**
-     * Maps a veterinarian request, including each nested speciality reference.
-     *
-     * @param vetDto source veterinarian DTO
-     * @return the entity to be resolved and saved by the service
-     */
-    default Vet toVet(VetDto vetDto) {
-        return new Vet(vetDto.id(), vetDto.firstName(), vetDto.lastName(),
-                vetDto.specialities().stream().map(this::toSpeciality).collect(Collectors.toSet()), vetDto.etag());
-    }
-
-    /**
-     * Maps a fetched veterinarian without serializing inverse relationships.
+     * Maps a fetched veterinarian.
      *
      * @param vet source veterinarian
      * @return the veterinarian response DTO
@@ -118,15 +107,7 @@ public interface FormMapper {
     }
 
     /**
-     * Maps a speciality reference to an entity.
-     *
-     * @param specialityDto source speciality DTO
-     * @return the mapped speciality
-     */
-    Speciality toSpeciality(SpecialityDto specialityDto);
-
-    /**
-     * Maps a speciality without its inverse veterinarian collection.
+     * Maps a speciality to specialityDto.
      *
      * @param speciality source speciality
      * @return the speciality response DTO
