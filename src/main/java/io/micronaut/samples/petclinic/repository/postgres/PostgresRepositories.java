@@ -7,7 +7,6 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.samples.petclinic.model.Appointment;
 import io.micronaut.samples.petclinic.model.Pet;
-import io.micronaut.samples.petclinic.model.Vet;
 import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.samples.petclinic.repository.AppointmentRepository;
 import io.micronaut.samples.petclinic.repository.ClinicRepository;
@@ -172,15 +171,11 @@ public final class PostgresRepositories {
     public interface PostgresAppointmentRepository extends AppointmentRepository {
         @NonNull
         @Override
-        @Query(value = """
-                SELECT a.* FROM "APPOINTMENTS" a WHERE a."id" = :appointmentId FOR UPDATE
-                """, nativeQuery = true)
+        @Query(value = "SELECT a.* FROM \"APPOINTMENTS\" a WHERE a.\"id\" = :appointmentId FOR UPDATE", nativeQuery = true)
         Optional<Appointment> findByIdForUpdate(Integer appointmentId);
 
         @Override
-        @Query(value = """
-                SELECT a.* FROM "APPOINTMENTS" a WHERE a."STATUS" = 'AVAILABLE' ORDER BY a."DISPLAY_ORDER", a."id"
-                """, nativeQuery = true)
+        @Query(value = "SELECT a.* FROM \"APPOINTMENTS\" a WHERE a.\"STATUS\" = 'AVAILABLE' ORDER BY a.\"DISPLAY_ORDER\", a.\"id\"", nativeQuery = true)
         List<Appointment> findAvailableAppointments();
     }
 }
