@@ -283,7 +283,7 @@ public class VetController {
     @Put(value = "/specialities/{id}", consumes = MediaType.APPLICATION_JSON)
     public HttpResponse<SpecialityDto> updateSpeciality(@PathVariable Integer id,
                                                         @Valid @Body SpecialityDto request) throws IllegalRequestArgumentException, NotFoundEntityException {
-        if (!Objects.equals(id, request.id())) {
+        if (request.id() != null && !Objects.equals(id, request.id())) {
             throw new IllegalRequestArgumentException("Id should match the one in the url");
         }
         Speciality current = vetService.findSpecialityById(id);
