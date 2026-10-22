@@ -33,7 +33,6 @@
                 method: 'POST',
                 headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
                 body: JSON.stringify({
-                    id: null,
                     firstName: fields.get('firstName'),
                     lastName: fields.get('lastName'),
                     specialityIds
@@ -44,7 +43,6 @@
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json', 'Accept': 'application/json', 'If-Match': '"' + fields.get('etag') + '"'},
                 body: JSON.stringify({
-                    id: Number(fields.get('id')),
                     firstName: fields.get('firstName'),
                     lastName: fields.get('lastName'),
                     specialityIds
