@@ -326,20 +326,4 @@ public class VetController {
     public HttpResponse<Map<String, String>> validationError(ConstraintViolationException error) {
         return HttpResponse.badRequest(Map.of("message", "Invalid request."));
     }
-    //TODO: Remove once the global not found exception handler is fixed
-    /**
-     * Renders the not-found page for a missing veterinarian or speciality.
-     *
-     * @param request the original request
-     * @return the error view with HTTP 404
-     */
-    @Error(exception = NotFoundException.class)
-    @View("error/404")
-    @Status(NOT_FOUND)
-    public Map<String, Object> notFound(HttpRequest<?> request) {
-        return Map.of(
-                "path", request.getPath(),
-                "message", "Page not found"
-        );
-    }
 }

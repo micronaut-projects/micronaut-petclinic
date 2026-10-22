@@ -5,22 +5,18 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.geo.LineString;
 import io.micronaut.data.model.geo.Point;
 import io.micronaut.data.model.geo.Polygon;
-import io.micronaut.http.server.exceptions.NotFoundException;
+import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.model.Clinic;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.PetType;
-import io.micronaut.samples.petclinic.model.Speciality;
-import io.micronaut.samples.petclinic.model.Vet;
 import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.samples.petclinic.dto.VisitSearchCriteria;
 import io.micronaut.samples.petclinic.repository.ClinicRepository;
 import io.micronaut.samples.petclinic.repository.OwnerRepository;
 import io.micronaut.samples.petclinic.repository.PetRepository;
 import io.micronaut.samples.petclinic.repository.PetTypeRepository;
-import io.micronaut.samples.petclinic.repository.SpecialityRepository;
 import io.micronaut.samples.petclinic.repository.VisitRepository;
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
 
@@ -244,9 +240,10 @@ public class ClinicService {
      * Finds clinic by id.
      * @param id clinic id.
      * @return clinic if found.
+     * @throws NotFoundEntityException if the clinic does not exist
      */
-    public Clinic findClinicById(Integer id) {
-        return clinicRepository.findById(id).orElseThrow(NotFoundException::new);
+    public Clinic findClinicById(Integer id) throws NotFoundEntityException {
+        return clinicRepository.findById(id).orElseThrow(NotFoundEntityException::new);
     }
 
     /**

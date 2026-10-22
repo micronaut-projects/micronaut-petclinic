@@ -1,6 +1,7 @@
 package io.micronaut.samples.petclinic.service;
 
 import io.micronaut.samples.petclinic.dto.ClinicServiceOfferingForm;
+import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.model.Clinic;
 import io.micronaut.samples.petclinic.model.ClinicServiceOffering;
 import io.micronaut.samples.petclinic.repository.ClinicServiceOfferingRepository;
@@ -55,8 +56,9 @@ public class ClinicServiceOfferingCatalogService {
      * @param clinicId the clinic branch from the URL
      * @param form validated offering fields
      * @return the entity passed to the repository
+     * @throws NotFoundEntityException if the clinic does not exist
      */
-    public ClinicServiceOffering upsert(Integer clinicId, ClinicServiceOfferingForm form) {
+    public ClinicServiceOffering upsert(Integer clinicId, ClinicServiceOfferingForm form) throws NotFoundEntityException {
         Clinic clinic = clinicService.findClinicById(clinicId);
         ClinicServiceOffering offering = new ClinicServiceOffering(
                 clinic, form.serviceCode(),

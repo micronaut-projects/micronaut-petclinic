@@ -11,7 +11,7 @@ import io.micronaut.http.annotation.Error;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Put;
-import io.micronaut.http.server.exceptions.NotFoundException;
+import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.oracle.model.OwnerCareView;
 import io.micronaut.samples.petclinic.service.OwnerCareViewService;
 import io.micronaut.scheduling.TaskExecutors;
@@ -39,13 +39,13 @@ class OwnerCareRecordController {
     }
 
     @Get
-    public OwnerCareView getDocument(@PathVariable Integer ownerId) {
+    public OwnerCareView getDocument(@PathVariable Integer ownerId) throws NotFoundEntityException {
         return service.findById(ownerId);
     }
 
     @Put(consumes = MediaType.APPLICATION_JSON)
     public OwnerCareView updateDocument(@PathVariable @NonNull Integer ownerId,
-                                        @NotNull @Valid @Body OwnerCareView document) {
+                                        @NotNull @Valid @Body OwnerCareView document) throws NotFoundEntityException {
         if (!ownerId.equals(document.id())) {
             throw new IllegalArgumentException("The document _id must match the owner in the URL.");
         }
@@ -70,10 +70,5 @@ class OwnerCareRecordController {
     @Error(exception = IllegalArgumentException.class)
     public HttpResponse<Map<String, String>> invalidDocument(IllegalArgumentException error) {
         return HttpResponse.badRequest(Map.of("message", error.getMessage()));
-    }
-
-    @Error(exception = NotFoundException.class)
-    public HttpResponse<Map<String, String>> notFound(NotFoundException error) {
-        return HttpResponse.notFound(Map.of("message", error.getMessage()));
     }
 }

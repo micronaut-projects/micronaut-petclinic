@@ -70,6 +70,38 @@ class ClinicServiceOfferingControllerTest {
     }
 
     @Test
+    void missingClinicOnHtmlPageUsesTheNotFoundView() {
+        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
+                client.toBlocking().exchange(HttpRequest.GET("/clinics/2147483647/services"), String.class));
+
+        assertThat((CharSequence) exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(exception.getResponse().getBody(String.class).orElseThrow()).contains("Page Not Found");
+    }
+
+    @Test
+    void missingClinicOnJsonSaveReturnsJsonNotFound() {
+        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
+                client.toBlocking().exchange(
+                        HttpRequest.POST("/clinics/2147483647/services", """
+                                {
+                                  "serviceCode": "CHECKUP",
+                                  "name": "Checkup",
+                                  "price": 20.00,
+                                  "durationMinutes": 15
+                                }
+                                """)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON),
+                        String.class));
+
+        assertThat((CharSequence) exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(exception.getResponse().getContentType()).contains(MediaType.APPLICATION_JSON_TYPE);
+        assertThat(exception.getResponse().getBody(String.class).orElseThrow())
+                .contains("\"path\":\"/clinics/2147483647/services\"")
+                .contains("\"message\":\"Entity not found.\"");
+    }
+
+    @Test
     void shouldRenderTheClinicScopedCreateForm() {
         HttpResponse<String> response = client.toBlocking()
                 .exchange(HttpRequest.GET("/clinics/" + capitolClinicId + "/services/new"), String.class);

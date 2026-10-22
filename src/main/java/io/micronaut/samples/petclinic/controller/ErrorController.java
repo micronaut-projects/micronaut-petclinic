@@ -7,13 +7,13 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Error;
 import io.micronaut.http.annotation.Status;
+import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.json.JsonSyntaxException;
 import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
 import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.exception.PreconditionFailedException;
 import io.micronaut.samples.petclinic.exception.PreconditionRequiredException;
 import io.micronaut.security.annotation.Secured;
-import io.micronaut.security.authentication.AuthorizationException;
 import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
 import org.slf4j.Logger;
@@ -112,14 +112,9 @@ public class ErrorController {
      * @param request the original request
      * @return the error view
      */
-    /* TODO: change this to @Error(exception = NotFoundException.class, global = true) since we're not returning
-        not found responses so this is rarely get's called instead we're throwing notFoundException
-        since we have two types of endpoints the first annotated with @view returns HTML the second type returns JSON
-        the first should throw NotFoundException The second Should throw NotFoundEntityException when an entity is not found.
-        then refactor the code accordingly.
-    */
-    @Error(status = io.micronaut.http.HttpStatus.NOT_FOUND, global = true)
+    @Error(exception = NotFoundException.class, global = true)
     @View("error/404")
+    @Status(NOT_FOUND)
     public Map<String, Object> notFound(HttpRequest<?> request) {
         return Map.of(
                 "path", request.getPath(),
