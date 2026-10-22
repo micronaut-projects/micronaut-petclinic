@@ -304,11 +304,17 @@ class VetCrudTest {
     void specialityFormsReturnJsonErrorsForDuplicatesInvalidNamesAndMissingIds() {
         SpecialityDto first = createSpeciality();
         SpecialityDto second = createSpeciality();
-        assertJsonError(HttpRequest.POST("/vets/specialities", first), HttpStatus.BAD_REQUEST);
+        HttpClientResponseException duplicateError = assertError(
+                HttpRequest.POST("/vets/specialities", first), HttpStatus.BAD_REQUEST);
         String editUrl = "/vets/specialities/" + second.id();
         assertJsonError(HttpRequest.PUT(editUrl, new SpecialityDto(second.id(), first.name())), HttpStatus.BAD_REQUEST);
-        assertJsonError(HttpRequest.POST("/vets/specialities", Map.of("name", " ")), HttpStatus.BAD_REQUEST);
+        HttpClientResponseException invalidNameError = assertError(
+                HttpRequest.POST("/vets/specialities", new SpecialityDto(null, " ")), HttpStatus.BAD_REQUEST);
         assertJsonError(HttpRequest.PUT(editUrl, new SpecialityDto(second.id(), " ")), HttpStatus.BAD_REQUEST);
+        String duplicateBody = duplicateError.getResponse().getBody(String.class).orElseThrow();
+        String invalidNameBody = invalidNameError.getResponse().getBody(String.class).orElseThrow();
+        assertThat(duplicateBody).contains("Speciality name already exists");
+        assertThat(invalidNameBody).contains("Invalid request.").doesNotContain("Speciality name already exists");
         assertJsonError(HttpRequest.PUT("/vets/specialities/2147483647", new SpecialityDto(2147483647, "UNKNOWN")), HttpStatus.NOT_FOUND);
         assertThat(specialities.findById(second.id()).orElseThrow().name()).isEqualTo(second.name());
     }

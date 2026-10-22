@@ -23,7 +23,6 @@
         @endif
         <div id="speciality-feedback" class="alert" role="status" aria-live="polite" hidden
              data-saved="${msg.text("speciality.saved")}"
-             data-duplicate="${msg.text("speciality.duplicate")}"
              data-error="${msg.text("speciality.requestFailed")}"
              data-network-error="${msg.text("speciality.networkError")}"></div>
         <section class="card">

@@ -33,7 +33,10 @@
             });
             const body = await response.json().catch(() => ({}));
             if (!response.ok) {
-                showFeedback(response.status === 400 ? feedback.dataset.duplicate : feedback.dataset.error, 'danger');
+                const errorMessage = typeof body?.message === 'string' && body.message.trim()
+                    ? body.message
+                    : feedback.dataset.error;
+                showFeedback(errorMessage, 'danger');
                 return;
             }
             if (!id) {
