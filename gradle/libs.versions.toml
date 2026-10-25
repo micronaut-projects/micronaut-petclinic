@@ -15,8 +15,8 @@ micronaut-test-resources = "5.0.2"
 mysql = "26.10.0"
 postgresql = "42.7.14"
 h2gis = "2.2.5"
-logback = "1.6.5"
-graalvm-native = "1.1.16"
+logback = "1.6.6"
+graalvm-native = "1.1.17"
 jte = "3.2.4"
 
 [libraries]
