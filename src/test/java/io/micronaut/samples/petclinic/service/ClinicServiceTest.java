@@ -2,6 +2,7 @@ package io.micronaut.samples.petclinic.service;
 
 import io.micronaut.samples.petclinic.dto.VisitSearchCriteria;
 import io.micronaut.samples.petclinic.ClinicServiceFixtures;
+import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.PetType;
@@ -15,9 +16,9 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Collection;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Integration tests for {@link ClinicService}.
@@ -42,18 +43,16 @@ class ClinicServiceTest {
     }
 
     @Test
-    void shouldFindOwnerById() {
+    void shouldFindOwnerById() throws NotFoundEntityException {
         Owner owner = clinicServiceFixtures.requiredOwner("George", "Franklin");
 
-        Optional<Owner> found = clinicService.findOwnerById(owner.id());
-        assertThat(found).isPresent();
-        assertThat(found.get().getLastName()).isEqualTo("Franklin");
+        Owner found = clinicService.findOwnerById(owner.id());
+        assertThat(found.getLastName()).isEqualTo("Franklin");
     }
 
     @Test
-    void shouldReturnEmptyWhenOwnerNotFound() {
-        Optional<Owner> owner = clinicService.findOwnerById(999);
-        assertThat(owner).isEmpty();
+    void shouldTrowWhenOwnerNotFound() {
+        assertThrows(NotFoundEntityException.class , () -> clinicService.findOwnerById(999));
     }
 
     @Test
@@ -100,11 +99,11 @@ class ClinicServiceTest {
     }
 
     @Test
-    void shouldFindPetById() {
+    void shouldFindPetById() throws NotFoundEntityException {
         Pet leo = clinicServiceFixtures.requiredPet("George", "Franklin", "Leo");
-        Optional<Pet> found = clinicService.findPetById(leo.id());
-        assertThat(found).isPresent();
-        assertThat(found.get().name()).isEqualTo("Leo");
+        Pet found = clinicService.findPetById(leo.id());
+        assertThat(found).isNotNull();
+        assertThat(found.name()).isEqualTo("Leo");
     }
 
     @Test
