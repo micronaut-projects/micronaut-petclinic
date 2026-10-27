@@ -11,6 +11,7 @@ import io.micronaut.http.annotation.Post;
 import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.samples.petclinic.dto.PetForm;
+import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.mapper.FormMapper;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
@@ -128,14 +129,11 @@ public class PetController {
      * @return redirect to owner details
      */
     @Post(value = "/new", consumes = MediaType.APPLICATION_FORM_URLENCODED)
-    public HttpResponse<?> processCreationForm(@PathVariable Integer ownerId, @Valid @Body PetForm form) {
-        Optional<Owner> owner = getOwner(ownerId);
+    public HttpResponse<?> processCreationForm(@PathVariable Integer ownerId, @Valid @Body PetForm form)
+            throws NotFoundEntityException {
+        Owner owner = getOwner(ownerId).orElseThrow(NotFoundEntityException::new);
 
-        if (owner.isEmpty()) {
-            return HttpResponse.notFound();
-        }
-
-        Pet pet = formMapper.toPet(form).withOwner(owner.get());
+        Pet pet = formMapper.toPet(form).withOwner(owner);
 
         // Set pet type - validation ensures typeId is not null
         if (form.typeId() != null) {
@@ -183,18 +181,11 @@ public class PetController {
     @Post(value = "/{petId}/edit", consumes = MediaType.APPLICATION_FORM_URLENCODED)
     public HttpResponse<?> processUpdateForm(@PathVariable Integer ownerId,
                                              @PathVariable Integer petId,
-                                             @Valid @Body PetForm form) {
-        Optional<Owner> owner = getOwner(ownerId);
-        if (owner.isEmpty()) {
-            return HttpResponse.notFound();
-        }
+                                             @Valid @Body PetForm form) throws NotFoundEntityException {
+        Owner owner = getOwner(ownerId).orElseThrow(NotFoundEntityException::new);
+        Pet existingPet = clinicService.findPetById(petId).orElseThrow(NotFoundEntityException::new);
 
-        Optional<Pet> existingPet = clinicService.findPetById(petId);
-        if (existingPet.isEmpty()) {
-            return HttpResponse.notFound();
-        }
-
-        Pet pet = formMapper.updatePet(existingPet.get(), form).withOwner(owner.get());
+        Pet pet = formMapper.updatePet(existingPet, form).withOwner(owner);
 
         // Set pet type - validation ensures typeId is not null
         if (form.typeId() != null) {

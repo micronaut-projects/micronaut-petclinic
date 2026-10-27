@@ -255,8 +255,8 @@ src/main/resources/
 
 - `application.yml` - Main configuration (H2 default)
 - `application-oracle.yml` - Oracle settings
-- `application-mysql.yml` - MySQL settings
 - `application-oracle-deepsec.yml` - opt-in Oracle Deep Data Security and IAM settings
+- `application-mysql.yml` - MySQL settings
 - `application-postgres.yml` - PostgreSQL settings
 
 To use a specific database locally:
@@ -288,18 +288,33 @@ export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
 
 ## Testing
 
+`./mvnw test` runs the integration suite against the default in-memory H2 database. `./mvnw verify` runs that H2 suite first, then reruns it against disposable PostgreSQL, MySQL, and Oracle databases managed by Micronaut Test Resources.
+
 ```bash
-# Run all tests (Maven)
+# H2 integration suite
 ./mvnw test
 
-# Run integration tests (Maven)
+# H2 plus PostgreSQL, MySQL, and Oracle integration suites
 ./mvnw verify
-
-# Gradle alternatives
-./gradlew test
-./gradlew test jacocoTestReport
-./gradlew check
 ```
+
+Docker must be running for `verify`; Micronaut Test Resources provisions the disposable database containers and pulls missing images automatically. Oracle startup is typically slower than PostgreSQL and MySQL.
+
+```bash
+# Gradle equivalents
+./gradlew test                  # H2 integration suite
+./gradlew check                 # H2 plus all database integrations
+
+# Run one database integration suite
+./gradlew testPostgresIntegration
+./gradlew testMysqlIntegration
+./gradlew testOracleIntegration
+
+# Generate coverage
+./gradlew test jacocoTestReport
+```
+
+The former Maven database test profiles are no longer used.
 
 `OracleTransactionPriorityIntegrationTest` and `OracleTransactionPriorityControllerTest` require `MICRONAUT_ENVIRONMENTS=oracle`; the default `CREATE_DROP` setting drops and recreates application tables in the `petclinic` schema.
 Use a disposable database, or preserve an already-seeded schema with `DATASOURCES_DEFAULT_SCHEMA_GENERATE=NONE PETCLINIC_SAMPLE_DATA_ENABLED=false`.
@@ -359,6 +374,33 @@ curl -X POST http://localhost:8080/knowledge/search \
 
 The vector service is intentionally an interface, making it straightforward to replace the checked-in catalog with another vector source while keeping Oracle retrieval unchanged. The sample query vectors are cataloged alongside the chunk vectors, so queries outside the demo catalog return no matches.
 
+### Veterinarian ETags
+
+Manage vets at `/vets` and specialities at `/vets/specialities`. Edit forms
+submit JSON and display errors inline.
+
+`Vet` uses Micronaut Data's `@GeneratedETag`. Send the returned ETag in an
+`If-Match` header for `PUT /vets/{id}` and `DELETE /vets/{id}`; do not put it in
+the request body. Create a vet with `POST /vets` and a JSON body containing
+`firstName`, `lastName`, and `specialityIds`; creation does not require an ETag.
+Create and update responses include the vet and its ETag; delete has no body and
+returns 204. Missing and stale ETags return 428 and 412 respectively. Reload after
+a conflict.
+
+Oracle uses `SYS_ROW_ETAG`; other profiles define a local equivalent. The name
+is arbitrary outside Oracle; it is shared so the single `@GeneratedETag`
+mapping also resolves to Oracle's built-in function. The ETag includes a
+SHA-256 hash of each veterinarian's sorted, comma-separated
+speciality IDs, persisted in `VETS.SPECIALITIES_ETAG_HASH`. Assignment changes
+update that hash with the links, so stale assignment updates are rejected.
+Renaming a speciality does not change the veterinarian's ETag.
+MySQL prerequisite: startup replaces `SYS_ROW_ETAG`, so the application database
+user needs `CREATE ROUTINE` and `ALTER ROUTINE`. If binary logging is enabled, set
+`log_bin_trust_function_creators=ON` or grant the required `SUPER` privilege;
+startup fails if MySQL rejects function creation. Docker Compose and Test
+Resources enable the trust setting for their local MySQL servers. Configure the
+same prerequisite on external MySQL servers before starting the app.
+
 ### Oracle transaction priority
 
 With the Oracle profile running, open http://localhost:8080/oracle/transaction-priority.
@@ -405,6 +447,46 @@ Wait for bookings in any other tabs or clients to finish too. Reset uses plain
 rollback enabled, a reset blocked by a LOW booking can cause Oracle to roll that
 booking back after the configured 3-second HIGH wait target. Reset can also clear
 a booking that commits while it waits for the row lock.
+
+### Oracle JSON duality showcase
+
+In the `oracle` environment, open an owner and select the **Owner Care Record** tab
+(for example, http://localhost:8080/owners/1?tab=care-record to open it
+directly). The owner document API is available at `/owners/{ownerId}/care-record`.
+View that owner, their pets, and visit history together as one JSON document.
+Edit existing owner, pet, or visit details and save; the changes also appear in Petclinic's
+regular forms. If the record changed since it was loaded, saving reports a
+conflict so you can reload the latest version. Adding or removing pets and
+visits is not supported in this showcase.
+
+### Clinic service offering upsert
+
+The application also demonstrates Micronaut Data's `@Upsert` feature.
+
+Each clinic has its own service catalog at `/clinics/{clinicId}/services`. From the clinic search results, click **Services**, or open the first sample clinic directly at http://localhost:8080/clinics/1/services.
+
+The sample-data loader seeds a curated catalog for every clinic, with offerings tailored to its neighborhood and patient profile. For example, Downtown Madison starts with `WELLNESS_CHECK`, `SENIOR_PET_SCREENING`, `SAME_DAY_SICK_VISIT`, and `DENTAL_SPARKLE`, while Capitol Square starts with `RABIES_EXPRESS`, `APARTMENT_PET_BEHAVIOR`, and `PUPPY_SOCIAL_START`.
+
+To demonstrate the behavior:
+
+1. Create an offering with a code such as `WELLNESS_CHECK`.
+2. Submit the same code again with a different price, duration, or description. The existing offering for that clinic is updated rather than duplicated.
+3. Open another clinic, such as `/clinics/2/services`, and create `WELLNESS_CHECK` there. It is a separate offering because the catalog key is derived from that clinic and the local service code.
+
+The same flow is available over HTTP:
+
+```bash
+curl -X POST http://localhost:8080/clinics/1/services \
+  -H "Content-Type: application/json" \
+  -d '{"serviceCode":"WELLNESS_CHECK","name":"Wellness check","description":"Annual check","price":45.00,"durationMinutes":30}'
+
+curl -X POST http://localhost:8080/clinics/1/services \
+  -H "Content-Type: application/json" \
+  -d '{"serviceCode":"WELLNESS_CHECK","name":"Extended wellness check","description":"Includes screening","price":65.00,"durationMinutes":45}'
+```
+
+The implementation is explicit: `ClinicServiceOffering` has a generated id and a many-to-one `Clinic` relationship; `Clinic` exposes the inverse one-to-many `serviceOfferings` collection. `ClinicServiceOfferingRepository.upsert` declares `@Upsert(conflictsOn = {"clinic", "serviceCode"})`, so the generated clinic id and clinic-local service code identify the row to update. The entity also declares the clinic/code uniqueness constraint. The H2, PostgreSQL, MySQL, and Oracle repository adapters exercise the dialect-specific SQL generated by Micronaut Data.
+---
 
 ## Troubleshooting
 

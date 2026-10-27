@@ -6,17 +6,15 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.samples.petclinic.model.Appointment;
 import io.micronaut.samples.petclinic.model.Pet;
-import io.micronaut.samples.petclinic.model.Speciality;
-import io.micronaut.samples.petclinic.model.VetWithSpecialities;
 import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.samples.petclinic.repository.AppointmentRepository;
 import io.micronaut.samples.petclinic.repository.ClinicRepository;
+import io.micronaut.samples.petclinic.repository.ClinicServiceOfferingRepository;
 import io.micronaut.samples.petclinic.repository.OwnerRepository;
 import io.micronaut.samples.petclinic.repository.PetRepository;
 import io.micronaut.samples.petclinic.repository.PetTypeRepository;
 import io.micronaut.samples.petclinic.repository.SpecialityRepository;
 import io.micronaut.samples.petclinic.repository.VetRepository;
-import io.micronaut.samples.petclinic.repository.VetSpecialityRepository;
 import io.micronaut.samples.petclinic.repository.VisitRepository;
 import org.jspecify.annotations.NonNull;
 
@@ -88,28 +86,6 @@ public final class MySqlRepositories {
     @Requires(env = "mysql")
     @JdbcRepository(dialect = Dialect.MYSQL)
     public interface MySqlVetRepository extends VetRepository {
-        /**
-         * Finds all vets and aggregates their specialities using MySQL SQL.
-         *
-         * @return all vets ordered by last name with aggregated speciality rows
-         */
-        @Override
-        @Query(value = """
-                SELECT
-                    v.id,
-                    v.FIRST_NAME AS first_name,
-                    v.LAST_NAME AS last_name,
-                    GROUP_CONCAT(
-                        CASE WHEN s.id IS NOT NULL THEN CONCAT(s.id, ':', s.NAME) END
-                        ORDER BY s.NAME SEPARATOR '|'
-                    ) AS speciality_rows
-                FROM VETS v
-                LEFT JOIN VET_SPECIALTIES vs ON vs.VET_ID = v.id
-                LEFT JOIN SPECIALTIES s ON s.id = vs.SPECIALTY_ID
-                GROUP BY v.id, v.FIRST_NAME, v.LAST_NAME
-                ORDER BY v.LAST_NAME
-                """, nativeQuery = true)
-        Collection<VetWithSpecialities> findAllWithSpecialities();
     }
 
     /**
@@ -127,23 +103,16 @@ public final class MySqlRepositories {
         @Override
         @Query(value = "SELECT v.* FROM VISITS v WHERE v.PET_ID = :petId ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
         Collection<Visit> findByPetId(Integer petId);
-    }
 
-    /**
-     * MySQL vet-speciality join repository bean.
-     */
-    @Requires(env = "mysql")
-    @JdbcRepository(dialect = Dialect.MYSQL)
-    public interface MySqlVetSpecialityRepository extends VetSpecialityRepository {
         /**
-         * Finds specialities for a vet using MySQL SQL.
+         * Finds visits for a pet using Oracle SQL.
          *
-         * @param vetId the vet id
-         * @return specialities associated with the vet
+         * @param petName the pet name
+         * @return visits for the pet
          */
         @Override
-        @Query(value = "SELECT s.* FROM SPECIALTIES s JOIN VET_SPECIALTIES vs ON vs.SPECIALTY_ID = s.id WHERE vs.VET_ID = :vetId ORDER BY s.NAME", nativeQuery = true)
-        List<Speciality> findSpecialitiesByVetId(Integer vetId);
+        @Query(value = "SELECT v.* FROM VISITS v LEFT JOIN PETS p ON v.PET_ID = p.ID WHERE p.NAME = :petName  ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
+        Collection<Visit> findByPetName(String petName);
     }
 
     @Requires(env = "mysql")
@@ -151,6 +120,7 @@ public final class MySqlRepositories {
     public interface MySqlClinicRepository extends ClinicRepository {
 
     }
+
     /**
      * Mysql appointment repository used by the transaction-priority showcase.
      */
@@ -168,5 +138,13 @@ public final class MySqlRepositories {
         @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE STATUS = 'AVAILABLE' ORDER BY DISPLAY_ORDER, ID", nativeQuery = true)
         List<Appointment> findAvailableAppointments();
 
+    }
+
+    /**
+     * MySQL clinic service offering repository bean.
+     */
+    @Requires(env = "mysql")
+    @JdbcRepository(dialect = Dialect.MYSQL)
+    public interface MySqlClinicServiceOfferingRepository extends ClinicServiceOfferingRepository {
     }
 }

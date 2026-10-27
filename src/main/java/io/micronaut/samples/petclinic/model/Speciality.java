@@ -7,6 +7,7 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.serde.annotation.Serdeable;
 import io.micronaut.sourcegen.annotations.Wither;
 import jakarta.validation.constraints.NotBlank;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Entity representing a veterinarian speciality (e.g., surgery, dentistry).
@@ -24,6 +25,7 @@ public record Speciality(
 
         @MappedProperty("NAME")
         @NotBlank
+        @NonNull
         String name
 ) implements NamedEntity, SpecialityWither {
 
@@ -31,7 +33,7 @@ public record Speciality(
      * Creates an empty speciality for framework binding.
      */
     public Speciality() {
-        this(null, null);
+        this(null, "");
     }
 
     /**
@@ -62,15 +64,5 @@ public record Speciality(
     @Override
     public int hashCode() {
         return BaseEntity.entityHashCode(this);
-    }
-
-    /**
-     * Returns the speciality display name.
-     *
-     * @return the speciality name
-     */
-    @Override
-    public String toString() {
-        return name;
     }
 }

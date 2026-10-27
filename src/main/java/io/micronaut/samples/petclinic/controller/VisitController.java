@@ -11,6 +11,7 @@ import io.micronaut.http.annotation.Post;
 import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.samples.petclinic.dto.VisitForm;
+import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.mapper.FormMapper;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
@@ -121,14 +122,10 @@ public class VisitController {
     @Post(value = "/new", consumes = MediaType.APPLICATION_JSON)
     public HttpResponse<?> processNewVisitForm(@PathVariable Integer ownerId,
                                                 @PathVariable Integer petId,
-                                                @Valid @Body VisitForm form) {
-        Optional<Pet> pet = clinicService.findPetById(petId);
+                                                @Valid @Body VisitForm form) throws NotFoundEntityException {
+        Pet pet = clinicService.findPetById(petId).orElseThrow(NotFoundEntityException::new);
 
-        if (pet.isEmpty()) {
-            return HttpResponse.notFound();
-        }
-
-        Visit visit = formMapper.toVisit(form).withPet(pet.get());
+        Visit visit = formMapper.toVisit(form).withPet(pet);
         clinicService.saveVisit(visit);
 
         URI uri = UriBuilder.of("/owners/{ownerId}").expand(Map.of("ownerId", ownerId));

@@ -9,10 +9,6 @@ micronaut:
         enabled: true
         mapping: /resources/**
         paths: classpath:static
-  caches:
-    vets:
-      expire-after-write: 60s
-      maximum-size: 100
   views:
     jte:
       dynamic: false
@@ -25,20 +21,6 @@ micronaut:
       - pattern: /resources/**
         access:
           - isAnonymous()
-
-
-# Default datasource configuration (H2 in-memory)
-datasources:
-  default:
-    url: jdbc:h2:mem:petclinic;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    username: sa
-    password: ""
-    driver-class-name: org.h2.Driver
-    schema-generate: CREATE_DROP
-    dialect: H2
-    maximum-pool-size: 2
-    minimum-idle: 1
-
 
 # Sample data configuration
 petclinic:

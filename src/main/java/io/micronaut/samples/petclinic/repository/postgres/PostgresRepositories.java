@@ -1,22 +1,21 @@
 package io.micronaut.samples.petclinic.repository.postgres;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.samples.petclinic.model.Appointment;
 import io.micronaut.samples.petclinic.model.Pet;
-import io.micronaut.samples.petclinic.model.Speciality;
-import io.micronaut.samples.petclinic.model.VetWithSpecialities;
 import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.samples.petclinic.repository.AppointmentRepository;
 import io.micronaut.samples.petclinic.repository.ClinicRepository;
+import io.micronaut.samples.petclinic.repository.ClinicServiceOfferingRepository;
 import io.micronaut.samples.petclinic.repository.OwnerRepository;
 import io.micronaut.samples.petclinic.repository.PetRepository;
 import io.micronaut.samples.petclinic.repository.PetTypeRepository;
 import io.micronaut.samples.petclinic.repository.SpecialityRepository;
 import io.micronaut.samples.petclinic.repository.VetRepository;
-import io.micronaut.samples.petclinic.repository.VetSpecialityRepository;
 import io.micronaut.samples.petclinic.repository.VisitRepository;
 import org.jspecify.annotations.NonNull;
 
@@ -52,7 +51,14 @@ public final class PostgresRepositories {
          * @return pets belonging to the owner
          */
         @Override
-        @Query(value = "SELECT p.* FROM PETS p WHERE p.OWNER_ID = :ownerId ORDER BY p.NAME", nativeQuery = true)
+        @Join(value = "type", type = Join.Type.LEFT_FETCH)
+        @Query(value = """
+                SELECT p.*, pet_type_."id" AS type_id, pet_type_."NAME" AS type_NAME
+                FROM "PETS" p
+                LEFT JOIN "TYPES" pet_type_ ON p."TYPE_ID" = pet_type_."id"
+                WHERE p."OWNER_ID" = :ownerId
+                ORDER BY p."NAME"
+                """, nativeQuery = true)
         Collection<Pet> findByOwnerId(Integer ownerId);
 
         /**
@@ -61,8 +67,14 @@ public final class PostgresRepositories {
          * @param ownerIds owner ids to match
          * @return pets belonging to the supplied owners
          */
-        @Override
-        @Query(value = "SELECT p.* FROM PETS p WHERE p.OWNER_ID IN (:ownerIds) ORDER BY p.OWNER_ID, p.NAME", nativeQuery = true)
+        @Join(value = "type", type = Join.Type.LEFT_FETCH)
+        @Query(value = """
+                SELECT p.*, pet_type_."id" AS type_id, pet_type_."NAME" AS type_NAME
+                FROM "PETS" p
+                LEFT JOIN "TYPES" pet_type_ ON p."TYPE_ID" = pet_type_."id"
+                WHERE p."OWNER_ID" IN (:ownerIds)
+                ORDER BY p."OWNER_ID", p."NAME"
+                """, nativeQuery = true)
         List<Pet> findByOwnerIdIn(List<Integer> ownerIds);
     }
 
@@ -89,27 +101,22 @@ public final class PostgresRepositories {
     @JdbcRepository(dialect = Dialect.POSTGRES)
     public interface PostgresVetRepository extends VetRepository {
         /**
-         * Finds all vets and aggregates their specialities using PostgreSQL SQL.
-         *
-         * @return all vets ordered by last name with aggregated speciality rows
+         * {@inheritDoc}
          */
         @Override
         @Query(value = """
-                SELECT
-                    v.id,
-                    v.FIRST_NAME AS first_name,
-                    v.LAST_NAME AS last_name,
-                    STRING_AGG(
-                        CASE WHEN s.id IS NOT NULL THEN s.id::text || ':' || s.NAME END,
-                        '|' ORDER BY s.NAME
-                    ) AS speciality_rows
-                FROM VETS v
-                LEFT JOIN VET_SPECIALTIES vs ON vs.VET_ID = v.id
-                LEFT JOIN SPECIALTIES s ON s.id = vs.SPECIALTY_ID
-                GROUP BY v.id, v.FIRST_NAME, v.LAST_NAME
-                ORDER BY v.LAST_NAME
+                DELETE FROM "VET_SPECIALTIES" WHERE "VET_ID" = :id
                 """, nativeQuery = true)
-        Collection<VetWithSpecialities> findAllWithSpecialities();
+        void deleteSpecialityLinks(Integer id);
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        @Query(value = """
+            INSERT INTO "VET_SPECIALTIES" ("VET_ID", "SPECIALTY_ID") VALUES (:vetId, :specialityId)
+            """, nativeQuery = true)
+        void insertSpecialityLink(Integer vetId, Integer specialityId);
     }
 
     /**
@@ -125,30 +132,35 @@ public final class PostgresRepositories {
          * @return visits for the pet
          */
         @Override
-        @Query(value = "SELECT v.* FROM VISITS v WHERE v.PET_ID = :petId ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
+        @Query(value = """
+                SELECT v.* FROM "VISITS" v WHERE v."PET_ID" = :petId ORDER BY v."VISIT_DATE" DESC
+                """, nativeQuery = true)
         Collection<Visit> findByPetId(Integer petId);
-    }
 
-    /**
-     * PostgreSQL vet-speciality join repository bean.
-     */
-    @Requires(env = "postgres")
-    @JdbcRepository(dialect = Dialect.POSTGRES)
-    public interface PostgresVetSpecialityRepository extends VetSpecialityRepository {
         /**
-         * Finds specialities for a vet using PostgreSQL SQL.
+         * Finds visits for a pet.
          *
-         * @param vetId the vet id
-         * @return specialities associated with the vet
+         * @param petName the pet name
+         * @return visits for the pet
          */
         @Override
-        @Query(value = "SELECT s.* FROM SPECIALTIES s JOIN VET_SPECIALTIES vs ON vs.SPECIALTY_ID = s.id WHERE vs.VET_ID = :vetId ORDER BY s.NAME", nativeQuery = true)
-        List<Speciality> findSpecialitiesByVetId(Integer vetId);
+        @Query(value = """
+                SELECT v.* FROM "VISITS" v LEFT JOIN "PETS" p ON v."PET_ID" = p.ID WHERE p."NAME" = :petName ORDER BY v."VISIT_DATE" DESC
+                """, nativeQuery = true)
+        Collection<Visit> findByPetName(String petName);
     }
 
     @Requires(env = "postgres")
     @JdbcRepository(dialect = Dialect.POSTGRES)
     public interface PostgresClinicRepository extends ClinicRepository {
+    }
+
+    /**
+     * PostgreSQL clinic service offering repository bean.
+     */
+    @Requires(env = "postgres")
+    @JdbcRepository(dialect = Dialect.POSTGRES)
+    public interface PostgresClinicServiceOfferingRepository extends ClinicServiceOfferingRepository {
     }
 
     /**
@@ -159,11 +171,11 @@ public final class PostgresRepositories {
     public interface PostgresAppointmentRepository extends AppointmentRepository {
         @NonNull
         @Override
-        @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE a.ID = :appointmentId FOR UPDATE", nativeQuery = true)
+        @Query(value = "SELECT a.* FROM \"APPOINTMENTS\" a WHERE a.\"id\" = :appointmentId FOR UPDATE", nativeQuery = true)
         Optional<Appointment> findByIdForUpdate(Integer appointmentId);
 
         @Override
-        @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE STATUS = 'AVAILABLE' ORDER BY DISPLAY_ORDER, ID", nativeQuery = true)
+        @Query(value = "SELECT a.* FROM \"APPOINTMENTS\" a WHERE a.\"STATUS\" = 'AVAILABLE' ORDER BY a.\"DISPLAY_ORDER\", a.\"id\"", nativeQuery = true)
         List<Appointment> findAvailableAppointments();
     }
 }

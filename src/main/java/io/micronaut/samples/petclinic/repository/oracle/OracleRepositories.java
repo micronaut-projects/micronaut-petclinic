@@ -6,10 +6,10 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.samples.petclinic.model.Appointment;
 import io.micronaut.samples.petclinic.model.Pet;
-import io.micronaut.samples.petclinic.model.Speciality;
-import io.micronaut.samples.petclinic.model.VetWithSpecialities;
+import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.samples.petclinic.repository.AppointmentRepository;
 import io.micronaut.samples.petclinic.repository.ClinicRepository;
+import io.micronaut.samples.petclinic.repository.ClinicServiceOfferingRepository;
 import io.micronaut.samples.petclinic.repository.OwnerRepository;
 import io.micronaut.samples.petclinic.repository.PetCareChunkRepository;
 import io.micronaut.samples.petclinic.repository.PetCareDocumentRepository;
@@ -17,7 +17,6 @@ import io.micronaut.samples.petclinic.repository.PetRepository;
 import io.micronaut.samples.petclinic.repository.PetTypeRepository;
 import io.micronaut.samples.petclinic.repository.SpecialityRepository;
 import io.micronaut.samples.petclinic.repository.VetRepository;
-import io.micronaut.samples.petclinic.repository.VetSpecialityRepository;
 import io.micronaut.samples.petclinic.repository.VisitRepository;
 import org.jspecify.annotations.NonNull;
 
@@ -47,6 +46,14 @@ public final class OracleRepositories {
     @Requires(env = {"oracle", "oracle-deepsec"})
     @JdbcRepository(dialect = Dialect.ORACLE)
     public interface OracleClinicRepository extends ClinicRepository {
+    }
+
+    /**
+     * Oracle clinic service offering repository bean.
+     */
+    @Requires(env = "oracle")
+    @JdbcRepository(dialect = Dialect.ORACLE)
+    public interface OracleClinicServiceOfferingRepository extends ClinicServiceOfferingRepository {
     }
 
     /**
@@ -114,28 +121,6 @@ public final class OracleRepositories {
     @Requires(env = {"oracle", "oracle-deepsec"})
     @JdbcRepository(dialect = Dialect.ORACLE)
     public interface OracleVetRepository extends VetRepository {
-        /**
-         * Finds all vets and aggregates their specialities using Oracle SQL.
-         *
-         * @return all vets ordered by last name with aggregated speciality rows
-         */
-        @Override
-        @Query(value = """
-                SELECT
-                    v.id,
-                    v.FIRST_NAME AS first_name,
-                    v.LAST_NAME AS last_name,
-                    LISTAGG(
-                        CASE WHEN s.id IS NOT NULL THEN s.id || ':' || s.NAME END,
-                        '|'
-                    ) WITHIN GROUP (ORDER BY s.NAME) AS speciality_rows
-                FROM VETS v
-                LEFT JOIN VET_SPECIALTIES vs ON vs.VET_ID = v.id
-                LEFT JOIN SPECIALTIES s ON s.id = vs.SPECIALTY_ID
-                GROUP BY v.id, v.FIRST_NAME, v.LAST_NAME
-                ORDER BY v.LAST_NAME
-                """, nativeQuery = true)
-        Collection<VetWithSpecialities> findAllWithSpecialities();
     }
 
     /**
@@ -144,6 +129,25 @@ public final class OracleRepositories {
     @Requires(env = {"oracle", "oracle-deepsec"})
     @JdbcRepository(dialect = Dialect.ORACLE)
     public interface OracleVisitRepository extends VisitRepository {
+        /**
+         * Finds visits for a pet using Oracle SQL.
+         *
+         * @param petId the pet id
+         * @return visits for the pet
+         */
+        @Override
+        @Query(value = "SELECT v.* FROM VISITS v WHERE v.PET_ID = :petId ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
+        Collection<Visit> findByPetId(Integer petId);
+
+        /**
+         * Finds visits for a pet using Oracle SQL.
+         *
+         * @param petName the pet name
+         * @return visits for the pet
+         */
+        @Override
+        @Query(value = "SELECT v.* FROM VISITS v LEFT JOIN PETS p ON v.PET_ID = p.ID WHERE p.NAME = :petName  ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
+        Collection<Visit> findByPetName(String petName);
     }
 
     /**
@@ -164,20 +168,4 @@ public final class OracleRepositories {
         List<Appointment> findAvailableAppointments();
     }
 
-    /**
-     * Oracle vet-speciality join repository bean.
-     */
-    @Requires(env = {"oracle", "oracle-deepsec"})
-    @JdbcRepository(dialect = Dialect.ORACLE)
-    public interface OracleVetSpecialityRepository extends VetSpecialityRepository {
-        /**
-         * Finds specialities for a vet using Oracle SQL.
-         *
-         * @param vetId the vet id
-         * @return specialities associated with the vet
-         */
-        @Override
-        @Query(value = "SELECT s.* FROM SPECIALTIES s JOIN VET_SPECIALTIES vs ON vs.SPECIALTY_ID = s.id WHERE vs.VET_ID = :vetId ORDER BY s.NAME", nativeQuery = true)
-        List<Speciality> findSpecialitiesByVetId(Integer vetId);
-    }
 }
