@@ -2,6 +2,7 @@
 micronaut-platform = "5.2.4"
 #TODO: temperory, Remove once the micronaut platform v5.2.3 is published
 micronaut-data = "5.2.4"
+micronaut-cache = "6.2.0-SNAPSHOT"
 micronaut-gradle-plugin = "5.0.2"
 micronaut-sourcegen = "2.2.4"
 # Azure provider 1.1.0 uses oracle.jdbc.util.OracleConfigurationCache,
@@ -34,7 +35,11 @@ micronaut-views-jte = { module = "io.micronaut.views:micronaut-views-jte" }
 micronaut-data-jdbc = { module = "io.micronaut.data:micronaut-data-jdbc", version.ref = "micronaut-data" }
 micronaut-jdbc-hikari = { module = "io.micronaut.sql:micronaut-jdbc-hikari" }
 micronaut-validation = { module = "io.micronaut.validation:micronaut-validation" }
-micronaut-cache-caffeine = { module = "io.micronaut.cache:micronaut-cache-caffeine" }
+micronaut-cache-caffeine = { module = "io.micronaut.cache:micronaut-cache-caffeine", version.ref = "micronaut-cache" }
+micronaut-cache-core = { module = "io.micronaut.cache:micronaut-cache-core", version.ref = "micronaut-cache" }
+micronaut-cache-oracle = { module = "io.micronaut.cache:micronaut-cache-oracle", version.ref = "micronaut-cache" }
+flyway-core = { module = "org.flywaydb:flyway-core" }
+flyway-database-oracle = { module = "org.flywaydb:flyway-database-oracle" }
 micronaut-inject-java = { module = "io.micronaut:micronaut-inject-java" }
 micronaut-data-processor = { module = "io.micronaut.data:micronaut-data-processor", version.ref = "micronaut-data" }
 micronaut-validation-processor = { module = "io.micronaut.validation:micronaut-validation-processor" }

@@ -63,12 +63,17 @@ public class VisitController {
                                                      ConstraintViolationException e) {
         Integer ownerId = request.getParameters().get("ownerId", Integer.class).orElse(null);
         Integer petId = request.getParameters().get("petId", Integer.class).orElse(null);
-
-        Optional<Pet> pet = petId != null ? clinicService.findPetById(petId) : Optional.empty();
+        Pet pet = null;
+        try {
+            if (petId != null) {
+                pet = clinicService.findPetById(petId);
+            }
+        } catch (NotFoundEntityException ignore) {
+        }
 
         Owner owner = null;
-        if (pet.isPresent() && pet.get().getOwner() != null) {
-            owner = pet.get().getOwner();
+        if (pet != null && pet.getOwner() != null) {
+            owner = pet.getOwner();
         }
 
         Map<String, String> validationErrors = new LinkedHashMap<>();
@@ -85,7 +90,7 @@ public class VisitController {
 
         VisitForm form = request.getBody(VisitForm.class).orElseGet(VisitForm::new);
         Map<String, Object> model = new LinkedHashMap<>();
-        model.put("pet", pet.orElse(null));
+        model.put("pet", pet);
         model.put("owner", owner);
         model.put("validationErrors", validationErrors);
         model.put("visit", form);
@@ -103,7 +108,12 @@ public class VisitController {
     @Get("/new")
     @View("pets/createOrUpdateVisitForm")
     public Map<String, Object> initNewVisitForm(@PathVariable Integer ownerId, @PathVariable Integer petId) {
-        Pet pet = clinicService.findPetById(petId).orElseThrow(NotFoundException::new);
+        Pet pet = null;
+        try {
+            pet = clinicService.findPetById(petId);
+        } catch (NotFoundEntityException e) {
+            throw new NotFoundException();
+        }
         return Map.of("visit", new VisitForm(),
                 "pet", pet,
                 "owner", pet.getOwner(),
@@ -123,7 +133,7 @@ public class VisitController {
     public HttpResponse<?> processNewVisitForm(@PathVariable Integer ownerId,
                                                 @PathVariable Integer petId,
                                                 @Valid @Body VisitForm form) throws NotFoundEntityException {
-        Pet pet = clinicService.findPetById(petId).orElseThrow(NotFoundEntityException::new);
+        Pet pet = clinicService.findPetById(petId);
 
         Visit visit = formMapper.toVisit(form).withPet(pet);
         clinicService.saveVisit(visit);

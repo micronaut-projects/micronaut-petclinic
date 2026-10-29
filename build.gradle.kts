@@ -13,6 +13,7 @@ group = providers.gradleProperty("projectGroup").orElse("io.micronaut.samples").
 version = providers.gradleProperty("projectVersion").orElse("1.0.0-SNAPSHOT").get()
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
@@ -92,7 +93,11 @@ dependencies {
     implementation(libs.micronaut.jdbc.hikari)
     implementation(libs.micronaut.validation)
     implementation(libs.jakarta.validation.api)
+    implementation(libs.micronaut.cache.core)
     implementation(libs.micronaut.cache.caffeine)
+    implementation(libs.micronaut.cache.oracle)
+    implementation(libs.flyway.core)
+    implementation(libs.flyway.database.oracle)
     implementation(libs.micronaut.sourcegen.annotations)
     implementation(libs.micronaut.managment)
 

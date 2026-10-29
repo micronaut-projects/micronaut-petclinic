@@ -18,6 +18,8 @@ import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.service.ClinicService;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.views.View;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -39,16 +41,16 @@ public class OwnerController {
     private final ClinicService clinicService;
     private final FormMapper formMapper;
 
-    /**
-     * Creates the controller with its service and mapper dependencies.
-     *
-     * @param clinicService the facade used for owner operations
-     * @param formMapper the mapper used to convert owner forms
-     */
-    public OwnerController(ClinicService clinicService, FormMapper formMapper) {
-        this.clinicService = clinicService;
-        this.formMapper = formMapper;
-    }
+	/**
+	 * Creates the controller with its service and mapper dependencies.
+	 *
+	 * @param clinicService      the facade used for owner operations
+	 * @param formMapper         the mapper used to convert owner forms
+	 */
+	public OwnerController(ClinicService clinicService, FormMapper formMapper) {
+		this.clinicService = clinicService;
+		this.formMapper = formMapper;
+	}
 
     /**
      * Display the owner search form.
@@ -121,18 +123,23 @@ public class OwnerController {
         );
     }
 
-    /**
-     * Display owner details.
-     *
-     * @param ownerId the owner ID
-     * @return the owner details view
-     */
-    @Get("/{ownerId}")
-    @View("owners/ownerDetails")
-    public Map<String, Object> showOwner(@PathVariable Integer ownerId) {
-        Owner owner = clinicService.findOwnerById(ownerId).orElseThrow(NotFoundException::new);
-        return Map.of("owner", owner);
-    }
+	/**
+	 * Display owner details.
+	 *
+	 * @param ownerId the owner ID
+	 * @return the owner details view
+	 */
+	@Get("/{ownerId}")
+	@View("owners/ownerDetails")
+	public Map<String, Object> showOwner(@PathVariable Integer ownerId) {
+		Owner owner;
+		try {
+			owner = clinicService.findOwnerById(ownerId);
+		} catch (NotFoundEntityException e) {
+			throw new NotFoundException();
+		}
+		return Map.of("owner", owner);
+	}
 
     /**
      * Display the form to create a new owner.
@@ -195,7 +202,7 @@ public class OwnerController {
         );
     }
 
-    /**
+	/**
      * Display the form to edit an existing owner.
      *
      * @param ownerId the owner ID
@@ -204,7 +211,12 @@ public class OwnerController {
     @Get("/{ownerId}/edit")
     @View("owners/createOrUpdateOwnerForm")
     public Map<String, Object> initUpdateOwnerForm(@PathVariable Integer ownerId) {
-        Owner owner = clinicService.findOwnerById(ownerId).orElseThrow(NotFoundException::new);
+        Owner owner;
+        try {
+          owner = clinicService.findOwnerById(ownerId);
+        } catch (NotFoundEntityException e) {
+            throw new NotFoundException();
+        }
             return Map.of(
                     "owner", formMapper.toOwnerForm(owner),
                     "ownerId", ownerId,
@@ -224,7 +236,7 @@ public class OwnerController {
     @Post(value = "/{ownerId}/edit", consumes = MediaType.APPLICATION_FORM_URLENCODED)
     public HttpResponse<?> processUpdateOwnerForm(@PathVariable Integer ownerId, @Valid @Body OwnerForm form)
             throws NotFoundEntityException {
-        Owner existingOwner = clinicService.findOwnerById(ownerId).orElseThrow(NotFoundEntityException::new);
+        Owner existingOwner = clinicService.findOwnerById(ownerId);
 
         Owner owner = formMapper.updateOwner(existingOwner, form);
         clinicService.saveOwner(owner);

@@ -19,6 +19,7 @@ import io.micronaut.samples.petclinic.repository.PetTypeRepository;
 import io.micronaut.samples.petclinic.repository.VisitRepository;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
+import org.jspecify.annotations.NonNull;
 
 import java.time.Duration;
 import java.time.Period;
@@ -69,12 +70,15 @@ public class ClinicService {
     // ========== Owner Operations ==========
 
     /**
-     * Find an owner by ID.
+     * Finds an owner by ID, including its pets and visit history. The result is cached as {@code owner-details}.
+     *
      * @param id the owner ID
      * @return the owner, if found
+     * @throws NotFoundEntityException if owner not found
      */
-    public Optional<Owner> findOwnerById(Integer id) {
-        return ownerRepository.findById(id);
+    @Cacheable("owner-details")
+    public @NonNull Owner findOwnerById(Integer id) throws NotFoundEntityException {
+        return ownerRepository.findById(id).orElseThrow(NotFoundEntityException::new);
     }
 
     /**
@@ -124,8 +128,8 @@ public class ClinicService {
      * @param id the pet ID
      * @return the pet, if found
      */
-    public Optional<Pet> findPetById(Integer id) {
-        return petRepository.findById(id);
+    public Pet findPetById(Integer id) throws NotFoundEntityException {
+        return petRepository.findById(id).orElseThrow(NotFoundEntityException::new);
     }
 
     /**
