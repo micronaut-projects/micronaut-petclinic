@@ -80,10 +80,10 @@ public interface OwnerRepository extends CrudRepository<Owner, Integer> {
     Optional<Owner> findById(Integer id);
 
     /**
-     * Finds owners by lastName.
+     * Finds owners by exact last name.
      *
-     * @param id the owner id
-     * @return the owner, if found
+     * @param lastName the last name to match
+     * @return matching owners
      */
     Collection<Owner> findByLastName(String lastName);
 }

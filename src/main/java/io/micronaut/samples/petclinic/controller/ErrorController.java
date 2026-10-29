@@ -95,6 +95,7 @@ public class ErrorController {
     /**
      * Reports a requested domain resource that does not exist.
      *
+     * @param request the request whose path is included in the response
      * @param e the missing-entity failure
      * @return HTTP 404 with a JSON message
      */

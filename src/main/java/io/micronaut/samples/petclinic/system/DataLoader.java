@@ -21,6 +21,7 @@ import io.micronaut.samples.petclinic.repository.PetTypeRepository;
 import io.micronaut.samples.petclinic.repository.SpecialityRepository;
 import io.micronaut.samples.petclinic.repository.VetRepository;
 import io.micronaut.samples.petclinic.repository.VisitRepository;
+import io.micronaut.samples.petclinic.service.OwnerLoyaltyService;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
@@ -54,6 +55,7 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
     private final ClinicRepository clinicRepository;
     private final ClinicServiceOfferingRepository clinicServiceOfferingRepository;
     private final AppointmentRepository appointmentRepository;
+    private final OwnerLoyaltyService ownerLoyaltyService;
 
     private static final Map<String, List<ClinicOfferingSeed>> CLINIC_OFFERINGS = Map.ofEntries(
             Map.entry("Downtown Madison Pet Clinic", List.of(
@@ -152,6 +154,7 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
      * @param clinicRepository repository for clinic locations
      * @param appointmentRepository appointment repository for the active database
      * @param clinicServiceOfferingRepository repository for clinic service offerings
+     * @param ownerLoyaltyService profile-specific zero-balance account reconciliation
      */
     public DataLoader(VetRepository vetRepository,
                       SpecialityRepository specialityRepository,
@@ -161,7 +164,8 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
                       VisitRepository visitRepository,
                       ClinicRepository clinicRepository,
                       AppointmentRepository appointmentRepository,
-                      ClinicServiceOfferingRepository clinicServiceOfferingRepository) {
+                      ClinicServiceOfferingRepository clinicServiceOfferingRepository,
+                      OwnerLoyaltyService ownerLoyaltyService) {
         this.vetRepository = vetRepository;
         this.specialityRepository = specialityRepository;
         this.petTypeRepository = petTypeRepository;
@@ -171,10 +175,13 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
         this.clinicRepository = clinicRepository;
         this.appointmentRepository = appointmentRepository;
         this.clinicServiceOfferingRepository = clinicServiceOfferingRepository;
+        this.ownerLoyaltyService = ownerLoyaltyService;
     }
 
     /**
-     * Seeds the database when the application starts.
+     * Seeds the database when the application starts and initializes zero-balance loyalty accounts.
+     * With loyalty enabled, an existing owner set is reconciled without reseeding sample data
+     * or backfilling historical visit credits. This listener runs only when sample loading is enabled.
      *
      * @param event the startup event
      */
@@ -182,8 +189,18 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
     @Transactional
     public void onApplicationEvent(StartupEvent event) {
         LOG.info("Loading sample data...");
+        if (ownerLoyaltyService.isEnabled() && ownerRepository.findAll().iterator().hasNext()) {
+            ensureLoyaltyAccountsForExistingOwners();
+            LOG.info("Existing Oracle owner data found; loyalty accounts reconciled without reseeding sample data.");
+            return;
+        }
         loadData();
+        ensureLoyaltyAccountsForExistingOwners();
         LOG.info("Sample data loaded successfully.");
+    }
+
+    private void ensureLoyaltyAccountsForExistingOwners() {
+        ownerLoyaltyService.ensureAccounts(ownerRepository.findAll());
     }
 
     private void loadData() {

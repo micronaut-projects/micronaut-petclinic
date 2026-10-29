@@ -100,7 +100,11 @@ public class PetController {
      * @return the owner, or empty if not found
      */
     private Optional<Owner> getOwner(Integer ownerId) {
-        return clinicService.findOwnerById(ownerId);
+        try {
+            return Optional.of(clinicService.findOwnerById(ownerId));
+        } catch (NotFoundEntityException e) {
+            return Optional.empty();
+        }
     }
 
     /**
@@ -160,7 +164,12 @@ public class PetController {
     @Get("/{petId}/edit")
     @View("pets/createOrUpdatePetForm")
     public Map<String, Object> initUpdateForm(@PathVariable Integer ownerId, @PathVariable Integer petId) {
-        Pet pet = clinicService.findPetById(petId).orElseThrow(NotFoundException::new);
+        Pet pet;
+        try {
+            pet = clinicService.findPetById(petId);
+        } catch (NotFoundEntityException e) {
+            throw new NotFoundException();
+        }
         return Map.of("pet", formMapper.toPetForm(pet),
                 "petId", petId,
                 "owner", pet.getOwner(),
@@ -183,7 +192,7 @@ public class PetController {
                                              @PathVariable Integer petId,
                                              @Valid @Body PetForm form) throws NotFoundEntityException {
         Owner owner = getOwner(ownerId).orElseThrow(NotFoundEntityException::new);
-        Pet existingPet = clinicService.findPetById(petId).orElseThrow(NotFoundEntityException::new);
+        Pet existingPet = clinicService.findPetById(petId);
 
         Pet pet = formMapper.updatePet(existingPet, form).withOwner(owner);
 

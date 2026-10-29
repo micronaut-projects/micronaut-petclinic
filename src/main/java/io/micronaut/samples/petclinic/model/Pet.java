@@ -12,6 +12,7 @@ import io.micronaut.sourcegen.annotations.Builder;
 import io.micronaut.sourcegen.annotations.Wither;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -57,6 +58,7 @@ public record Pet(
 
         @Relation(MANY_TO_ONE)
         @MappedProperty("OWNER_ID")
+        @NonNull
         Owner owner,
 
         @Relation(value = ONE_TO_MANY, mappedBy = "pet")
@@ -146,11 +148,11 @@ public record Pet(
     /**
      * Returns the identifier of the owning owner.
      *
-     * @return the owner id, or {@code null} when no owner is assigned
+     * @return the associated owner's ID; the owner must be present
      */
     @Transient
-    public Integer getOwnerId() {
-        return owner != null ? owner.id() : null;
+    public @NonNull Integer getOwnerId() {
+        return owner.id();
     }
 
     /**

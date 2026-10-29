@@ -1,7 +1,8 @@
 package io.micronaut.samples.petclinic.service;
 
-import io.micronaut.samples.petclinic.dto.VisitSearchCriteria;
 import io.micronaut.samples.petclinic.ClinicServiceFixtures;
+import io.micronaut.samples.petclinic.dto.VisitSearchCriteria;
+import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.PetType;
@@ -13,11 +14,12 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Integration tests for {@link ClinicService}.
@@ -42,18 +44,16 @@ class ClinicServiceTest {
     }
 
     @Test
-    void shouldFindOwnerById() {
+    void shouldFindOwnerById() throws NotFoundEntityException {
         Owner owner = clinicServiceFixtures.requiredOwner("George", "Franklin");
 
-        Optional<Owner> found = clinicService.findOwnerById(owner.id());
-        assertThat(found).isPresent();
-        assertThat(found.get().getLastName()).isEqualTo("Franklin");
+        Owner found = clinicService.findOwnerById(owner.id());
+        assertThat(found.getLastName()).isEqualTo("Franklin");
     }
 
     @Test
-    void shouldReturnEmptyWhenOwnerNotFound() {
-        Optional<Owner> owner = clinicService.findOwnerById(999);
-        assertThat(owner).isEmpty();
+    void shouldThrowWhenOwnerNotFound() {
+        assertThrows(NotFoundEntityException.class, () -> clinicService.findOwnerById(999));
     }
 
     @Test
@@ -66,9 +66,9 @@ class ClinicServiceTest {
     @Test
     void shouldSaveNewOwner() {
         Owner owner = new Owner("John", "Doe", "123 Main St", "Springfield", "1234567890");
-        
+
         Owner savedOwner = clinicService.saveOwner(owner);
-        
+
         assertThat(savedOwner.id()).isNotNull();
         assertThat(savedOwner.getFirstName()).isEqualTo("John");
     }
@@ -100,11 +100,10 @@ class ClinicServiceTest {
     }
 
     @Test
-    void shouldFindPetById() {
+    void shouldFindPetById() throws NotFoundEntityException {
         Pet leo = clinicServiceFixtures.requiredPet("George", "Franklin", "Leo");
-        Optional<Pet> found = clinicService.findPetById(leo.id());
-        assertThat(found).isPresent();
-        assertThat(found.get().name()).isEqualTo("Leo");
+        Pet found = clinicService.findPetById(leo.id());
+        assertThat(found.name()).isEqualTo("Leo");
     }
 
     @Test
@@ -117,7 +116,7 @@ class ClinicServiceTest {
 
         Pet pet = new Pet("Whiskers", LocalDate.of(2023, 1, 1), catType, owner);
         Pet savedPet = clinicService.savePet(pet);
-        
+
         assertThat(savedPet.id()).isNotNull();
         assertThat(savedPet.name()).isEqualTo("Whiskers");
     }
