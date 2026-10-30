@@ -3,7 +3,6 @@ package io.micronaut.samples.petclinic.repository.oracle;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
@@ -33,29 +32,28 @@ public interface OwnerLoyaltyAccountRepository extends GenericRepository<OwnerLo
     OwnerLoyaltyAccount insert(OwnerLoyaltyAccount account);
 
     /**
-     * Finds an owner's account and fetches its owner, without fetching vouchers.
+     * Finds an owner's account with its owner and vouchers fetched.
+     * Voucher account references are fetched to populate their required record components.
      * @param owner the persisted owner
      * @return the account, if present
      */
     @Join(value = "owner", type = Join.Type.LEFT_FETCH)
+    @Join(value = "vouchers", type = Join.Type.LEFT_FETCH)
+    @Join(value = "vouchers.ownerLoyaltyAccount", type = Join.Type.LEFT_FETCH)
+    @Join(value = "vouchers.ownerLoyaltyAccount.owner", type = Join.Type.LEFT_FETCH)
     Optional<OwnerLoyaltyAccount> findByOwner(Owner owner);
 
     /**
-     * Finds an account by its own ID and fetches its owner, without fetching vouchers.
+     * Finds an account by its own ID with its owner and vouchers fetched.
+     * Voucher account references are fetched to populate their required record components.
      * @param id the loyalty account ID
      * @return the account, if present
      */
     @Join(value = "owner", type = Join.Type.LEFT_FETCH)
+    @Join(value = "vouchers", type = Join.Type.LEFT_FETCH)
+    @Join(value = "vouchers.ownerLoyaltyAccount", type = Join.Type.LEFT_FETCH)
+    @Join(value = "vouchers.ownerLoyaltyAccount.owner", type = Join.Type.LEFT_FETCH)
     Optional<OwnerLoyaltyAccount> findById(Long id);
-
-    /**
-     * Locks an owner row until the caller's transaction completes, serializing initial provisioning.
-     * Call only after an account lookup misses, then repeat the lookup after locking.
-     * @param ownerId the persisted owner ID
-     * @return the locked owner ID
-     */
-    @Query("SELECT ID FROM OWNERS WHERE ID = :ownerId FOR UPDATE")
-    Integer lockOwner(Integer ownerId);
 
     /**
      * Deletes an owner's account; associated vouchers must be deleted first.

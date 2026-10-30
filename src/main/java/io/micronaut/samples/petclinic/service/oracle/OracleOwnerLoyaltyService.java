@@ -4,6 +4,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.exceptions.DataIntegrityViolationException;
 import io.micronaut.samples.petclinic.dto.LoyaltyRedemptionResponse;
 import io.micronaut.samples.petclinic.dto.OwnerLoyaltySummary;
+import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
 import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.oracle.model.OwnerLoyaltyAccount;
@@ -18,6 +19,7 @@ import org.jspecify.annotations.NullMarked;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Locale;
 import java.util.Set;
 
@@ -25,7 +27,7 @@ import java.util.Set;
  * Loyalty persistence for the regular Oracle profile, excluding Oracle Deep Data Security.
  * Point credits join the visit transaction. Reward redemption uses a separate transaction
  * bean so the debit and voucher commit before the response balance is reloaded.
- * Existing accounts use reservation deltas; only provisioning a missing account locks its owner.
+ * Account lookup creates a zero-balance account as a fallback when one is missing.
  */
 @Singleton
 @NullMarked
@@ -70,12 +72,8 @@ public class OracleOwnerLoyaltyService implements OwnerLoyaltyService {
     @Override
     @Transactional
     public OwnerLoyaltyAccount findOrCreateOwnerLoyaltyAccount(Owner owner) {
-        return ownerLoyaltyAccountRepository.findByOwner(owner).orElseGet(() -> {
-            // Only first-time provisioning needs serialization. Recheck after obtaining the lock.
-            ownerLoyaltyAccountRepository.lockOwner(owner.id());
-            return ownerLoyaltyAccountRepository.findByOwner(owner)
-                    .orElseGet(() -> ownerLoyaltyAccountRepository.insert(new OwnerLoyaltyAccount(owner)));
-        });
+        return ownerLoyaltyAccountRepository.findByOwner(owner)
+                .orElseGet(() -> ownerLoyaltyAccountRepository.insert(new OwnerLoyaltyAccount(owner)));
     }
 
     @Override
@@ -113,9 +111,9 @@ public class OracleOwnerLoyaltyService implements OwnerLoyaltyService {
     }
 
     @Override
-    public void reserveDecrementPoints(OwnerLoyaltyAccount account, long pointsCost) {
+    public void reserveDecrementPoints(OwnerLoyaltyAccount account, long pointsCost) throws IllegalRequestArgumentException {
         if (pointsCost <= 0) {
-            throw new IllegalArgumentException("The points cost must be positive.");
+            throw new IllegalRequestArgumentException("The points cost must be positive.");
         }
         if (ownerLoyaltyAccountRepository.reserveDecrementPoints(account.id(), pointsCost) != 1) {
             throw new IllegalStateException("The owner's loyalty account could not be debited.");
@@ -124,15 +122,16 @@ public class OracleOwnerLoyaltyService implements OwnerLoyaltyService {
 
     @Override
     public OwnerLoyaltySummary summary(OwnerLoyaltyAccount account) {
-        OwnerLoyaltyAccount current = ownerLoyaltyAccountRepository.findById(account.id())
-                .orElseThrow(() -> new IllegalStateException("The owner's loyalty account is missing."));
-        return new OwnerLoyaltySummary(current.owner().id(), current.points(), POINTS_PER_VISIT,
-                REWARD_COST, voucherRepository.findTop10ByOwnerLoyaltyAccountOrderByCreatedAtDescAndIdDesc(current)
-                        .stream().map(OracleOwnerLoyaltyService::toView).toList());
+        return new OwnerLoyaltySummary(account.owner().id(), account.points(), POINTS_PER_VISIT,
+                REWARD_COST, account.vouchers().stream()
+                        .sorted(Comparator.comparing(OwnerRewardVoucher::createdAt)
+                                .thenComparing(OwnerRewardVoucher::id).reversed())
+                        .limit(10)
+                        .map(OracleOwnerLoyaltyService::toView).toList());
     }
 
     @Override
-    public LoyaltyRedemptionResponse redeem(OwnerLoyaltyAccount account) throws InsufficientLoyaltyPointsException {
+    public LoyaltyRedemptionResponse redeem(OwnerLoyaltyAccount account) throws IllegalRequestArgumentException {
         final OwnerRewardVoucher voucher;
         try {
             voucher = redemptionTransaction.redeem(account, REWARD_COST);

@@ -20,7 +20,7 @@ import static io.micronaut.data.annotation.Relation.Kind.ONE_TO_ONE;
 /**
  * Oracle loyalty balance kept outside the owner document and owner row.
  * Points are initialized on insert and subsequently changed only through reservation deltas.
- * The voucher collection is populated only when explicitly fetched; summaries query vouchers separately.
+ * Owner-based lookups fetch the voucher collection so summaries can reuse it without another query.
  *
  * @param id the generated account ID, or {@code null} before insertion
  * @param owner the one-to-one owner association

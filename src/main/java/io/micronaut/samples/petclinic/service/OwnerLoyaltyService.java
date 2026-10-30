@@ -2,6 +2,7 @@ package io.micronaut.samples.petclinic.service;
 
 import io.micronaut.samples.petclinic.dto.LoyaltyRedemptionResponse;
 import io.micronaut.samples.petclinic.dto.OwnerLoyaltySummary;
+import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
 import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.oracle.model.OwnerLoyaltyAccount;
@@ -32,6 +33,7 @@ public interface OwnerLoyaltyService {
 
     /**
      * Looks up an account by owner, creating a zero-balance account if missing.
+     * This is a fallback; normal owner creation already initializes the account.
      * @param owner the persisted owner
      * @return the owner's account, or {@code null} when loyalty is disabled
      */
@@ -76,14 +78,15 @@ public interface OwnerLoyaltyService {
      * The debit becomes visible in the account balance when its transaction commits.
      * @param account the persisted account
      * @param pointsCost the positive number of points to debit
-     * @throws IllegalArgumentException if loyalty is enabled and the cost is not positive
+     * @throws IllegalRequestArgumentException if loyalty is enabled and the cost is not positive
      */
-    void reserveDecrementPoints(OwnerLoyaltyAccount account, long pointsCost);
+    void reserveDecrementPoints(OwnerLoyaltyAccount account, long pointsCost) throws IllegalRequestArgumentException;
 
     /**
-     * Reloads the balance and up to ten vouchers, ordered by creation time and ID descending.
-     * @param account the persisted account identifying the balance to reload
-     * @return the current summary, or an empty summary when loyalty is disabled
+     * Builds a summary from the supplied account and its fetched vouchers, without further queries.
+     * Includes up to ten vouchers, ordered by creation time and ID descending.
+     * @param account the already loaded account, including its voucher collection
+     * @return the account summary, or an empty summary when loyalty is disabled
      */
     OwnerLoyaltySummary summary(OwnerLoyaltyAccount account);
 
@@ -93,7 +96,8 @@ public interface OwnerLoyaltyService {
      * failure rolls back both. The supplied account must already be committed.
      * @param account the persisted account funding the reward
      * @return the committed voucher and subsequently read balance, or {@code null} when disabled
+     * @throws IllegalRequestArgumentException if the configured reward cost is not positive
      * @throws InsufficientLoyaltyPointsException if the points reservation is rejected for insufficient funds
      */
-    @Nullable LoyaltyRedemptionResponse redeem(OwnerLoyaltyAccount account) throws InsufficientLoyaltyPointsException;
+    @Nullable LoyaltyRedemptionResponse redeem(OwnerLoyaltyAccount account) throws IllegalRequestArgumentException;
 }

@@ -10,6 +10,8 @@ import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.samples.petclinic.dto.LoyaltyRedemptionResponse;
+import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
+import io.micronaut.samples.petclinic.service.oracle.LoyaltyRedemptionTransaction;
 import io.micronaut.samples.petclinic.dto.OwnerLoyaltySummary;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
@@ -79,6 +81,9 @@ class OracleOwnerLoyaltyIntegrationTest {
 
     @Inject
     OwnerLoyaltyService ownerLoyaltyService;
+
+    @Inject
+    LoyaltyRedemptionTransaction redemptionTransaction;
 
     @Inject
     OwnerCareViewRepository ownerCareViewRepository;
@@ -307,7 +312,8 @@ class OracleOwnerLoyaltyIntegrationTest {
                     firstDate.plusDays(index)));
         }
 
-        List<OwnerLoyaltySummary.Voucher> recent = ownerLoyaltyService.summary(ownerLoyaltyAccount).recentVouchers();
+        OwnerLoyaltyAccount loaded = accountRepository.findByOwner(owner).orElseThrow();
+        List<OwnerLoyaltySummary.Voucher> recent = ownerLoyaltyService.summary(loaded).recentVouchers();
 
         assertThat(recent).hasSize(10);
         assertThat(recent.getFirst().createdAt()).isEqualTo(firstDate.plusDays(11));
@@ -403,16 +409,18 @@ class OracleOwnerLoyaltyIntegrationTest {
 
     @Test
     @Order(16)
-    void concurrentProvisioningReturnsTheSameAccount() throws Exception {
-        Owner owner = ownerRepository.save(new Owner("Existing", "Concurrent", "123 Test Street",
+    void missingAccountFallbackCreatesOnceAndPreservesTheExistingBalance() {
+        Owner owner = ownerRepository.save(new Owner("Existing", "MissingAccount", "123 Test Street",
                 "Madison", "6085551111"));
-        CountDownLatch start = new CountDownLatch(1);
-        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            var first = executor.submit(() -> { start.await(); return ownerLoyaltyService.createAccount(owner); });
-            var second = executor.submit(() -> { start.await(); return ownerLoyaltyService.createAccount(owner); });
-            start.countDown();
-            assertThat(first.get(15, TimeUnit.SECONDS).id()).isEqualTo(second.get(15, TimeUnit.SECONDS).id());
-        }
+        assertThat(accountRepository.findByOwner(owner)).isEmpty();
+
+        OwnerLoyaltyAccount created = ownerLoyaltyService.findOrCreateOwnerLoyaltyAccount(owner);
+        assertThat(created.points()).isZero();
+        incrementPoints(created, 75L);
+
+        OwnerLoyaltyAccount existing = ownerLoyaltyService.findOrCreateOwnerLoyaltyAccount(owner);
+        assertThat(existing.id()).isEqualTo(created.id());
+        assertThat(existing.points()).isEqualTo(75L);
         assertThat(accountRepository.findAllByOwnerIn(List.of(owner))).hasSize(1);
     }
 
@@ -500,7 +508,8 @@ class OracleOwnerLoyaltyIntegrationTest {
                 "PET_CARE_REWARD", 100L, timestamp));
         OwnerRewardVoucher newer = voucherRepository.save(new OwnerRewardVoucher(null, account,
                 "PET_CARE_REWARD", 100L, timestamp));
-        assertThat(ownerLoyaltyService.summary(account).recentVouchers())
+        OwnerLoyaltyAccount loaded = accountRepository.findByOwner(owner).orElseThrow();
+        assertThat(ownerLoyaltyService.summary(loaded).recentVouchers())
                 .extracting(OwnerLoyaltySummary.Voucher::reference)
                 .containsExactly("PCR-%08d".formatted(newer.id()), "PCR-%08d".formatted(older.id()));
     }
@@ -538,6 +547,23 @@ class OracleOwnerLoyaltyIntegrationTest {
             assertThat(body.get("code")).isEqualTo("INSUFFICIENT_LOYALTY_POINTS");
             assertThat(body.get("message")).isEqualTo(
                     messageSource.getMessage("loyalty.insufficientPoints", locale).orElseThrow());
+        }
+    }
+
+    @Test
+    @Order(22)
+    void invalidPointsCostsRejectBothDebitPathsWithoutChangingTheBalance() {
+        Owner owner = createOwner();
+        OwnerLoyaltyAccount account = createOwnerLoyaltyAccount(owner);
+        incrementPoints(account, 200L);
+
+        for (long pointsCost : List.of(0L, -100L)) {
+            assertThatThrownBy(() -> ownerLoyaltyService.reserveDecrementPoints(account, pointsCost))
+                    .isExactlyInstanceOf(IllegalRequestArgumentException.class);
+            assertThatThrownBy(() -> redemptionTransaction.redeem(account, pointsCost))
+                    .isExactlyInstanceOf(IllegalRequestArgumentException.class);
+            assertThat(accountRepository.findByOwner(owner).orElseThrow().points()).isEqualTo(200L);
+            assertThat(vouchers(owner)).isEmpty();
         }
     }
 

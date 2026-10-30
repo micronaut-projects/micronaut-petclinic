@@ -14,6 +14,7 @@ import io.micronaut.http.annotation.Status;
 import io.micronaut.http.server.util.locale.HttpLocaleResolver;
 import io.micronaut.samples.petclinic.dto.LoyaltyRedemptionResponse;
 import io.micronaut.samples.petclinic.dto.OwnerLoyaltySummary;
+import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
 import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.oracle.model.OwnerLoyaltyAccount;
@@ -76,11 +77,12 @@ public class OwnerLoyaltyController {
      * @param ownerId the owner ID, not the loyalty account ID
      * @return the issued voucher and balance read after commit
      * @throws NotFoundEntityException if the owner does not exist
+     * @throws IllegalRequestArgumentException if the configured reward cost is not positive
      * @throws InsufficientLoyaltyPointsException if the reward cannot be funded
      */
     @Post("/redemptions")
     @Status(HttpStatus.CREATED)
-    public LoyaltyRedemptionResponse redeem(@PathVariable Integer ownerId) throws NotFoundEntityException, InsufficientLoyaltyPointsException {
+    public LoyaltyRedemptionResponse redeem(@PathVariable Integer ownerId) throws NotFoundEntityException, IllegalRequestArgumentException {
         Owner owner = clinicService.findOwnerById(ownerId);
         OwnerLoyaltyAccount ownerLoyaltyAccount = ownerLoyaltyService.findOrCreateOwnerLoyaltyAccount(owner);
         return ownerLoyaltyService.redeem(Objects.requireNonNull(ownerLoyaltyAccount));

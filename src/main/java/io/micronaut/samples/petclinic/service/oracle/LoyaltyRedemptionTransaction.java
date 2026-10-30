@@ -1,6 +1,7 @@
 package io.micronaut.samples.petclinic.service.oracle;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
 import io.micronaut.samples.petclinic.oracle.model.OwnerLoyaltyAccount;
 import io.micronaut.samples.petclinic.oracle.model.OwnerRewardVoucher;
 import io.micronaut.samples.petclinic.repository.oracle.OwnerLoyaltyAccountRepository;
@@ -39,13 +40,13 @@ public class LoyaltyRedemptionTransaction {
      * @param account the persisted account funding the reward
      * @param pointsCost the positive reward cost
      * @return the saved voucher; the transaction proxy commits before the caller receives it
-     * @throws IllegalArgumentException if the reward cost is not positive
+     * @throws IllegalRequestArgumentException if the reward cost is not positive
      * @throws IllegalStateException if the account cannot be debited because it is missing
      */
-    @Transactional(Transactional.TxType.REQUIRES_NEW)
-    public OwnerRewardVoucher redeem(OwnerLoyaltyAccount account, long pointsCost) {
+    @Transactional(value = Transactional.TxType.REQUIRES_NEW, rollbackOn = Throwable.class)
+    public OwnerRewardVoucher redeem(OwnerLoyaltyAccount account, long pointsCost) throws IllegalRequestArgumentException {
         if (pointsCost <= 0) {
-            throw new IllegalArgumentException("The points cost must be positive.");
+            throw new IllegalRequestArgumentException("The points cost must be positive.");
         }
         if (accountRepository.reserveDecrementPoints(account.id(), pointsCost) != 1) {
             throw new IllegalStateException("The owner's loyalty account could not be debited.");

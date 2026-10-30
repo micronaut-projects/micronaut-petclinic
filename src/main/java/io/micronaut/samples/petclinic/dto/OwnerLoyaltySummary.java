@@ -6,9 +6,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Current loyalty balance, earning rate, and newest vouchers returned by the Oracle endpoints.
+ * Loyalty balance snapshot, earning rate, and newest vouchers returned by the Oracle endpoints.
  * @param ownerId the owner ID, or {@code null} in the disabled-profile summary
- * @param points the committed points balance read for this summary
+ * @param points the balance from the supplied account snapshot
  * @param pointsPerVisit the fixed credit for a newly inserted visit
  * @param rewardCost the fixed cost of one reward voucher
  * @param recentVouchers up to ten vouchers, ordered by creation time and ID descending
