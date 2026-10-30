@@ -24,9 +24,8 @@ This Micronaut PetClinic app allows you to:
 ## Requirements
 
 - Java 25 or higher
-- Maven 3.9+ (or use the included wrapper)
-- Gradle 9+ (or use the included wrapper)
-- Docker (optional, for databases)
+- Maven 3.9+ or Gradle 9+ (the included wrappers are recommended)
+- Docker for the database integration suites and container-based database profiles; not needed for H2
 
 ---
 
@@ -162,19 +161,25 @@ docker-compose --profile postgres down -v
 
 ---
 
-## Building a JAR
+## Building a JAR or Distribution
 
 ```bash
 # Build
 ./mvnw package
 
 # Run
-java -jar target/micronaut-petclinic-*.jar
+MICRONAUT_ENVIRONMENTS=h2 java -jar target/micronaut-petclinic-*.jar
 
-# Gradle alternative
-./gradlew build
-java -jar build/libs/micronaut-petclinic-*.jar
+# Gradle distribution with its dependencies and launch script
+./gradlew build installDist
+MICRONAUT_ENVIRONMENTS=h2 ./build/install/micronaut-petclinic/bin/micronaut-petclinic
 ```
+
+`./gradlew build` includes `check`, which runs all database integration suites
+and requires Docker. The Gradle distribution includes the application JAR and
+its runtime dependencies; keep its `lib` and `bin` directories together. Set the
+desired database environment explicitly when launching a packaged application;
+the examples above use H2.
 
 ---
 
@@ -187,11 +192,11 @@ If you have GraalVM installed:
 ./mvnw package -Pnative
 
 # Run
-./target/micronaut-petclinic
+MICRONAUT_ENVIRONMENTS=h2 ./target/micronaut-petclinic
 
 # Gradle alternative
 ./gradlew nativeCompile
-./build/native/nativeCompile/micronaut-petclinic
+MICRONAUT_ENVIRONMENTS=h2 ./build/native/nativeCompile/micronaut-petclinic
 ```
 
 ---
@@ -238,13 +243,13 @@ src/main/java/
       ├── model/           # Micronaut Data JDBC entities (Owner, Pet, Visit, Vet)
       ├── repository/      # Data access interfaces
       ├── service/         # Business logic
-      ├── dto/             # Form objects
-      ├── controller/      #
-      └── system/          #
+      ├── dto/             # Request, response, and form objects
+      ├── controller/      # HTTP endpoints and view models
+      └── system/          # Startup data, localization, and database initialization
 
 src/main/resources/
   ├── views/              # JTE templates
-  ├── static/             # CSS and images
+  ├── static/             # JavaScript, CSS, and images
   ├── i18n/               # Message translations
   └── application*.yml    # Configuration files
 ```
@@ -253,7 +258,8 @@ src/main/resources/
 
 ## Configuration Files
 
-- `application.yml` - Main configuration (H2 default)
+- `application.yml` - Shared application configuration
+- `application-h2.yml` - In-memory H2 settings (selected by the local run/test defaults)
 - `application-oracle.yml` - Oracle settings
 - `application-oracle-deepsec.yml` - opt-in Oracle Deep Data Security and IAM settings
 - `application-mysql.yml` - MySQL settings
@@ -316,8 +322,13 @@ Docker must be running for `verify`; Micronaut Test Resources provisions the dis
 
 The former Maven database test profiles are no longer used.
 
-`OracleTransactionPriorityIntegrationTest` and `OracleTransactionPriorityControllerTest` require `MICRONAUT_ENVIRONMENTS=oracle`; the default `CREATE_DROP` setting drops and recreates application tables in the `petclinic` schema.
-Use a disposable database, or preserve an already-seeded schema with `DATASOURCES_DEFAULT_SCHEMA_GENERATE=NONE PETCLINIC_SAMPLE_DATA_ENABLED=false`.
+Oracle-specific tests run only with the `oracle` environment active; the dedicated
+Gradle task and Maven `verify` execution select it automatically. The profile's
+`CREATE_DROP` setting drops and recreates tables in the configured application
+schema. Use disposable databases. Setting
+`DATASOURCES_DEFAULT_SCHEMA_GENERATE=NONE PETCLINIC_SAMPLE_DATA_ENABLED=false`
+disables schema recreation and sample loading, but tests still write data and the
+loyalty rollback tests temporarily alter check constraints.
 
 ---
 
@@ -328,7 +339,7 @@ Main differences you'll encounter:
 1. **Dependency Injection**: Use constructor injection, not `@Autowired`
 2. **Form Binding**: Add `@Body` annotation to form parameters in controllers
 3. **MessageSource**: Must configure manually (not auto-configured)
-4. **Templates**: Use OGNL expressions instead of SpEL
+4. **Templates**: This application uses JTE templates with Java expressions instead of SpEL
 5. **Configuration**: Use YAML format, different property names
 
 See [migration-guide.md](migration-guide.md) for detailed comparisons and examples.
@@ -459,6 +470,28 @@ regular forms. If the record changed since it was loaded, saving reports a
 conflict so you can reload the latest version. Adding or removing pets and
 visits is not supported in this showcase.
 
+### Oracle owner loyalty points (lock-free reservations)
+
+The `oracle` profile adds a loyalty card to owner details. Create an owner and
+pet, then add four visits: each new visit earns 25 points. Select **Redeem 100
+points** to issue a `PET_CARE_REWARD` voucher. Visit edits earn no additional
+points, and historical visits are not backfilled. The feature is disabled in
+`oracle-deepsec` and non-Oracle profiles.
+
+The separate loyalty account uses Micronaut Data's `@Reservable` delta operations.
+Oracle applies the deltas at commit and prevents overspending with a nonnegative
+balance constraint. Visit creation and its credit commit together; redemption
+commits the debit and voucher together.
+
+- `GET /owners/{ownerId}/loyalty`: balance and ten newest vouchers.
+- `POST /owners/{ownerId}/loyalty/redemptions`: redeem 100 points; returns 201,
+  or 409 for insufficient points.
+
+The local profile uses `CREATE_DROP`. Persistent installations need additive DDL
+for the account and voucher tables; no loyalty migration is included.
+See [OracleOwnerLoyaltyIntegrationTest](src/test/java/io/micronaut/samples/petclinic/service/OracleOwnerLoyaltyIntegrationTest.java)
+for concurrency, rollback, schema, and localization coverage.
+
 ### Clinic service offering upsert
 
 The application also demonstrates Micronaut Data's `@Upsert` feature.
@@ -512,11 +545,11 @@ export MICRONAUT_ENVIRONMENTS=oracle  # or mysql, postgres
 
 ### Oracle-specific issues
 
-**Image architecture mismatch:** The default Oracle image is for ARM64 (Apple Silicon). For x86/AMD64:
-```yaml
-# In docker-compose.yml, change:
-image: container-registry.oracle.com/database/free:latest
-```
+**Image architecture mismatch:** Set `ORACLE_IMAGE` in `.env` to a compatible
+full Oracle AI Database 26ai Free image built for your host architecture. The
+Compose setup expects the full image's TCPS configuration and
+`/opt/oracle/scripts/startup` support; changing to an image with a different
+startup layout also requires adapting the mounts and initialization scripts.
 
 **Oracle takes long to start:** Oracle Free needs 2-3 minutes on first startup. The healthcheck waits for it automatically.
 

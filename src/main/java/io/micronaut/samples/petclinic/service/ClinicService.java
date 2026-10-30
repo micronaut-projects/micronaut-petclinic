@@ -1,6 +1,5 @@
 package io.micronaut.samples.petclinic.service;
 
-import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.geo.LineString;
 import io.micronaut.data.model.geo.Point;
@@ -19,6 +18,7 @@ import io.micronaut.samples.petclinic.repository.PetTypeRepository;
 import io.micronaut.samples.petclinic.repository.VisitRepository;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
+import org.jspecify.annotations.NonNull;
 
 import java.time.Duration;
 import java.time.Period;
@@ -44,26 +44,30 @@ public class ClinicService {
     private final PetTypeRepository petTypeRepository;
     private final VisitRepository visitRepository;
     private final ClinicRepository clinicRepository;
+    private final OwnerLoyaltyService ownerLoyaltyService;
 
     /**
-     * Creates the service facade with its repository dependencies.
+     * Creates the service facade with its repository and loyalty dependencies.
      *
      * @param ownerRepository repository for owners
      * @param petRepository repository for pets
      * @param petTypeRepository repository for pet types
      * @param visitRepository repository for visits
      * @param clinicRepository repository for clinic locations
+     * @param ownerLoyaltyService profile-specific owner and visit loyalty hooks
      */
     public ClinicService(OwnerRepository ownerRepository,
                          PetRepository petRepository,
                          PetTypeRepository petTypeRepository,
                          VisitRepository visitRepository,
-                         ClinicRepository clinicRepository) {
+                         ClinicRepository clinicRepository,
+                         OwnerLoyaltyService ownerLoyaltyService) {
         this.ownerRepository = ownerRepository;
         this.petRepository = petRepository;
         this.petTypeRepository = petTypeRepository;
         this.visitRepository = visitRepository;
         this.clinicRepository = clinicRepository;
+        this.ownerLoyaltyService = ownerLoyaltyService;
     }
 
     // ========== Owner Operations ==========
@@ -71,10 +75,11 @@ public class ClinicService {
     /**
      * Find an owner by ID.
      * @param id the owner ID
-     * @return the owner, if found
+     * @return the persisted owner
+     * @throws NotFoundEntityException if the owner does not exist
      */
-    public Optional<Owner> findOwnerById(Integer id) {
-        return ownerRepository.findById(id);
+    public Owner findOwnerById(Integer id) throws NotFoundEntityException {
+        return ownerRepository.findById(id).orElseThrow(NotFoundEntityException::new);
     }
 
     /**
@@ -95,26 +100,30 @@ public class ClinicService {
     }
 
     /**
-     * Save an owner (create or update).
+     * Saves an owner, creating its loyalty account in the same transaction when enabled.
+     * Updating an owner leaves the separate loyalty balance unchanged.
      * @param owner the owner to save
      * @return the persisted owner returned by the repository
      */
     @Transactional
     public Owner saveOwner(Owner owner) {
         if (owner.isNew()) {
-            return ownerRepository.save(owner);
+            Owner saved = ownerRepository.save(owner);
+            ownerLoyaltyService.createAccount(saved);
+            return saved;
         } else {
             return ownerRepository.update(owner);
         }
     }
 
     /**
-     * Delete an owner by ID.
-     * @param id the owner ID
+     * Deletes an owner and its loyalty data in the same transaction.
+     * @param owner the persisted owner to delete
      */
     @Transactional
-    public void deleteOwner(Integer id) {
-        ownerRepository.deleteById(id);
+    public void deleteOwner(Owner owner) {
+        ownerLoyaltyService.deleteOwnerData(owner);
+        ownerRepository.delete(owner);
     }
 
     // ========== Pet Operations ==========
@@ -122,10 +131,11 @@ public class ClinicService {
     /**
      * Find a pet by ID.
      * @param id the pet ID
-     * @return the pet, if found
+     * @return the persisted pet
+     * @throws NotFoundEntityException if the pet does not exist
      */
-    public Optional<Pet> findPetById(Integer id) {
-        return petRepository.findById(id);
+    public @NonNull Pet findPetById(Integer id) throws NotFoundEntityException {
+        return petRepository.findById(id).orElseThrow(NotFoundEntityException::new);
     }
 
     /**
@@ -214,21 +224,24 @@ public class ClinicService {
     }
 
     /**
-     * Save a visit (create or update).
+     * Saves a visit, awarding loyalty points only for a newly inserted visit.
+     * The visit and credit share one transaction; editing a visit earns no further points.
      * @param visit the visit to save
      * @return the persisted visit returned by the repository
      */
     @Transactional
     public Visit saveVisit(Visit visit) {
-        if (visit.isNew()) {
-            return visitRepository.save(visit);
-        } else {
+        if (!visit.isNew()) {
             return visitRepository.update(visit);
         }
+
+        Visit saved = visitRepository.save(visit);
+        ownerLoyaltyService.awardVisit(saved.pet().getOwner());
+        return saved;
     }
 
     /**
-     * Delete a visit by ID.
+     * Deletes a visit by ID without reversing any previously earned loyalty points.
      * @param id the visit ID
      */
     @Transactional

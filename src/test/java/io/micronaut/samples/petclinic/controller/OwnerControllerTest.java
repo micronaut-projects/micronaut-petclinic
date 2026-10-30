@@ -8,6 +8,7 @@ import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.samples.petclinic.ClinicServiceFixtures;
 import io.micronaut.samples.petclinic.model.Owner;
+import io.micronaut.samples.petclinic.controller.OwnerLoyaltyController;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -72,6 +73,8 @@ class OwnerControllerTest {
             assertThat(response.body()).contains("id=\"care-record-tab\"");
         } else {
             assertThat(response.body()).doesNotContain("id=\"care-record-tab\"");
+            assertThat(response.body()).doesNotContain("id=\"owner-loyalty-card\"");
+            assertThat(context.containsBean(OwnerLoyaltyController.class)).isFalse();
         }
     }
 

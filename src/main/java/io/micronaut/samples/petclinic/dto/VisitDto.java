@@ -21,9 +21,8 @@ public record VisitDto(
         return new VisitDto(visit.id(),
                 visit.date(),
                 visit.description(),
-                visit.pet() != null ? visit.pet().name() : null,
-                visit.pet() != null &&
-                        visit.pet().getOwner() != null ? visit.pet().getOwner().getFullName() : null,
+                visit.pet().name(),
+                visit.pet().getOwner().getFullName(),
                 visit.duration().toMinutes(),
                 visit.period().toTotalMonths());
     }
