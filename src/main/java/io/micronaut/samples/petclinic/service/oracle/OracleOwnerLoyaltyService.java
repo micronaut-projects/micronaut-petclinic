@@ -1,7 +1,6 @@
 package io.micronaut.samples.petclinic.service.oracle;
 
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.data.exceptions.DataIntegrityViolationException;
 import io.micronaut.samples.petclinic.dto.LoyaltyRedemptionResponse;
 import io.micronaut.samples.petclinic.dto.OwnerLoyaltySummary;
 import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
@@ -11,16 +10,13 @@ import io.micronaut.samples.petclinic.oracle.model.OwnerLoyaltyAccount;
 import io.micronaut.samples.petclinic.oracle.model.OwnerRewardVoucher;
 import io.micronaut.samples.petclinic.repository.oracle.OwnerLoyaltyAccountRepository;
 import io.micronaut.samples.petclinic.repository.oracle.OwnerRewardVoucherRepository;
-import io.micronaut.samples.petclinic.service.InsufficientLoyaltyPointsException;
 import io.micronaut.samples.petclinic.service.OwnerLoyaltyService;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
 import org.jspecify.annotations.NullMarked;
 
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -41,7 +37,6 @@ public class OracleOwnerLoyaltyService implements OwnerLoyaltyService {
     public static final long REWARD_COST = 100L;
     /** Number of points earned for each newly inserted visit. */
     public static final long POINTS_PER_VISIT = 25;
-    private static final String POINTS_CHECK_CONSTRAINT = "CK_OWNER_LOYALTY_ACCOUNT_POINTS_GE_0";
 
     private final OwnerLoyaltyAccountRepository ownerLoyaltyAccountRepository;
     private final OwnerRewardVoucherRepository voucherRepository;
@@ -137,36 +132,16 @@ public class OracleOwnerLoyaltyService implements OwnerLoyaltyService {
     @Override
     public LoyaltyRedemptionResponse redeem(OwnerLoyaltyAccount account)
             throws IllegalRequestArgumentException, NotFoundEntityException {
-        final OwnerRewardVoucher voucher;
-        try {
-            voucher = redemptionService.redeem(account, REWARD_COST);
-        } catch (DataIntegrityViolationException exception) {
-            if (isInsufficientPointsConstraint(exception)) {
-                throw new InsufficientLoyaltyPointsException();
-            }
-            throw exception;
-        }
+        OwnerRewardVoucher voucher = redemptionService.redeem(account, REWARD_COST);
         // The transaction proxy has committed the reservation before this balance is read.
-        long points = ownerLoyaltyAccountRepository.findById(account.id())
-                .orElseThrow(NotFoundEntityException::new).points();
+        long points = ownerLoyaltyAccountRepository.findPointsById(account.id())
+                .orElseThrow(NotFoundEntityException::new);
         return new LoyaltyRedemptionResponse(points, toView(voucher));
     }
 
     private static OwnerLoyaltySummary.Voucher toView(OwnerRewardVoucher voucher) {
         return new OwnerLoyaltySummary.Voucher("PCR-%08d".formatted(voucher.id()), voucher.rewardCode(),
                 voucher.pointsSpent(), voucher.createdAt());
-    }
-
-    private static boolean isInsufficientPointsConstraint(Throwable error) {
-        for (Throwable current = error; current != null; current = current.getCause()) {
-            if (current instanceof SQLException sqlException
-                    && sqlException.getErrorCode() == 2290
-                    && sqlException.getMessage() != null
-                    && sqlException.getMessage().toUpperCase(Locale.ROOT).contains(POINTS_CHECK_CONSTRAINT)) {
-                return true;
-            }
-        }
-        return false;
     }
 
 }

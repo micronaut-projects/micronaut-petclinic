@@ -2,6 +2,7 @@ package io.micronaut.samples.petclinic.service;
 
 import io.micronaut.context.MessageSource;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.data.exceptions.DataIntegrityViolationException;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -240,7 +241,7 @@ class OracleOwnerLoyaltyIntegrationTest {
 
         try {
             assertThatThrownBy(() -> ownerLoyaltyService.redeem(ownerLoyaltyAccount))
-                    .isInstanceOf(RuntimeException.class)
+                    .isInstanceOf(DataIntegrityViolationException.class)
                     .isNotInstanceOf(InsufficientLoyaltyPointsException.class);
             assertThat(accountRepository.findByOwner(owner).orElseThrow().points()).isEqualTo(200L);
             assertThat(vouchers(owner)).isEmpty();
@@ -623,6 +624,20 @@ class OracleOwnerLoyaltyIntegrationTest {
         assertThat(accountRepository.findById(account.id())).isEmpty();
         assertThat(voucherRepository.findTop10ByOwnerLoyaltyAccountOrderByCreatedAtDescAndIdDesc(account))
                 .isEmpty();
+    }
+
+    @Test
+    @Order(26)
+    void redemptionServiceReportsInsufficientPointsWithoutChangingTheBalance() {
+        Owner owner = createOwner();
+        OwnerLoyaltyAccount account = findOwnerLoyaltyAccount(owner);
+        incrementPoints(account, 75L);
+
+        assertThatThrownBy(() -> redemptionService.redeem(account, 100L))
+                .isExactlyInstanceOf(InsufficientLoyaltyPointsException.class);
+
+        assertThat(accountRepository.findById(account.id()).orElseThrow().points()).isEqualTo(75L);
+        assertThat(vouchers(owner)).isEmpty();
     }
 
     private List<OwnerRewardVoucher> vouchers(Owner owner) {

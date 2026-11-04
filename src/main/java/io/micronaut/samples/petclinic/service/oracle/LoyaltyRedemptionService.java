@@ -1,19 +1,20 @@
 package io.micronaut.samples.petclinic.service.oracle;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.data.exceptions.DataIntegrityViolationException;
 import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
 import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.oracle.model.OwnerLoyaltyAccount;
 import io.micronaut.samples.petclinic.oracle.model.OwnerRewardVoucher;
 import io.micronaut.samples.petclinic.repository.oracle.OwnerLoyaltyAccountRepository;
 import io.micronaut.samples.petclinic.repository.oracle.OwnerRewardVoucherRepository;
+import io.micronaut.samples.petclinic.service.InsufficientLoyaltyPointsException;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
-import jakarta.transaction.Transactional.TxType;
 
 import java.time.LocalDateTime;
 
-import static jakarta.transaction.Transactional.TxType.*;
+import static jakarta.transaction.Transactional.TxType.REQUIRES_NEW;
 
 /**
  * Issues reward vouchers by reserving points and inserting the voucher atomically.
@@ -47,6 +48,7 @@ public class LoyaltyRedemptionService {
      * @return the saved voucher; the transaction proxy commits before the caller receives it
      * @throws IllegalRequestArgumentException if the reward cost is not positive
      * @throws NotFoundEntityException if the account no longer exists when the debit is reserved
+     * @throws InsufficientLoyaltyPointsException if Oracle rejects the points reservation
      */
     @Transactional(value = REQUIRES_NEW, rollbackOn = Throwable.class)
     public OwnerRewardVoucher redeem(OwnerLoyaltyAccount account, long pointsCost)
@@ -54,7 +56,13 @@ public class LoyaltyRedemptionService {
         if (pointsCost <= 0) {
             throw new IllegalRequestArgumentException("The points cost must be positive.");
         }
-        if (accountRepository.reserveDecrementPoints(account.id(), pointsCost) != 1) {
+        final long updated;
+        try {
+            updated = accountRepository.reserveDecrementPoints(account.id(), pointsCost);
+        } catch (DataIntegrityViolationException exception) {
+            throw new InsufficientLoyaltyPointsException();
+        }
+        if (updated != 1) {
             throw new NotFoundEntityException();
         }
         return voucherRepository.save(new OwnerRewardVoucher(null, account, "PET_CARE_REWARD",

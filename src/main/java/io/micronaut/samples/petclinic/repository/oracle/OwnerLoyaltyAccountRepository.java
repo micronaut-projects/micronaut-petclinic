@@ -56,6 +56,13 @@ public interface OwnerLoyaltyAccountRepository extends GenericRepository<OwnerLo
     Optional<OwnerLoyaltyAccount> findById(Long id);
 
     /**
+     * Reads only the points balance without fetching the owner or vouchers.
+     * @param id the loyalty account ID
+     * @return the points balance, or empty if the account does not exist
+     */
+    Optional<Long> findPointsById(Long id);
+
+    /**
      * Deletes an owner's account; associated vouchers must be deleted first.
      * @param owner the owner whose account is to be deleted
      */
