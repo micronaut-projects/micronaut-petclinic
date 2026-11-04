@@ -142,7 +142,7 @@ public class OwnerController {
         OwnerLoyaltyAccount account;
         try {
             owner = clinicService.findOwnerById(ownerId);
-            account = ownerLoyaltyService.findOwnerLoyaltyAccount(owner);
+            account = ownerLoyaltyService.isEnabled() ? ownerLoyaltyService.findOwnerLoyaltyAccount(owner) : null;
         } catch (NotFoundEntityException e) {
             throw new NotFoundException();
         }

@@ -482,6 +482,9 @@ The separate loyalty account uses Micronaut Data's `@Reservable` delta operation
 Oracle applies the deltas at commit and prevents overspending with a nonnegative
 balance constraint. Visit creation and its credit commit together; redemption
 commits the debit and voucher together.
+See [Micronaut Data's reservable columns documentation](https://micronaut-projects.github.io/micronaut-data/latest/guide/#sqlReservable)
+and the [Oracle Lock-Free Reservation guide](https://guides.micronaut.io/micronaut-data-oracle-lockfree-reservation-gradle-java/)
+for details.
 
 - `GET /owners/{ownerId}/loyalty`: balance and ten newest vouchers.
 - `POST /owners/{ownerId}/loyalty/redemptions`: redeem 100 points; returns 201,

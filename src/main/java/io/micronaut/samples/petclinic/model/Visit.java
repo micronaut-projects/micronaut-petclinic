@@ -178,12 +178,4 @@ public record Visit(
                 ", petId=" + (pet != null ? pet.id() : null) +
                 '}';
     }
-
-    /**
-     * Returns the identifier of the associated pet's owner.
-     * @return the owner ID; both the pet and its owner must be present
-     */
-    public Integer getPetOwnerId() {
-        return this.pet.getOwnerId();
-    }
 }

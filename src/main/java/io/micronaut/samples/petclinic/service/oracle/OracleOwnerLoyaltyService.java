@@ -16,8 +16,6 @@ import jakarta.transaction.Transactional;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.Collection;
-import java.util.Comparator;
-import java.util.Set;
 
 /**
  * Manages loyalty balances and reward vouchers using Oracle lock-free points reservations.
@@ -63,8 +61,8 @@ public class OracleOwnerLoyaltyService implements OwnerLoyaltyService {
 
     @Override
     @Transactional
-    public OwnerLoyaltyAccount createAccount(Owner owner) {
-        return ownerLoyaltyAccountRepository.findByOwner(owner)
+    public void createAccount(Owner owner) {
+        ownerLoyaltyAccountRepository.findByOwner(owner)
                 .orElseGet(() -> ownerLoyaltyAccountRepository.insert(new OwnerLoyaltyAccount(owner)));
     }
 
@@ -72,16 +70,6 @@ public class OracleOwnerLoyaltyService implements OwnerLoyaltyService {
     public OwnerLoyaltyAccount findOwnerLoyaltyAccount(Owner owner) throws NotFoundEntityException {
         return ownerLoyaltyAccountRepository.findByOwner(owner)
                 .orElseThrow(NotFoundEntityException::new);
-    }
-
-    @Override
-    public OwnerLoyaltyAccount findOwnerLoyaltyAccount(Long id) throws NotFoundEntityException {
-        return ownerLoyaltyAccountRepository.findById(id).orElseThrow(NotFoundEntityException::new);
-    }
-
-    @Override
-    public Set<OwnerLoyaltyAccount> findOwnerLoyaltyAccounts(Collection<Owner> owners) {
-        return ownerLoyaltyAccountRepository.findAllByOwnerIn(owners);
     }
 
     @Override
@@ -110,23 +98,10 @@ public class OracleOwnerLoyaltyService implements OwnerLoyaltyService {
     }
 
     @Override
-    public void reserveDecrementPoints(OwnerLoyaltyAccount account, long pointsCost) throws IllegalRequestArgumentException {
-        if (pointsCost <= 0) {
-            throw new IllegalRequestArgumentException("The points cost must be positive.");
-        }
-        if (ownerLoyaltyAccountRepository.reserveDecrementPoints(account.id(), pointsCost) != 1) {
-            throw new IllegalStateException("The owner's loyalty account could not be debited.");
-        }
-    }
-
-    @Override
     public OwnerLoyaltySummary summary(OwnerLoyaltyAccount account) {
         return new OwnerLoyaltySummary(account.owner().id(), account.points(), POINTS_PER_VISIT,
-                REWARD_COST, account.vouchers().stream()
-                        .sorted(Comparator.comparing(OwnerRewardVoucher::createdAt)
-                                .thenComparing(OwnerRewardVoucher::id).reversed())
-                        .limit(10)
-                        .map(OracleOwnerLoyaltyService::toView).toList());
+                REWARD_COST, voucherRepository.findTop10ByOwnerLoyaltyAccountOrderByCreatedAtDescAndIdDesc(account)
+                        .stream().map(OracleOwnerLoyaltyService::toView).toList());
     }
 
     @Override

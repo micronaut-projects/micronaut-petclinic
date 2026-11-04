@@ -7,16 +7,14 @@ import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.oracle.model.OwnerLoyaltyAccount;
 import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Set;
 
 /**
  * Loyalty hooks shared by the owner and visit flows across database profiles.
- * The regular Oracle implementation persists accounts and vouchers. The fallback
- * implementation disables loyalty: account and redemption methods return {@code null},
- * collection lookups return empty sets, and persistence hooks do nothing.
+ * The Oracle implementation persists accounts and vouchers. When loyalty is disabled,
+ * persistence hooks do nothing, account lookup and redemption report not found,
+ * and summaries are empty. Callers can check {@link #isEnabled()} before loading loyalty data.
  */
 @NullMarked
 public interface OwnerLoyaltyService {
@@ -27,32 +25,16 @@ public interface OwnerLoyaltyService {
     /**
      * Ensures an owner has an account without changing an existing balance.
      * @param owner the persisted owner
-     * @return the existing or newly created account, or {@code null} when loyalty is disabled
      */
-    @Nullable OwnerLoyaltyAccount createAccount(Owner owner);
+    void createAccount(Owner owner);
 
     /**
      * Looks up an existing account by owner without creating one.
      * @param owner the persisted owner
-     * @return the owner's account, or {@code null} when loyalty is disabled
-     * @throws NotFoundEntityException if loyalty is enabled and the account does not exist
+     * @return the owner's account
+     * @throws NotFoundEntityException if the account does not exist or loyalty is disabled
      */
-    @Nullable OwnerLoyaltyAccount findOwnerLoyaltyAccount(Owner owner) throws NotFoundEntityException;
-
-    /**
-     * Looks up an existing account by its account ID without creating one.
-     * @param id the loyalty account ID, not the owner ID
-     * @return the account, or {@code null} when loyalty is disabled
-     * @throws NotFoundEntityException if loyalty is enabled and the account does not exist
-     */
-    @Nullable OwnerLoyaltyAccount findOwnerLoyaltyAccount(Long id) throws NotFoundEntityException;
-
-    /**
-     * Finds existing accounts without creating missing ones.
-     * @param owners the owners to look up
-     * @return matching accounts, or an empty set when loyalty is disabled
-     */
-    Set<OwnerLoyaltyAccount> findOwnerLoyaltyAccounts(Collection<Owner> owners);
+    OwnerLoyaltyAccount findOwnerLoyaltyAccount(Owner owner) throws NotFoundEntityException;
 
     /**
      * Creates missing zero-balance accounts without backfilling historical visit credits.
@@ -75,18 +57,9 @@ public interface OwnerLoyaltyService {
     void deleteOwnerData(Owner owner);
 
     /**
-     * Reserves a points debit without issuing a voucher; use {@link #redeem} for rewards.
-     * The debit becomes visible in the account balance when its transaction commits.
-     * @param account the persisted account
-     * @param pointsCost the positive number of points to debit
-     * @throws IllegalRequestArgumentException if loyalty is enabled and the cost is not positive
-     */
-    void reserveDecrementPoints(OwnerLoyaltyAccount account, long pointsCost) throws IllegalRequestArgumentException;
-
-    /**
-     * Builds a summary from the supplied account and its fetched vouchers, without further queries.
-     * Includes up to ten vouchers, ordered by creation time and ID descending.
-     * @param account the already loaded account, including its voucher collection
+     * Builds a summary from the supplied account, querying its ten newest vouchers.
+     * Voucher ordering by creation time and ID descending and limiting happen in the database.
+     * @param account the already loaded account supplying the balance
      * @return the account summary, or an empty summary when loyalty is disabled
      */
     OwnerLoyaltySummary summary(OwnerLoyaltyAccount account);
@@ -96,11 +69,11 @@ public interface OwnerLoyaltyService {
      * The Oracle implementation uses an independent transaction for the debit and voucher;
      * failure rolls back both. The supplied account must already be committed.
      * @param account the persisted account funding the reward
-     * @return the committed voucher and subsequently read balance, or {@code null} when disabled
+     * @return the committed voucher and subsequently read balance
      * @throws IllegalRequestArgumentException if the configured reward cost is not positive
-     * @throws NotFoundEntityException if the account disappears before the debit or balance lookup
+     * @throws NotFoundEntityException if loyalty is disabled or the account disappears before the debit or balance lookup
      * @throws InsufficientLoyaltyPointsException if the points reservation is rejected for insufficient funds
      */
-    @Nullable LoyaltyRedemptionResponse redeem(OwnerLoyaltyAccount account)
+    LoyaltyRedemptionResponse redeem(OwnerLoyaltyAccount account)
             throws IllegalRequestArgumentException, NotFoundEntityException;
 }

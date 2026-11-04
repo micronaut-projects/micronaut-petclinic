@@ -314,8 +314,7 @@ class OracleOwnerLoyaltyIntegrationTest {
                     firstDate.plusDays(index)));
         }
 
-        OwnerLoyaltyAccount loaded = accountRepository.findByOwner(owner).orElseThrow();
-        List<OwnerLoyaltySummary.Voucher> recent = ownerLoyaltyService.summary(loaded).recentVouchers();
+        List<OwnerLoyaltySummary.Voucher> recent = ownerLoyaltyService.summary(ownerLoyaltyAccount).recentVouchers();
 
         assertThat(recent).hasSize(10);
         assertThat(recent.getFirst().createdAt()).isEqualTo(firstDate.plusDays(11));
@@ -416,15 +415,16 @@ class OracleOwnerLoyaltyIntegrationTest {
                 "Madison", "6085551111"));
         assertThat(accountRepository.findByOwner(owner)).isEmpty();
 
-        OwnerLoyaltyAccount created = ownerLoyaltyService.createAccount(owner);
+        ownerLoyaltyService.createAccount(owner);
+        OwnerLoyaltyAccount created = findOwnerLoyaltyAccount(owner);
         assertThat(created.points()).isZero();
         incrementPoints(created, 75L);
 
         ownerLoyaltyService.ensureAccounts(List.of(owner));
-        OwnerLoyaltyAccount existing = ownerLoyaltyService.createAccount(owner);
+        ownerLoyaltyService.createAccount(owner);
+        OwnerLoyaltyAccount existing = findOwnerLoyaltyAccount(owner);
         assertThat(existing.id()).isEqualTo(created.id());
         assertThat(existing.points()).isEqualTo(75L);
-        assertThat(accountRepository.findAllByOwnerIn(List.of(owner))).hasSize(1);
     }
 
     @Test
@@ -511,8 +511,7 @@ class OracleOwnerLoyaltyIntegrationTest {
                 "PET_CARE_REWARD", 100L, timestamp));
         OwnerRewardVoucher newer = voucherRepository.save(new OwnerRewardVoucher(null, account,
                 "PET_CARE_REWARD", 100L, timestamp));
-        OwnerLoyaltyAccount loaded = accountRepository.findByOwner(owner).orElseThrow();
-        assertThat(ownerLoyaltyService.summary(loaded).recentVouchers())
+        assertThat(ownerLoyaltyService.summary(account).recentVouchers())
                 .extracting(OwnerLoyaltySummary.Voucher::reference)
                 .containsExactly("PCR-%08d".formatted(newer.id()), "PCR-%08d".formatted(older.id()));
     }
@@ -555,14 +554,12 @@ class OracleOwnerLoyaltyIntegrationTest {
 
     @Test
     @Order(22)
-    void invalidPointsCostsRejectBothDebitPathsWithoutChangingTheBalance() {
+    void invalidPointsCostsRejectRedemptionWithoutChangingTheBalance() {
         Owner owner = createOwner();
         OwnerLoyaltyAccount account = findOwnerLoyaltyAccount(owner);
         incrementPoints(account, 200L);
 
         for (long pointsCost : List.of(0L, -100L)) {
-            assertThatThrownBy(() -> ownerLoyaltyService.reserveDecrementPoints(account, pointsCost))
-                    .isExactlyInstanceOf(IllegalRequestArgumentException.class);
             assertThatThrownBy(() -> redemptionService.redeem(account, pointsCost))
                     .isExactlyInstanceOf(IllegalRequestArgumentException.class);
             assertThat(accountRepository.findByOwner(owner).orElseThrow().points()).isEqualTo(200L);
@@ -598,14 +595,12 @@ class OracleOwnerLoyaltyIntegrationTest {
 
         assertThatThrownBy(() -> ownerLoyaltyService.findOwnerLoyaltyAccount(owner))
                 .isExactlyInstanceOf(NotFoundEntityException.class);
-        assertThatThrownBy(() -> ownerLoyaltyService.findOwnerLoyaltyAccount(Long.MAX_VALUE))
-                .isExactlyInstanceOf(NotFoundEntityException.class);
         assertThat(accountRepository.findByOwner(owner)).isEmpty();
 
-        OwnerLoyaltyAccount created = ownerLoyaltyService.createAccount(owner);
+        ownerLoyaltyService.createAccount(owner);
+        OwnerLoyaltyAccount created = findOwnerLoyaltyAccount(owner);
         incrementPoints(created, 75L);
         assertThat(ownerLoyaltyService.findOwnerLoyaltyAccount(owner).points()).isEqualTo(75L);
-        assertThat(ownerLoyaltyService.findOwnerLoyaltyAccount(created.id()).points()).isEqualTo(75L);
     }
 
     @Test
@@ -638,6 +633,24 @@ class OracleOwnerLoyaltyIntegrationTest {
 
         assertThat(accountRepository.findById(account.id()).orElseThrow().points()).isEqualTo(75L);
         assertThat(vouchers(owner)).isEmpty();
+    }
+
+    @Test
+    @Order(27)
+    void reservedDebitBecomesVisibleOnlyAfterTransactionCommits() {
+        Owner owner = createOwner();
+        OwnerLoyaltyAccount account = findOwnerLoyaltyAccount(owner);
+        incrementPoints(account, 100L);
+        assertThat(accountRepository.findPointsById(account.id())).contains(100L);
+
+        transactions.executeWrite(status -> {
+            assertThat(accountRepository.reserveDecrementPoints(account.id(), 25L)).isEqualTo(1L);
+            // A read in the reserving transaction still sees the balance before its pending debit.
+            assertThat(accountRepository.findPointsById(account.id())).contains(100L);
+            return null;
+        });
+
+        assertThat(accountRepository.findPointsById(account.id())).contains(75L);
     }
 
     private List<OwnerRewardVoucher> vouchers(Owner owner) {

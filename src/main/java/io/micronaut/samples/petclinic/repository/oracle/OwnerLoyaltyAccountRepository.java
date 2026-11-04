@@ -10,9 +10,7 @@ import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.oracle.model.OwnerLoyaltyAccount;
 import org.jspecify.annotations.NullMarked;
 
-import java.util.Collection;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Inserts and looks up Oracle loyalty accounts and applies point deltas by primary key.
@@ -32,27 +30,19 @@ public interface OwnerLoyaltyAccountRepository extends GenericRepository<OwnerLo
     OwnerLoyaltyAccount insert(OwnerLoyaltyAccount account);
 
     /**
-     * Finds an owner's account with its owner and vouchers fetched.
-     * Voucher account references are fetched to populate their required record components.
+     * Finds an owner's account with its owner fetched.
      * @param owner the persisted owner
      * @return the account, if present
      */
     @Join(value = "owner", type = Join.Type.LEFT_FETCH)
-    @Join(value = "vouchers", type = Join.Type.LEFT_FETCH)
-    @Join(value = "vouchers.ownerLoyaltyAccount", type = Join.Type.LEFT_FETCH)
-    @Join(value = "vouchers.ownerLoyaltyAccount.owner", type = Join.Type.LEFT_FETCH)
     Optional<OwnerLoyaltyAccount> findByOwner(Owner owner);
 
     /**
-     * Finds an account by its own ID with its owner and vouchers fetched.
-     * Voucher account references are fetched to populate their required record components.
+     * Finds an account by its own ID with its owner fetched.
      * @param id the loyalty account ID
      * @return the account, if present
      */
     @Join(value = "owner", type = Join.Type.LEFT_FETCH)
-    @Join(value = "vouchers", type = Join.Type.LEFT_FETCH)
-    @Join(value = "vouchers.ownerLoyaltyAccount", type = Join.Type.LEFT_FETCH)
-    @Join(value = "vouchers.ownerLoyaltyAccount.owner", type = Join.Type.LEFT_FETCH)
     Optional<OwnerLoyaltyAccount> findById(Long id);
 
     /**
@@ -84,11 +74,4 @@ public interface OwnerLoyaltyAccountRepository extends GenericRepository<OwnerLo
      */
     long reserveDecrementPoints(@Id Long accountId, Long points);
 
-    /**
-     * Finds existing accounts for the supplied owners without creating missing accounts.
-     * @param owners the persisted owners
-     * @return matching accounts with their owners fetched
-     */
-    @Join(value = "owner", type = Join.Type.LEFT_FETCH)
-    Set<OwnerLoyaltyAccount> findAllByOwnerIn(Collection<Owner> owners);
 }

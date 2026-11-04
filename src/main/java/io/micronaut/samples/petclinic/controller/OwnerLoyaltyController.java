@@ -27,7 +27,6 @@ import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * REST API for an owner's loyalty points, backed by an Oracle lock-free reservable column.
@@ -75,7 +74,7 @@ public class OwnerLoyaltyController {
     public OwnerLoyaltySummary getLoyalty(@PathVariable Integer ownerId) throws NotFoundEntityException {
         Owner owner = clinicService.findOwnerById(ownerId);
         OwnerLoyaltyAccount ownerLoyaltyAccount = ownerLoyaltyService.findOwnerLoyaltyAccount(owner);
-        return ownerLoyaltyService.summary(Objects.requireNonNull(ownerLoyaltyAccount));
+        return ownerLoyaltyService.summary(ownerLoyaltyAccount);
     }
 
     /**
@@ -92,7 +91,7 @@ public class OwnerLoyaltyController {
     public LoyaltyRedemptionResponse redeem(@PathVariable Integer ownerId) throws NotFoundEntityException, IllegalRequestArgumentException {
         Owner owner = clinicService.findOwnerById(ownerId);
         OwnerLoyaltyAccount ownerLoyaltyAccount = ownerLoyaltyService.findOwnerLoyaltyAccount(owner);
-        return ownerLoyaltyService.redeem(Objects.requireNonNull(ownerLoyaltyAccount));
+        return ownerLoyaltyService.redeem(ownerLoyaltyAccount);
     }
 
     /**
