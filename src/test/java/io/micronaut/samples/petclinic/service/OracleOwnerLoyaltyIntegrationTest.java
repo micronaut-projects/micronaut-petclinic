@@ -569,13 +569,12 @@ class OracleOwnerLoyaltyIntegrationTest {
 
     @Test
     @Order(23)
-    void missingAccountRequestsReturnNotFoundWithoutCreatingAnAccount() {
+    void missingAccountLoyaltyRequestsReturnNotFoundWithoutCreatingAnAccount() {
         Owner owner = ownerRepository.save(new Owner("Existing", "MissingAccountRequests", "123 Test Street",
                 "Madison", "6085551111"));
         String ownerPath = "/owners/" + owner.id();
 
         for (HttpRequest<?> request : List.of(
-                HttpRequest.GET(ownerPath),
                 HttpRequest.GET(ownerPath + "/loyalty"),
                 HttpRequest.POST(ownerPath + "/loyalty/redemptions", ""))) {
             HttpClientResponseException failure = org.junit.jupiter.api.Assertions.assertThrows(
@@ -651,6 +650,60 @@ class OracleOwnerLoyaltyIntegrationTest {
         });
 
         assertThat(accountRepository.findPointsById(account.id())).contains(75L);
+    }
+
+    @Test
+    @Order(28)
+    void ownerDetailsRemainAvailableWithoutCreatingAMissingLoyaltyAccount() {
+        Owner owner = ownerRepository.save(new Owner("Existing", "NoLoyaltyCard", "123 Test Street",
+                "Madison", "6085551111"));
+
+        HttpResponse<String> response = client.toBlocking().exchange(
+                HttpRequest.GET("/owners/" + owner.id()), String.class);
+
+        assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
+        assertThat(response.body()).contains("Existing", "NoLoyaltyCard")
+                .doesNotContain("id=\"owner-loyalty-card\"");
+        assertThat(accountRepository.findByOwner(owner)).isEmpty();
+    }
+
+    @Test
+    @Order(29)
+    void firstNewVisitProvisionsAMissingAccountAndAwardsOnlyNewVisitPoints() {
+        Owner owner = ownerRepository.save(new Owner("Existing", "VisitProvisioning", "123 Test Street",
+                "Madison", "6085551111"));
+        Pet pet = createPet(owner);
+        visitRepository.save(new Visit(LocalDate.of(2024, 1, 1), "Historical visit", pet,
+                Duration.ofMinutes(30), Period.ofMonths(6)));
+        assertThat(accountRepository.findByOwner(owner)).isEmpty();
+
+        createVisit(pet, 1);
+
+        OwnerLoyaltyAccount account = findOwnerLoyaltyAccount(owner);
+        assertThat(account.points()).isEqualTo(25L);
+        createVisit(pet, 2);
+        OwnerLoyaltyAccount credited = findOwnerLoyaltyAccount(owner);
+        assertThat(credited.id()).isEqualTo(account.id());
+        assertThat(credited.points()).isEqualTo(50L);
+        assertThat(visitRepository.findByPetId(pet.id())).hasSize(3);
+    }
+
+    @Test
+    @Order(30)
+    void rollingBackAVisitAlsoRollsBackProvisioningItsMissingAccount() {
+        Owner owner = ownerRepository.save(new Owner("Existing", "VisitProvisioningRollback", "123 Test Street",
+                "Madison", "6085551111"));
+        Pet pet = createPet(owner);
+        assertThat(accountRepository.findByOwner(owner)).isEmpty();
+
+        assertThatThrownBy(() -> transactions.executeWrite(status -> {
+            createVisit(pet, 1);
+            throw new IllegalStateException("Force the enclosing visit transaction to roll back.");
+        })).isExactlyInstanceOf(IllegalStateException.class)
+                .hasMessage("Force the enclosing visit transaction to roll back.");
+
+        assertThat(visitRepository.findByPetId(pet.id())).isEmpty();
+        assertThat(accountRepository.findByOwner(owner)).isEmpty();
     }
 
     private List<OwnerRewardVoucher> vouchers(Owner owner) {

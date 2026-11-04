@@ -24,7 +24,8 @@ import java.util.Collection;
  * overspending, including pending debit reservations from concurrent transactions.
  * Oracle applies reserved balance changes at commit, so {@link LoyaltyRedemptionService}
  * commits the debit and voucher independently before this service reloads the response balance.
- * Accounts are provisioned during owner creation and startup reconciliation; lookups never insert.
+ * Accounts are provisioned during owner creation, startup reconciliation, or a new visit
+ * when missing; lookups never insert.
  */
 @Singleton
 @NullMarked
@@ -84,7 +85,7 @@ public class OracleOwnerLoyaltyService implements OwnerLoyaltyService {
     @Transactional
     public void awardVisit(Owner owner) {
         OwnerLoyaltyAccount account = ownerLoyaltyAccountRepository.findByOwner(owner)
-                .orElseThrow(() -> new IllegalStateException("The owner's loyalty account is missing."));
+                .orElseGet(() -> ownerLoyaltyAccountRepository.insert(new OwnerLoyaltyAccount(owner)));
         if (ownerLoyaltyAccountRepository.reserveIncrementPoints(account.id(), POINTS_PER_VISIT) != 1) {
             throw new IllegalStateException("The owner's loyalty account could not be credited.");
         }

@@ -44,9 +44,10 @@ public interface OwnerLoyaltyService {
 
     /**
      * Awards the fixed credit for one newly inserted visit, joining the caller's transaction.
+     * Creates a missing zero-balance account in that transaction before awarding the credit.
      * Call only after inserting a visit; this hook does not inspect visits or deduplicate calls.
      * @param owner the persisted owner of the visited pet
-     * @throws IllegalStateException if loyalty is enabled and the owner's account is missing
+     * @throws IllegalStateException if loyalty is enabled and the account cannot be credited
      */
     void awardVisit(Owner owner);
 

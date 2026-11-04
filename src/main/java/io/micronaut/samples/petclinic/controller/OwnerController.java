@@ -12,10 +12,10 @@ import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.samples.petclinic.dto.OwnerForm;
+import io.micronaut.samples.petclinic.dto.OwnerLoyaltySummary;
 import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.mapper.FormMapper;
 import io.micronaut.samples.petclinic.model.Owner;
-import io.micronaut.samples.petclinic.oracle.model.OwnerLoyaltyAccount;
 import io.micronaut.samples.petclinic.service.ClinicService;
 import io.micronaut.samples.petclinic.service.OwnerLoyaltyService;
 import io.micronaut.security.annotation.Secured;
@@ -133,22 +133,28 @@ public class OwnerController {
      *
      * @param ownerId the owner ID
      * @return the owner details view
-     * @throws NotFoundException if the owner, or its enabled loyalty account, does not exist
+     * @throws NotFoundException if the owner does not exist
      */
     @Get("/{ownerId}")
     @View("owners/ownerDetails")
     public Map<String, Object> showOwner(@PathVariable Integer ownerId) {
         Owner owner;
-        OwnerLoyaltyAccount account;
         try {
             owner = clinicService.findOwnerById(ownerId);
-            account = ownerLoyaltyService.isEnabled() ? ownerLoyaltyService.findOwnerLoyaltyAccount(owner) : null;
         } catch (NotFoundEntityException e) {
             throw new NotFoundException();
         }
+        OwnerLoyaltySummary loyalty = null;
+        if (ownerLoyaltyService.isEnabled()) {
+            try {
+                loyalty = ownerLoyaltyService.summary(ownerLoyaltyService.findOwnerLoyaltyAccount(owner));
+            } catch (NotFoundEntityException ignored) {
+                // A missing loyalty account hides the card, not the owner's details page.
+            }
+        }
         Map<String, Object> model = new HashMap<>();
         model.put("owner", owner);
-        model.put("loyalty", account != null ? ownerLoyaltyService.summary(account) : null);
+        model.put("loyalty", loyalty);
         return model;
     }
 
@@ -229,12 +235,12 @@ public class OwnerController {
             throw new NotFoundException();
         }
         return Map.of(
-                    "owner", formMapper.toOwnerForm(owner),
-                    "ownerId", ownerId,
-                    "isNew", false,
-                    "validationErrors", Map.of()
-            );
-        }
+                "owner", formMapper.toOwnerForm(owner),
+                "ownerId", ownerId,
+                "isNew", false,
+                "validationErrors", Map.of()
+        );
+    }
 
 
     /**

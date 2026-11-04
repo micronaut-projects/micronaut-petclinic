@@ -492,6 +492,8 @@ for details.
 
 The local profile uses `CREATE_DROP`. Persistent installations need additive DDL
 for the account and voucher tables; no loyalty migration is included.
+An existing owner's next new visit creates a missing account; until then,
+owner details remain available without the loyalty card.
 See [OracleOwnerLoyaltyIntegrationTest](src/test/java/io/micronaut/samples/petclinic/service/OracleOwnerLoyaltyIntegrationTest.java)
 for concurrency, rollback, schema, and localization coverage.
 
