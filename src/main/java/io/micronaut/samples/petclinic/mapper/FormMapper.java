@@ -7,6 +7,7 @@ import io.micronaut.samples.petclinic.dto.PetForm;
 import io.micronaut.samples.petclinic.dto.SpecialityDto;
 import io.micronaut.samples.petclinic.dto.VetDto;
 import io.micronaut.samples.petclinic.dto.VisitForm;
+import io.micronaut.samples.petclinic.generated.OwnerCareSummary;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.Speciality;
@@ -15,15 +16,16 @@ import io.micronaut.samples.petclinic.model.Visit;
 
 import java.time.Duration;
 import java.time.Period;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Maps web form DTOs to and from the domain model.
+ * Maps web form and response DTOs to and from the domain model.
  * <p>
  * The form types represent URL-encoded request data, while the model types are
  * immutable records used by the repository and service layers. Micronaut
- * generates the implementations for these methods from the {@link Mapper}
- * annotations, keeping controllers free of manual field-copying logic.
+ * generates the simple mappings from the {@link Mapper} annotations; default
+ * methods assemble nested response collections.
  */
 @Mapper
 public interface FormMapper {
@@ -104,6 +106,53 @@ public interface FormMapper {
     default VetDto toVetDto(Vet vet) {
         return new VetDto(vet.id(), vet.firstName(), vet.lastName(),
                 vet.specialities().stream().map(this::toSpecialityDto).collect(Collectors.toSet()), vet.etag());
+    }
+
+    /**
+     * Maps a fetched owner and their care history to the generated export DTO.
+     *
+     * @param owner the persisted owner with pets and visits loaded
+     * @return the generated owner care summary
+     */
+    @Mapping(from = "id", to = "_id")
+    @Mapping(from = "#{this.toCareSummaryPets(owner)}", to = "pets")
+    OwnerCareSummary toOwnerCareSummary(Owner owner);
+
+    /**
+     * Maps a fetched pet and visits, retaining their calendar dates.
+     *
+     * @param pet the persisted pet with visits loaded
+     * @return the generated pet summary
+     */
+    @Mapping(from = "#{this.toCareSummaryVisits(pet)}", to = "visits")
+    OwnerCareSummary.Pets toCareSummaryPet(Pet pet);
+
+    /**
+     * Maps a visit to the generated export DTO.
+     *
+     * @param visit the persisted visit
+     * @return the generated visit summary
+     */
+    OwnerCareSummary.Pets.Visits toCareSummaryVisit(Visit visit);
+
+    /**
+     * Maps each pet because Micronaut's mapper copies assignable lists without converting their elements.
+     *
+     * @param owner the owner with pets and visits loaded
+     * @return the immutable list of generated pet summaries
+     */
+    default List<OwnerCareSummary.Pets> toCareSummaryPets(Owner owner) {
+        return owner.pets().stream().map(this::toCareSummaryPet).toList();
+    }
+
+    /**
+     * Maps each visit to the generated export DTO.
+     *
+     * @param pet the pet with visits loaded
+     * @return the immutable list of generated visit summaries
+     */
+    default List<OwnerCareSummary.Pets.Visits> toCareSummaryVisits(Pet pet) {
+        return pet.visits().stream().map(this::toCareSummaryVisit).toList();
     }
 
     /**

@@ -80,6 +80,10 @@
                                 <i class="fas fa-plus me-2"></i>${msg.text("button.addPet")}
                             </a>
                         </div>
+                        <a id="export-care-summary" href="/owners/${owner.id()}/care-summary"
+                           class="btn btn-outline-primary w-100 mt-3">
+                            <i class="fas fa-download me-2"></i>${msg.text("owner.exportCareSummary")}
+                        </a>
                     </div>
                 </div>
             </div>

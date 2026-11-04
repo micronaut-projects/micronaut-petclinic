@@ -448,6 +448,60 @@ rollback enabled, a reset blocked by a LOW booking can cause Oracle to roll that
 booking back after the configured 3-second HIGH wait target. Reset can also clear
 a booking that commits while it waits for the row lock.
 
+### Owner care summary export with generated records
+
+The owner details page exports contact details, pets, and visits as JSON on
+H2, MySQL, PostgreSQL, and Oracle. Normal builds generate the `OwnerCareSummary`
+record from [`src/main/resources/jsonschema/owner-care-summary.schema.json`](src/main/resources/jsonschema/owner-care-summary.schema.json),
+so compilation does not need a database. Exports use the same owner, pet, and
+visit data on every database.
+
+Choose **Export care summary** on an owner's page, or use:
+
+```bash
+curl -fOJ http://localhost:8080/owners/{OwnerId}/care-summary
+```
+
+The response downloads as `owner-{OwnerId}-care-summary.json`.
+
+For optional Oracle discovery, use a database with
+`PETCLINIC.OWNER_CARE_DV`. Start the Compose database or use another Oracle
+instance, then provide the same connection settings to discovery and the app:
+
+```bash
+docker-compose --profile oracle up -d oracle
+export DATASOURCES_DEFAULT_URL='jdbc:oracle:thin:@localhost:1521/FREEPDB1'
+export DATASOURCES_DEFAULT_USERNAME=petclinic
+export DATASOURCES_DEFAULT_PASSWORD=petclinic
+```
+
+Export these variables in the terminal used for discovery; Gradle does not read
+connection settings from your application's IDE run configuration.
+
+Use a disposable database: the `oracle` environment uses `CREATE_DROP`, which
+recreates the mapped tables and view on each application startup. Start the app
+with either build tool to initialize the schema and sample data:
+
+```bash
+MICRONAUT_ENVIRONMENTS=oracle ./gradlew run
+./mvnw -Dmicronaut.environments=oracle mn:run
+```
+
+After startup succeeds, stop the app with Ctrl+C and keep Oracle running.
+Stopping the app leaves the schema available. Discover `PETCLINIC.OWNER_CARE_DV`
+with either build tool:
+
+```bash
+./gradlew -PoracleSchemaDiscovery generateFromJsonSchemaSources
+# Or Maven
+./mvnw -PoracleSchemaDiscovery io.micronaut.jsonschema:micronaut-json-schema-maven-plugin:2.3.1:generate-from-json-schema-sources
+```
+
+Discovery writes a separate schema and model under `build/` or `target/` for
+inspection. It uses the existing database without Test Resources. The exporter
+always uses the resource schema; compilation never starts the app or changes
+the database.
+
 ### Oracle JSON duality showcase
 
 In the `oracle` environment, open an owner and select the **Owner Care Record** tab

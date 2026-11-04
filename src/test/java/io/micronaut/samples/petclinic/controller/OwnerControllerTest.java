@@ -73,6 +73,8 @@ class OwnerControllerTest {
         } else {
             assertThat(response.body()).doesNotContain("id=\"care-record-tab\"");
         }
+        assertThat(response.body()).contains("id=\"export-care-summary\"");
+        assertThat(response.body()).contains("href=\"/owners/" + owner.id() + "/care-summary\"");
     }
 
     @Test
