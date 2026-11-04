@@ -36,13 +36,13 @@ public class NoOpOwnerLoyaltyService implements OwnerLoyaltyService {
 
     @Override
     @Nullable
-    public OwnerLoyaltyAccount findOrCreateOwnerLoyaltyAccount(Owner owner) {
+    public OwnerLoyaltyAccount findOwnerLoyaltyAccount(Owner owner) {
         return null;
     }
 
     @Override
     @Nullable
-    public OwnerLoyaltyAccount findOrCreateOwnerLoyaltyAccount(Long id) {
+    public OwnerLoyaltyAccount findOwnerLoyaltyAccount(Long id) {
         return null;
     }
 

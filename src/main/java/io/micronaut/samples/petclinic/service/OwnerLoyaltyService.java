@@ -32,20 +32,20 @@ public interface OwnerLoyaltyService {
     @Nullable OwnerLoyaltyAccount createAccount(Owner owner);
 
     /**
-     * Looks up an account by owner, creating a zero-balance account if missing.
-     * This is a fallback; normal owner creation already initializes the account.
+     * Looks up an existing account by owner without creating one.
      * @param owner the persisted owner
      * @return the owner's account, or {@code null} when loyalty is disabled
+     * @throws NotFoundEntityException if loyalty is enabled and the account does not exist
      */
-    @Nullable OwnerLoyaltyAccount findOrCreateOwnerLoyaltyAccount(Owner owner);
+    @Nullable OwnerLoyaltyAccount findOwnerLoyaltyAccount(Owner owner) throws NotFoundEntityException;
 
     /**
-     * Looks up an existing account by its account ID. This overload does not create an account.
+     * Looks up an existing account by its account ID without creating one.
      * @param id the loyalty account ID, not the owner ID
      * @return the account, or {@code null} when loyalty is disabled
      * @throws NotFoundEntityException if loyalty is enabled and the account does not exist
      */
-    @Nullable OwnerLoyaltyAccount findOrCreateOwnerLoyaltyAccount(Long id) throws NotFoundEntityException;
+    @Nullable OwnerLoyaltyAccount findOwnerLoyaltyAccount(Long id) throws NotFoundEntityException;
 
     /**
      * Finds existing accounts without creating missing ones.
@@ -64,6 +64,7 @@ public interface OwnerLoyaltyService {
      * Awards the fixed credit for one newly inserted visit, joining the caller's transaction.
      * Call only after inserting a visit; this hook does not inspect visits or deduplicate calls.
      * @param owner the persisted owner of the visited pet
+     * @throws IllegalStateException if loyalty is enabled and the owner's account is missing
      */
     void awardVisit(Owner owner);
 

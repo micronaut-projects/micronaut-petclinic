@@ -28,9 +28,9 @@ import java.util.Set;
  * New visits earn {@value #POINTS_PER_VISIT} points in the visit transaction; each reward
  * spends {@value #REWARD_COST} points. Oracle's {@code CHECK (POINTS >= 0)} rejects
  * overspending, including pending debit reservations from concurrent transactions.
- * Oracle applies reserved balance changes at commit, so redemption uses a separate
- * transaction bean to commit the debit and voucher before reloading the response balance.
- * Account lookup creates a zero-balance account as a fallback when one is missing.
+ * Oracle applies reserved balance changes at commit, so {@link LoyaltyRedemptionService}
+ * commits the debit and voucher independently before this service reloads the response balance.
+ * Accounts are provisioned during owner creation and startup reconciliation; lookups never insert.
  */
 @Singleton
 @NullMarked
@@ -45,20 +45,20 @@ public class OracleOwnerLoyaltyService implements OwnerLoyaltyService {
 
     private final OwnerLoyaltyAccountRepository ownerLoyaltyAccountRepository;
     private final OwnerRewardVoucherRepository voucherRepository;
-    private final LoyaltyRedemptionTransaction redemptionTransaction;
+    private final LoyaltyRedemptionService redemptionService;
 
     /**
      * Creates the Oracle loyalty service.
      * @param ownerLoyaltyAccountRepository account lookups, provisioning, and reservations
      * @param voucherRepository voucher lookup and deletion operations
-     * @param redemptionTransaction independent transaction for issuing a funded voucher
+     * @param redemptionService issues funded vouchers in an independent transaction
      */
     public OracleOwnerLoyaltyService(OwnerLoyaltyAccountRepository ownerLoyaltyAccountRepository,
                                      OwnerRewardVoucherRepository voucherRepository,
-                                     LoyaltyRedemptionTransaction redemptionTransaction) {
+                                     LoyaltyRedemptionService redemptionService) {
         this.ownerLoyaltyAccountRepository = ownerLoyaltyAccountRepository;
         this.voucherRepository = voucherRepository;
-        this.redemptionTransaction = redemptionTransaction;
+        this.redemptionService = redemptionService;
     }
 
     @Override
@@ -69,18 +69,18 @@ public class OracleOwnerLoyaltyService implements OwnerLoyaltyService {
     @Override
     @Transactional
     public OwnerLoyaltyAccount createAccount(Owner owner) {
-        return findOrCreateOwnerLoyaltyAccount(owner);
-    }
-
-    @Override
-    @Transactional
-    public OwnerLoyaltyAccount findOrCreateOwnerLoyaltyAccount(Owner owner) {
         return ownerLoyaltyAccountRepository.findByOwner(owner)
                 .orElseGet(() -> ownerLoyaltyAccountRepository.insert(new OwnerLoyaltyAccount(owner)));
     }
 
     @Override
-    public OwnerLoyaltyAccount findOrCreateOwnerLoyaltyAccount(Long id) throws NotFoundEntityException {
+    public OwnerLoyaltyAccount findOwnerLoyaltyAccount(Owner owner) throws NotFoundEntityException {
+        return ownerLoyaltyAccountRepository.findByOwner(owner)
+                .orElseThrow(NotFoundEntityException::new);
+    }
+
+    @Override
+    public OwnerLoyaltyAccount findOwnerLoyaltyAccount(Long id) throws NotFoundEntityException {
         return ownerLoyaltyAccountRepository.findById(id).orElseThrow(NotFoundEntityException::new);
     }
 
@@ -93,14 +93,15 @@ public class OracleOwnerLoyaltyService implements OwnerLoyaltyService {
     @Transactional
     public void ensureAccounts(Collection<Owner> owners) {
         for (Owner owner : owners) {
-            findOrCreateOwnerLoyaltyAccount(owner);
+            createAccount(owner);
         }
     }
 
     @Override
     @Transactional
     public void awardVisit(Owner owner) {
-        OwnerLoyaltyAccount account = findOrCreateOwnerLoyaltyAccount(owner);
+        OwnerLoyaltyAccount account = ownerLoyaltyAccountRepository.findByOwner(owner)
+                .orElseThrow(() -> new IllegalStateException("The owner's loyalty account is missing."));
         if (ownerLoyaltyAccountRepository.reserveIncrementPoints(account.id(), POINTS_PER_VISIT) != 1) {
             throw new IllegalStateException("The owner's loyalty account could not be credited.");
         }
@@ -137,7 +138,7 @@ public class OracleOwnerLoyaltyService implements OwnerLoyaltyService {
     public LoyaltyRedemptionResponse redeem(OwnerLoyaltyAccount account) throws IllegalRequestArgumentException {
         final OwnerRewardVoucher voucher;
         try {
-            voucher = redemptionTransaction.redeem(account, REWARD_COST);
+            voucher = redemptionService.redeem(account, REWARD_COST);
         } catch (DataIntegrityViolationException exception) {
             if (isInsufficientPointsConstraint(exception)) {
                 throw new InsufficientLoyaltyPointsException();

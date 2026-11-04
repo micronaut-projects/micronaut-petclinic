@@ -133,17 +133,19 @@ public class OwnerController {
      *
      * @param ownerId the owner ID
      * @return the owner details view
+     * @throws NotFoundException if the owner, or its enabled loyalty account, does not exist
      */
     @Get("/{ownerId}")
     @View("owners/ownerDetails")
     public Map<String, Object> showOwner(@PathVariable Integer ownerId) {
         Owner owner;
+        OwnerLoyaltyAccount account;
         try {
             owner = clinicService.findOwnerById(ownerId);
+            account = ownerLoyaltyService.findOwnerLoyaltyAccount(owner);
         } catch (NotFoundEntityException e) {
             throw new NotFoundException();
         }
-        OwnerLoyaltyAccount account = ownerLoyaltyService.findOrCreateOwnerLoyaltyAccount(owner);
         Map<String, Object> model = new HashMap<>();
         model.put("owner", owner);
         model.put("loyalty", account != null ? ownerLoyaltyService.summary(account) : null);

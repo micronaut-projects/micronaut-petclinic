@@ -35,7 +35,7 @@ import java.util.Objects;
  * the fixed reward cost on a voucher. The debit reserves {@code POINTS = POINTS - ?},
  * allowing concurrent points reservations without row locks. Oracle's
  * {@code CHECK (POINTS >= 0)} rejects overspending, reported as HTTP 409 Conflict.
- * Unknown owners return HTTP 404 Not Found.
+ * Unknown owners or missing loyalty accounts return HTTP 404 Not Found.
  */
 @Controller("/owners/{ownerId}/loyalty")
 @ExecuteOn(TaskExecutors.BLOCKING)
@@ -50,7 +50,7 @@ public class OwnerLoyaltyController {
 
     /**
      * Creates the loyalty endpoints with their owner and reward services.
-     * @param ownerLoyaltyService loyalty provisioning, summaries, and redemption
+     * @param ownerLoyaltyService loyalty lookups, summaries, and redemption
      * @param clinicService owner lookup operations
      * @param messageSource the application translation bundles
      * @param localeResolver the resolver for the locale cookie and request headers
@@ -66,15 +66,15 @@ public class OwnerLoyaltyController {
     }
 
     /**
-     * Returns the balance and up to ten recent vouchers, provisioning a zero-balance account if needed.
+     * Returns the existing account's balance and up to ten recent vouchers without creating an account.
      * @param ownerId the owner ID, not the loyalty account ID
      * @return the current loyalty summary
-     * @throws NotFoundEntityException if the owner does not exist
+     * @throws NotFoundEntityException if the owner or loyalty account does not exist
      */
     @Get
     public OwnerLoyaltySummary getLoyalty(@PathVariable Integer ownerId) throws NotFoundEntityException {
         Owner owner = clinicService.findOwnerById(ownerId);
-        OwnerLoyaltyAccount ownerLoyaltyAccount = ownerLoyaltyService.findOrCreateOwnerLoyaltyAccount(owner);
+        OwnerLoyaltyAccount ownerLoyaltyAccount = ownerLoyaltyService.findOwnerLoyaltyAccount(owner);
         return ownerLoyaltyService.summary(Objects.requireNonNull(ownerLoyaltyAccount));
     }
 
@@ -83,7 +83,7 @@ public class OwnerLoyaltyController {
      * No request body is required; sufficient points are enforced by Oracle's reservation constraint.
      * @param ownerId the owner ID, not the loyalty account ID
      * @return the issued voucher and balance read after commit
-     * @throws NotFoundEntityException if the owner does not exist
+     * @throws NotFoundEntityException if the owner or loyalty account does not exist
      * @throws IllegalRequestArgumentException if the configured reward cost is not positive
      * @throws InsufficientLoyaltyPointsException if the reward cannot be funded
      */
@@ -91,7 +91,7 @@ public class OwnerLoyaltyController {
     @Status(HttpStatus.CREATED)
     public LoyaltyRedemptionResponse redeem(@PathVariable Integer ownerId) throws NotFoundEntityException, IllegalRequestArgumentException {
         Owner owner = clinicService.findOwnerById(ownerId);
-        OwnerLoyaltyAccount ownerLoyaltyAccount = ownerLoyaltyService.findOrCreateOwnerLoyaltyAccount(owner);
+        OwnerLoyaltyAccount ownerLoyaltyAccount = ownerLoyaltyService.findOwnerLoyaltyAccount(owner);
         return ownerLoyaltyService.redeem(Objects.requireNonNull(ownerLoyaltyAccount));
     }
 
