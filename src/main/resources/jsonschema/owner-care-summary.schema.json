@@ -5,10 +5,6 @@
     "_id": {
       "type": "integer"
     },
-    "_metadata": {
-      "additionalProperties": true,
-      "type": "object"
-    },
     "address": {
       "type": "string"
     },

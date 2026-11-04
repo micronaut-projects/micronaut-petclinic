@@ -459,37 +459,23 @@ visit data on every database.
 Choose **Export care summary** on an owner's page, or use:
 
 ```bash
-curl -fOJ http://localhost:8080/owners/{OwnerId}/care-summary
+curl -fOJ "http://localhost:8080/owners/1/care-summary"
 ```
 
-The response downloads as `owner-{OwnerId}-care-summary.json`.
+Replace `1` with the ID from the owner's page. The response downloads as
+`owner-{ownerId}-care-summary.json`.
 
-For optional Oracle discovery, use a database with
-`PETCLINIC.OWNER_CARE_DV`. Start the Compose database or use another Oracle
-instance, then provide the same connection settings to discovery and the app:
+For optional Oracle discovery, connect to a database containing
+`PETCLINIC.OWNER_CARE_DV`. Export its connection settings in the terminal used
+for discovery (local Compose example):
 
 ```bash
-docker-compose --profile oracle up -d oracle
 export DATASOURCES_DEFAULT_URL='jdbc:oracle:thin:@localhost:1521/FREEPDB1'
 export DATASOURCES_DEFAULT_USERNAME=petclinic
 export DATASOURCES_DEFAULT_PASSWORD=petclinic
 ```
 
-Export these variables in the terminal used for discovery; Gradle does not read
-connection settings from your application's IDE run configuration.
-
-Use a disposable database: the `oracle` environment uses `CREATE_DROP`, which
-recreates the mapped tables and view on each application startup. Start the app
-with either build tool to initialize the schema and sample data:
-
-```bash
-MICRONAUT_ENVIRONMENTS=oracle ./gradlew run
-./mvnw -Dmicronaut.environments=oracle mn:run
-```
-
-After startup succeeds, stop the app with Ctrl+C and keep Oracle running.
-Stopping the app leaves the schema available. Discover `PETCLINIC.OWNER_CARE_DV`
-with either build tool:
+If the view already exists, run discovery directly with either build tool:
 
 ```bash
 ./gradlew -PoracleSchemaDiscovery generateFromJsonSchemaSources
@@ -497,10 +483,27 @@ with either build tool:
 ./mvnw -PoracleSchemaDiscovery io.micronaut.jsonschema:micronaut-json-schema-maven-plugin:2.3.1:generate-from-json-schema-sources
 ```
 
+Gradle does not read connection settings from your application's IDE run configuration.
 Discovery writes a separate schema and model under `build/` or `target/` for
 inspection. It uses the existing database without Test Resources. The exporter
 always uses the resource schema; compilation never starts the app or changes
 the database.
+
+If the view is missing, initialize a **disposable demo database** first. Follow
+the `.env` preparation steps in [Oracle setup](#oracle) and export the connection
+settings above. PetClinic's `@JsonView` mapping creates the view at startup;
+`CREATE_DROP` recreates the mapped tables and view on each startup. Start Compose,
+then initialize with either build tool:
+
+```bash
+docker-compose --profile oracle up -d oracle
+MICRONAUT_ENVIRONMENTS=oracle ./gradlew run
+# Or Maven
+./mvnw -Dmicronaut.environments=oracle mn:run
+```
+
+After startup succeeds, stop the app with Ctrl+C and keep Oracle running.
+The schema remains available; run the discovery commands above.
 
 ### Oracle JSON duality showcase
 
