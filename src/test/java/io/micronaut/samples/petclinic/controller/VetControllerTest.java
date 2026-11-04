@@ -69,7 +69,7 @@ class VetControllerTest {
                     .header(HttpHeaders.COOKIE, sessionCookie));
 
             assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
-            assertThat(response.body()).contains("New Veterinarian");
+            assertThat(response.body()).contains("Add veterinarian");
         }
     }
 

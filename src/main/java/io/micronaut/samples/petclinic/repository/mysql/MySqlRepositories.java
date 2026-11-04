@@ -18,7 +18,6 @@ import io.micronaut.samples.petclinic.repository.SpecialityRepository;
 import io.micronaut.samples.petclinic.repository.UserJdbcRepository;
 import io.micronaut.samples.petclinic.repository.UserRoleJdbcRepository;
 import io.micronaut.samples.petclinic.repository.VetRepository;
-import io.micronaut.samples.petclinic.repository.VetSpecialityRepository;
 import io.micronaut.samples.petclinic.repository.VisitRepository;
 import org.jspecify.annotations.NonNull;
 
@@ -110,93 +109,75 @@ public final class MySqlRepositories {
         @Override
         @Query(value = "SELECT v.* FROM VISITS v WHERE v.PET_ID = :petId ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
         Collection<Visit> findByPetId(Integer petId);
+    }
 
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
+    @JdbcRepository(dialect = Dialect.MYSQL)
+    public interface MySqlClinicRepository extends ClinicRepository {
+    }
+
+    /**
+     * Mysql appointment repository used by the transaction-priority showcase.
+     */
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
+    @JdbcRepository(dialect = Dialect.MYSQL)
+    public interface MysqlAppointmentRepository extends AppointmentRepository {
+
+        /** Acquires the row lock using this database's configured lock timeout. */
+        @NonNull
+        @Override
+        @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE a.ID = :appointmentId FOR UPDATE", nativeQuery = true)
+        Optional<Appointment> findByIdForUpdate(Integer appointmentId);
+
+        @Override
+        @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE STATUS = 'AVAILABLE' ORDER BY DISPLAY_ORDER, ID", nativeQuery = true)
+        List<Appointment> findAvailableAppointments();
+
+    }
+
+    /**
+     * MySQL user repository bean.
+     */
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
+    @JdbcRepository(dialect = Dialect.MYSQL)
+    public interface MysqlUserJdbcRepository extends UserJdbcRepository {
+    }
+
+    /**
+     * MySQL role repository bean.
+     */
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
+    @JdbcRepository(dialect = Dialect.MYSQL)
+    public interface MysqlRoleJdbcRepository extends RoleJdbcRepository {
+    }
+
+    /**
+     * MySQL user-role repository bean.
+     */
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
+    @JdbcRepository(dialect = Dialect.MYSQL)
+    public interface MysqlUserRoleJdbcRepository extends UserRoleJdbcRepository {
         /**
-         * MySQL vet-speciality join repository bean.
+         * Finds authority names for a user using MySQL SQL.
+         *
+         * @param username the user name whose authorities should be loaded
+         * @return authority names granted to the user
          */
-        @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
-        @JdbcRepository(dialect = Dialect.MYSQL)
-        public interface MySqlVetSpecialityRepository extends VetSpecialityRepository {
-            /**
-             * Finds visits for a pet using Oracle SQL.
-             *
-             * @param petName the pet name
-             * @return visits for the pet
-             */
-            @Override
-            @Query(value = "SELECT v.* FROM VISITS v LEFT JOIN PETS p ON v.PET_ID = p.ID WHERE p.NAME = :petName  ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
-            Collection<Visit> findByPetName(String petName);
-        }
+        @Override
+        @Query(value = """
+                SELECT r.authority FROM `ROLE` r
+                INNER JOIN `USER_ROLE` ur ON ur.role_id = r.id
+                INNER JOIN `USER` u ON ur.user_id = u.ID
+                WHERE u.USERNAME = :username
+                """, nativeQuery = true)
+        List<String> findAllAuthoritiesByUsername(String username);
+    }
 
-        @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
-        @JdbcRepository(dialect = Dialect.MYSQL)
-        public interface MySqlClinicRepository extends ClinicRepository {
-
-        }
-
-        /**
-         * Mysql appointment repository used by the transaction-priority showcase.
-         */
-        @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
-        @JdbcRepository(dialect = Dialect.MYSQL)
-        public interface MysqlAppointmentRepository extends AppointmentRepository {
-
-            /** Acquires the row lock using this database's configured lock timeout. */
-            @NonNull
-            @Override
-            @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE a.ID = :appointmentId FOR UPDATE", nativeQuery = true)
-            Optional<Appointment> findByIdForUpdate(Integer appointmentId);
-
-            @Override
-            @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE STATUS = 'AVAILABLE' ORDER BY DISPLAY_ORDER, ID", nativeQuery = true)
-            List<Appointment> findAvailableAppointments();
-
-        }
-
-        /**
-         * MySQL user repository bean.
-         */
-        @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
-        @JdbcRepository(dialect = Dialect.MYSQL)
-        public interface MysqlUserJdbcRepository extends UserJdbcRepository {
-        }
-
-        /**
-         * MySQL role repository bean.
-         */
-        @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
-        @JdbcRepository(dialect = Dialect.MYSQL)
-        public interface MysqlRoleJdbcRepository extends RoleJdbcRepository {
-        }
-
-        /**
-         * MySQL user-role repository bean.
-         */
-        @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
-        @JdbcRepository(dialect = Dialect.MYSQL)
-        public interface MysqlUserRoleJdbcRepository extends UserRoleJdbcRepository {
-            /**
-             * Finds authority names for a user using MySQL SQL.
-             *
-             * @param username the user name whose authorities should be loaded
-             * @return authority names granted to the user
-             */
-            @Override
-            @Query(value = """
-                    SELECT r.authority FROM `ROLE` r
-                    INNER JOIN `USER_ROLE` ur ON ur.role_id = r.id
-                    INNER JOIN `USER` u ON ur.user_id = u.ID
-                    WHERE u.USERNAME = :username
-                    """, nativeQuery = true)
-            List<String> findAllAuthoritiesByUsername(String username);
-        }
-
-        /**
-         * MySQL clinic service offering repository bean.
-         */
-        @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
-        @JdbcRepository(dialect = Dialect.MYSQL)
-        public interface MySqlClinicServiceOfferingRepository extends ClinicServiceOfferingRepository {
-        }
+    /**
+     * MySQL clinic service offering repository bean.
+     */
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
+    @JdbcRepository(dialect = Dialect.MYSQL)
+    public interface MySqlClinicServiceOfferingRepository extends ClinicServiceOfferingRepository {
     }
 }

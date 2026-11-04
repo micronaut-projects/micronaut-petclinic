@@ -7,6 +7,7 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.runtime.server.EmbeddedServer;
+import io.micronaut.samples.petclinic.ClinicServiceFixtures;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,9 @@ class AuthorizationControllerTest {
 
     @Inject
     EmbeddedServer server;
+
+    @Inject
+    ClinicServiceFixtures clinicServiceFixtures;
 
     @Test
     void shouldAllowStaffButRejectAdminForStaffOnlyOwnerCreation() {
@@ -53,15 +57,29 @@ class AuthorizationControllerTest {
             String staffCookie = login(client, "staff@example.com", "password123");
             String adminCookie = login(client, "admin@example.com", "password123");
 
-            HttpResponse<String> staffResponse = exchange(client, formPost("/owners/1/edit", ownerForm("StaffUpdate"))
+            String suffix = UUID.randomUUID().toString().substring(0, 8);
+            HttpResponse<String> staffOwnerCreated = exchange(client,
+                    formPost("/owners/new", ownerForm("StaffOwner" + suffix))
+                            .header(HttpHeaders.COOKIE, staffCookie));
+            HttpResponse<String> adminOwnerCreated = exchange(client,
+                    formPost("/owners/new", ownerForm("AdminOwner" + suffix))
+                            .header(HttpHeaders.COOKIE, staffCookie));
+            String staffOwnerPath = staffOwnerCreated.getHeaders().get(HttpHeaders.LOCATION);
+            String adminOwnerPath = adminOwnerCreated.getHeaders().get(HttpHeaders.LOCATION);
+            assertThat(staffOwnerCreated.status().getCode()).isBetween(300, 399);
+            assertThat(adminOwnerCreated.status().getCode()).isBetween(300, 399);
+            assertThat(staffOwnerPath).isNotBlank();
+            assertThat(adminOwnerPath).isNotBlank();
+
+            HttpResponse<String> staffResponse = exchange(client, formPost(staffOwnerPath + "/edit", ownerForm("StaffUpdate"))
                     .header(HttpHeaders.COOKIE, staffCookie));
-            HttpResponse<String> adminResponse = exchange(client, formPost("/owners/2/edit", ownerForm("AdminUpdate"))
+            HttpResponse<String> adminResponse = exchange(client, formPost(adminOwnerPath + "/edit", ownerForm("AdminUpdate"))
                     .header(HttpHeaders.COOKIE, adminCookie));
 
             assertThat(staffResponse.status().getCode()).isBetween(300, 399);
-            assertThat(staffResponse.getHeaders().get(HttpHeaders.LOCATION)).isEqualTo("/owners/1");
+            assertThat(staffResponse.getHeaders().get(HttpHeaders.LOCATION)).isEqualTo(staffOwnerPath);
             assertThat(adminResponse.status().getCode()).isBetween(300, 399);
-            assertThat(adminResponse.getHeaders().get(HttpHeaders.LOCATION)).isEqualTo("/owners/2");
+            assertThat(adminResponse.getHeaders().get(HttpHeaders.LOCATION)).isEqualTo(adminOwnerPath);
         }
     }
 
@@ -79,8 +97,11 @@ class AuthorizationControllerTest {
             assertThat(signUpResponse.status().getCode()).isBetween(300, 399);
 
             String cookie = login(client, username, password);
+            var owner = clinicServiceFixtures.requiredOwner("George", "Franklin");
+            var pet = clinicServiceFixtures.requiredPet("George", "Franklin", "Leo");
 
-            HttpResponse<String> response = exchange(client, HttpRequest.POST("/owners/1/pets/1/visits/new", Map.of(
+            HttpResponse<String> response = exchange(client, HttpRequest.POST(
+                    "/owners/" + owner.id() + "/pets/" + pet.id() + "/visits/new", Map.of(
                     "date", LocalDate.now().plusDays(1).toString(),
                     "description", "Follow-up",
                     "durationMinutes", 30,
@@ -89,7 +110,7 @@ class AuthorizationControllerTest {
                     .header(HttpHeaders.COOKIE, cookie));
 
             assertThat(response.status().getCode()).isBetween(300, 399);
-            assertThat(response.getHeaders().get(HttpHeaders.LOCATION)).isEqualTo("/owners/1");
+            assertThat(response.getHeaders().get(HttpHeaders.LOCATION)).isEqualTo("/owners/" + owner.id());
         }
     }
 

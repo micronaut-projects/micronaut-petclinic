@@ -1,46 +1,53 @@
 package io.micronaut.samples.petclinic.controller;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.Delete;
 import io.micronaut.http.annotation.Error;
 import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.Header;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
-import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.annotation.Put;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.annotation.Status;
+import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.samples.petclinic.dto.SpecialityDto;
 import io.micronaut.samples.petclinic.dto.VetDto;
 import io.micronaut.samples.petclinic.dto.VetForm;
 import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
 import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
+import io.micronaut.samples.petclinic.exception.PreconditionFailedException;
+import io.micronaut.samples.petclinic.exception.PreconditionRequiredException;
 import io.micronaut.samples.petclinic.mapper.FormMapper;
 import io.micronaut.samples.petclinic.model.Speciality;
 import io.micronaut.samples.petclinic.model.Vet;
-import io.micronaut.samples.petclinic.service.ClinicService;
 import io.micronaut.samples.petclinic.service.VetService;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
+import io.micronaut.views.ModelAndView;
 import io.micronaut.views.View;
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
+import jakarta.validation.ConstraintViolation;
 
 import java.net.URI;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static io.micronaut.http.HttpStatus.CREATED;
+import static io.micronaut.http.HttpStatus.NO_CONTENT;
 
 /** Veterinarian and speciality pages and operations. */
 @Controller("/vets")
@@ -50,9 +57,6 @@ public class VetController {
 
     private final VetService vetService;
     private final FormMapper formMapper;
-    private static final String VIEW_VET_FORM = "vets/createOrUpdateVetForm";
-
-    private final ClinicService clinicService;
 
     /**
      * Creates the veterinarian and speciality controller.
@@ -72,7 +76,6 @@ public class VetController {
      * @param saved whether to display the saved notice
      * @return the veterinarian list view model
      */
-    @Secured(SecurityRule.IS_ANONYMOUS)
     @Get
     @View("vets/vetList")
     public Map<String, Object> showVetList(@QueryValue(defaultValue = "false") boolean saved) {
@@ -80,83 +83,189 @@ public class VetController {
     }
 
     /**
-     * Display the list of veterinarians in HTML format.
-     * Alias for the main endpoint.
-     * @return the vets list view
+     * Displays the veterinarian list through its HTML alias.
+     *
+     * @param saved whether to display the saved notice
+     * @return the veterinarian list view model
      */
-    @Secured(SecurityRule.IS_ANONYMOUS)
     @Get("/html")
     @View("vets/vetList")
-    public Map<String, Object> showResourcesVetList() {
-        return showVetList();
+    public Map<String, Object> showResourcesVetList(@QueryValue(defaultValue = "false") boolean saved) {
+        return vetListModel(saved);
     }
 
     /**
-     * Return the list of veterinarians as JSON.
-     * @return collection of vets in JSON format
+     * Lists veterinarians with their fetched specialities as DTOs in JSON.
+     *
+     * @return the current veterinarian DTOs
      */
-    @Secured(SecurityRule.IS_ANONYMOUS)
     @Get("/json")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Collection<Vet> showResourcesVetListJson() {
-        return clinicService.findAllVets();
+    public Collection<VetDto> showResourcesVetListJson() {
+        return vetService.findAll().stream().map(formMapper::toVetDto).toList();
     }
 
     /**
-     * Display the form to create a new veterinarian.
+     * Displays an empty veterinarian creation form.
      *
-     * @return the create vet form view
+     * @return the form and available specialities
      */
-    @Secured(SecurityRule.IS_ANONYMOUS)
     @Get("/new")
-    @View(VIEW_VET_FORM)
-    public Map<String, Object> initCreationForm() {
-        return Map.of(
-                "vet", new VetForm(),
-                "validationErrors", Map.of()
-        );
+    @View("vets/createOrUpdateVetForm")
+    public Map<String, Object> newVetForm() {
+        return vetFormModel(new VetDto(), true, false);
     }
 
     /**
-     * Process the form to create a new veterinarian.
+     * Creates a veterinarian from the authenticated HTML form.
      *
-     * @param form the submitted vet form data
-     * @return redirect to the vet list on success
+     * @param form submitted veterinarian details
+     * @return redirect to the veterinarian list
+     * @throws IllegalRequestArgumentException if a speciality reference is invalid
+     * @throws NotFoundEntityException if a referenced entity is missing
      */
-    @Secured({"ROLE_ADMIN"})
+    @Secured("ROLE_ADMIN")
     @Post(value = "/new", consumes = MediaType.APPLICATION_FORM_URLENCODED)
-    public HttpResponse<?> processCreationForm(@Valid @Body VetForm form) {
-        clinicService.saveVet(new Vet(form.firstName(), form.lastName()));
+    public HttpResponse<?> processCreationForm(@Valid @Body VetForm form)
+            throws IllegalRequestArgumentException, NotFoundEntityException {
+        vetService.create(form);
         URI uri = UriBuilder.of("/vets").build();
         return HttpResponse.redirect(uri);
     }
 
     /**
-     * Renders the vet creation form when validation fails.
+     * Loads the current veterinarian and ETag into the edit page.
      *
-     * @param request the request containing the submitted form
-     * @param e the validation exception
-     * @return a form model containing submitted values and field errors
+     * @param id veterinarian identifier
+     * @param saved whether to display the saved notice
+     * @return the edit form and available specialities
+     * @throws NotFoundException if the vet isn't found
      */
-    @Error(exception = ConstraintViolationException.class)
-    @View(VIEW_VET_FORM)
-    public Map<String, Object> onCreateVetValidationError(HttpRequest<?> request,
-                                                          ConstraintViolationException e) {
-        VetForm vet = request.getBody(VetForm.class).orElseGet(VetForm::new);
-
-        Map<String, String> errors = new LinkedHashMap<>();
-        for (ConstraintViolation<?> v : e.getConstraintViolations()) {
-            String field = v.getPropertyPath() != null ? v.getPropertyPath().toString() : "";
-            int lastDot = field.lastIndexOf('.');
-            if (lastDot >= 0 && lastDot < field.length() - 1) {
-                field = field.substring(lastDot + 1);
-            }
-            errors.put(field, v.getMessage());
+    @Get("/{id}/edit")
+    @View("vets/createOrUpdateVetForm")
+    public Map<String, Object> editVetForm(@PathVariable Integer id,
+                                           @QueryValue(defaultValue = "false") boolean saved) {
+        Vet vet = null;
+        try {
+            vet = vetService.findById(id);
+        } catch (NotFoundEntityException e) {
+            throw new NotFoundException();
         }
-        return Map.of(
-                "vet", vet,
-                "validationErrors", errors
-        );
+        VetDto form = new VetDto(vet.id(), vet.firstName(), vet.lastName(),
+                vet.specialities().stream().map(formMapper::toSpecialityDto).collect(Collectors.toSet()),
+                Objects.requireNonNull(vet.etag()));
+        return vetFormModel(form, false, saved);
+    }
+
+    /**
+     * Displays available specialities ordered by name.
+     *
+     * @param created whether to display the creation confirmation
+     * @param changed whether to display the update confirmation
+     * @return the speciality list view model
+     */
+    @Get("/specialities")
+    @View("vets/specialityList")
+    public Map<String, Object> showSpecialities(@QueryValue(defaultValue = "false") boolean created,
+                                                @QueryValue(defaultValue = "false") boolean changed) {
+        return Map.of("specialities", vetService.findSpecialities(), "created", created, "changed", changed);
+    }
+
+    /**
+     * Displays an empty speciality creation form.
+     *
+     * @param duplicate whether to display the duplicate-name notice
+     * @return the creation form view model
+     */
+    @Get("/specialities/new")
+    @View("vets/createOrUpdateSpecialityForm")
+    public Map<String, Object> newSpecialityForm(@QueryValue(defaultValue = "false") boolean duplicate) {
+        return specialityFormModel(new SpecialityDto(null, null), true, false, duplicate);
+    }
+
+    /**
+     * Displays the current speciality name for editing.
+     *
+     * @param id speciality identifier
+     * @param saved whether to display the saved notice
+     * @param duplicate whether to display the duplicate-name notice
+     * @return the speciality edit view model
+     * @throws NotFoundException if the speciality isn't found
+     */
+    @Get("/specialities/{id}/edit")
+    @View("vets/createOrUpdateSpecialityForm")
+    public Map<String, Object> editSpecialityForm(@PathVariable Integer id,
+                                                  @QueryValue(defaultValue = "false") boolean saved,
+                                                  @QueryValue(defaultValue = "false") boolean duplicate) {
+        Speciality speciality = null;
+        try {
+            speciality = vetService.findSpecialityById(id);
+        } catch (NotFoundEntityException e) {
+            throw new NotFoundException();
+        }
+        return specialityFormModel(formMapper.toSpecialityDto(speciality), false, saved, duplicate);
+    }
+
+    /**
+     * Creates a veterinarian, resolving assignments against stored specialities.
+     *
+     * @param form submitted names and speciality IDs
+     * @return HTTP 201 with the saved veterinarian and ETag
+     * @throws IllegalRequestArgumentException if a speciality reference is invalid
+     * @throws NotFoundEntityException if the vet isn't found
+     */
+    @Post(consumes = MediaType.APPLICATION_JSON)
+    public HttpResponse<VetDto> createVet(@Valid @Body VetForm form) throws IllegalRequestArgumentException, NotFoundEntityException {
+        Vet saved = vetService.create(form);
+        return response(saved, HttpStatus.CREATED);
+    }
+
+    /**
+     * Reads a veterinarian with its ETag and specialities.
+     *
+     * @param id veterinarian identifier
+     * @return HTTP 200 with the veterinarian and quoted ETag header
+     */
+    @Get("/{id}")
+    public HttpResponse<VetDto> readVet(@PathVariable Integer id) throws NotFoundEntityException {
+        return response(vetService.findById(id), HttpStatus.OK);
+    }
+
+    /**
+     * Updates a veterinarian using the ETag supplied in {@code If-Match}.
+     *
+     * @param id veterinarian identifier from the URL
+     * @param ifMatch the current ETag, optionally enclosed in double quotes
+     * @param request new names and speciality references
+     * @return HTTP 200 with the updated veterinarian and ETag
+     * @throws PreconditionRequiredException if the ETag is absent or blank
+     * @throws PreconditionFailedException if the veterinarian has changed
+     * @throws IllegalRequestArgumentException if a speciality reference is invalid
+     * @throws NotFoundEntityException if the vet isn't found
+     */
+    @Put(value = "/{id}", consumes = MediaType.APPLICATION_JSON)
+    public HttpResponse<VetDto> updateVet(@PathVariable Integer id,
+                                          @Nullable @Header("If-Match") String ifMatch,
+                                          @Valid @Body VetForm request)
+            throws PreconditionRequiredException, PreconditionFailedException, IllegalRequestArgumentException, NotFoundEntityException {
+        Vet current = vetService.findById(id);
+        return response(vetService.update(current, request, ifMatch), HttpStatus.OK);
+    }
+
+    /**
+     * Deletes a veterinarian using the ETag supplied in {@code If-Match}.
+     *
+     * @param id veterinarian identifier
+     * @param ifMatch the current ETag, optionally enclosed in double quotes
+     * @throws PreconditionRequiredException if the ETag is absent or blank
+     * @throws PreconditionFailedException if the veterinarian has changed
+     * @throws NotFoundEntityException if the vet isn't found
+     */
+    @Delete("/{id}")
+    @Status(NO_CONTENT)
+    public void deleteVet(@PathVariable Integer id,
+                          @Nullable @Header("If-Match") String ifMatch)
+            throws PreconditionRequiredException, PreconditionFailedException, NotFoundEntityException {
+        vetService.delete(id, ifMatch);
     }
 
     /**
@@ -194,7 +303,7 @@ public class VetController {
      */
     @Put(value = "/specialities/{id}", consumes = MediaType.APPLICATION_JSON)
     public SpecialityDto updateSpeciality(@PathVariable Integer id,
-                                          @Valid @Body SpecialityDto request) throws IllegalRequestArgumentException, NotFoundEntityException {
+                                                        @Valid @Body SpecialityDto request) throws IllegalRequestArgumentException, NotFoundEntityException {
         if (request.id() != null && !Objects.equals(id, request.id())) {
             throw new IllegalRequestArgumentException("Id should match the one in the url");
         }
@@ -227,7 +336,6 @@ public class VetController {
                                                            boolean duplicate) {
         return Map.of("specialityForm", form, "isNew", isNew, "saved", saved, "duplicate", duplicate);
     }
-
     /**
      * Reports invalid request data.
      *
@@ -235,7 +343,28 @@ public class VetController {
      * @return HTTP 400 with a JSON message
      */
     @Error(exception = ConstraintViolationException.class)
-    public HttpResponse<Map<String, String>> validationError(ConstraintViolationException error) {
+    public Object validationError(HttpRequest<?> request, ConstraintViolationException error) {
+        if ("/vets/new".equals(request.getPath())) {
+            VetForm form = request.getBody(VetForm.class).orElseGet(VetForm::new);
+            Map<String, String> errors = new LinkedHashMap<>();
+            for (ConstraintViolation<?> violation : error.getConstraintViolations()) {
+                String field = violation.getPropertyPath() == null ? "" : violation.getPropertyPath().toString();
+                int lastDot = field.lastIndexOf('.');
+                if (lastDot >= 0 && lastDot < field.length() - 1) {
+                    field = field.substring(lastDot + 1);
+                }
+                errors.put(field, violation.getMessage());
+            }
+
+            Map<String, Object> model = new LinkedHashMap<>(vetFormModel(
+                    new VetDto(null, form.firstName(), form.lastName(),
+                            form.specialityIds().stream().map(id -> new SpecialityDto(id, null)).collect(Collectors.toSet()), null),
+                    true,
+                    false));
+            model.put("vet", form);
+            model.put("validationErrors", errors);
+            return new ModelAndView<>("vets/createOrUpdateVetForm", model);
+        }
         return HttpResponse.badRequest(Map.of("message", "Invalid request."));
     }
 }

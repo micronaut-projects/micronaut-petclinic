@@ -12,6 +12,7 @@ import io.micronaut.samples.petclinic.service.OwnerCareViewService;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import java.util.Collection;
 import java.util.List;
@@ -22,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /** Oracle integration coverage for Micronaut Data's generated JSON duality view. */
 @MicronautTest
 @Requires(env = "oracle")
+@EnabledIfSystemProperty(named = "micronaut.environments", matches = ".*oracle.*")
 class OracleOwnerCareViewRepositoryTest {
 
     @Inject

@@ -7,6 +7,7 @@ import io.micronaut.samples.petclinic.repository.ClinicRepository;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -17,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest
 @Requires(property = "datasources.default.dialect", value = "H2")
+@EnabledIfSystemProperty(named = "micronaut.environments", matches = ".*h2.*")
 class H2GisInitializerTest {
     @Inject ClinicRepository clinics;
     @Value("${datasources.default.url}") String jdbcUrl;

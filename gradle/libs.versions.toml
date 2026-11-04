@@ -48,7 +48,6 @@ micronaut-managment = { module = "io.micronaut:micronaut-management" }
 micronaut-security = { module = "io.micronaut.security:micronaut-security" }
 micronaut-security-session = { module = "io.micronaut.security:micronaut-security-session" }
 micronaut-reactor = { module = "io.micronaut.reactor:micronaut-reactor" }
-micronaut-managment = { module = "io.micronaut:micronaut-management"}
 
 jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api" }
 h2 = { module = "com.h2database:h2" }

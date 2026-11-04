@@ -8,6 +8,7 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.runtime.server.EmbeddedServer;
+import io.micronaut.samples.petclinic.ClinicServiceFixtures;
 import io.micronaut.samples.petclinic.model.User;
 import io.micronaut.samples.petclinic.repository.UserJdbcRepository;
 import io.micronaut.samples.petclinic.utils.PasswordEncoder;
@@ -38,6 +39,9 @@ class UserControllerTest {
 
     @Inject
     EmbeddedServer server;
+
+    @Inject
+    ClinicServiceFixtures clinicServiceFixtures;
 
     @Inject
     UserJdbcRepository userJdbcRepository;
@@ -89,7 +93,7 @@ class UserControllerTest {
             String sessionCookie = login(noRedirectClient, "admin@example.com", "password123");
             assertThat(sessionCookie).isNotBlank();
 
-            HttpResponse<String> protectedResponse = exchange(noRedirectClient, HttpRequest.GET("/owners/1/pets/1/edit")
+            HttpResponse<String> protectedResponse = exchange(noRedirectClient, HttpRequest.GET(leoPetEditPath())
                     .header(HttpHeaders.COOKIE, sessionCookie));
 
             assertThat((CharSequence) protectedResponse.status()).isEqualTo(HttpStatus.OK);
@@ -123,7 +127,7 @@ class UserControllerTest {
             assertThat(logoutResponse.status().getCode()).isBetween(300, 399);
             assertThat(logoutResponse.getHeaders().get(HttpHeaders.LOCATION)).isEqualTo("/");
 
-            HttpResponse<String> protectedResponse = exchange(noRedirectClient, HttpRequest.GET("/owners/1/pets/1/edit")
+            HttpResponse<String> protectedResponse = exchange(noRedirectClient, HttpRequest.GET(leoPetEditPath())
                     .header(HttpHeaders.COOKIE, sessionCookie));
 
             assertThat((CharSequence) protectedResponse.status()).isEqualTo(HttpStatus.UNAUTHORIZED);
@@ -133,7 +137,7 @@ class UserControllerTest {
     @Test
     void shouldRedirectAnonymousUserFromAuthenticatedPageToLogin() {
         try (HttpClient noRedirectClient = createNoRedirectClient(server)) {
-            HttpResponse<String> response = exchange(noRedirectClient, HttpRequest.GET("/owners/1/pets/1/edit")
+            HttpResponse<String> response = exchange(noRedirectClient, HttpRequest.GET(leoPetEditPath())
                     .accept(MediaType.TEXT_HTML));
 
             assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.SEE_OTHER);
@@ -174,5 +178,11 @@ class UserControllerTest {
 
             assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
         }
+    }
+
+    private String leoPetEditPath() {
+        var owner = clinicServiceFixtures.requiredOwner("George", "Franklin");
+        var pet = clinicServiceFixtures.requiredPet("George", "Franklin", "Leo");
+        return "/owners/" + owner.id() + "/pets/" + pet.id() + "/edit";
     }
 }

@@ -1,6 +1,5 @@
 package io.micronaut.samples.petclinic.dto;
 
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.samples.petclinic.model.Speciality;
 import io.micronaut.samples.petclinic.model.Vet;
 import io.micronaut.serde.annotation.Serdeable;
@@ -18,7 +17,6 @@ import java.util.Set;
  * @param firstName veterinarian first name
  * @param lastName veterinarian last name
  * @param specialityIds selected speciality identifiers
- * @param id the vet id for update submissions, or {@code null} for new vets
  * @param firstName the submitted first name
  * @param lastName the submitted last name
  */
