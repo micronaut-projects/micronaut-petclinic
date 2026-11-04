@@ -1,10 +1,13 @@
 package io.micronaut.samples.petclinic.controller;
 
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.samples.petclinic.ClinicServiceFixtures;
+import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -20,6 +23,12 @@ class OwnerControllerTest {
     @Inject
     @Client("/")
     HttpClient client;
+
+    @Inject
+    ClinicServiceFixtures clinicServiceFixtures;
+
+    @Inject
+    ApplicationContext context;
 
     @Test
     void shouldShowFindOwnersForm() {
@@ -50,12 +59,20 @@ class OwnerControllerTest {
 
     @Test
     void shouldShowOwnerDetails() {
+        Owner owner = clinicServiceFixtures.requiredOwner("George", "Franklin");
+
         HttpResponse<String> response = client.toBlocking()
-                .exchange(HttpRequest.GET("/owners/1"), String.class);
-        
+                .exchange(HttpRequest.GET("/owners/" + owner.id()), String.class);
+
         assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
         assertThat(response.body()).contains("George");
         assertThat(response.body()).contains("Franklin");
+
+        if (context.getEnvironment().getActiveNames().contains("oracle")) {
+            assertThat(response.body()).contains("id=\"care-record-tab\"");
+        } else {
+            assertThat(response.body()).doesNotContain("id=\"care-record-tab\"");
+        }
     }
 
     @Test
@@ -69,11 +86,14 @@ class OwnerControllerTest {
 
     @Test
     void shouldShowEditOwnerForm() {
+        Owner owner = clinicServiceFixtures.requiredOwner("George", "Franklin");
+
         HttpResponse<String> response = client.toBlocking()
-                .exchange(HttpRequest.GET("/owners/1/edit"), String.class);
+                .exchange(HttpRequest.GET("/owners/" + owner.id() + "/edit"), String.class);
         
         assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
         assertThat(response.body()).contains("Edit Owner");
         assertThat(response.body()).contains("George");
     }
+
 }

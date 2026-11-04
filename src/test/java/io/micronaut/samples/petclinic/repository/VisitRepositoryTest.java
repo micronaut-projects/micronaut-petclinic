@@ -26,7 +26,7 @@ class VisitRepositoryTest {
 
     @Test
     void shouldReadIntervalValues() {
-        Collection<Visit> visits = visitRepository.findByPetId(7);
+        Collection<Visit> visits = visitRepository.findByPetName("Samantha");
 
         assertThat(visits).extracting(Visit::duration)
                 .containsExactly(Duration.ofHours(1), Duration.ofMinutes(30));

@@ -4,14 +4,18 @@ import io.micronaut.context.annotation.Mapper;
 import io.micronaut.context.annotation.Mapper.Mapping;
 import io.micronaut.samples.petclinic.dto.OwnerForm;
 import io.micronaut.samples.petclinic.dto.PetForm;
+import io.micronaut.samples.petclinic.dto.SpecialityDto;
+import io.micronaut.samples.petclinic.dto.VetDto;
 import io.micronaut.samples.petclinic.dto.VisitForm;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
+import io.micronaut.samples.petclinic.model.Speciality;
+import io.micronaut.samples.petclinic.model.Vet;
 import io.micronaut.samples.petclinic.model.Visit;
-import jakarta.inject.Singleton;
 
 import java.time.Duration;
 import java.time.Period;
+import java.util.stream.Collectors;
 
 /**
  * Maps web form DTOs to and from the domain model.
@@ -90,4 +94,23 @@ public interface FormMapper {
                 Period.ofMonths(form.followUpPeriodMonths())
         );
     }
+
+    /**
+     * Maps a fetched veterinarian.
+     *
+     * @param vet source veterinarian
+     * @return the veterinarian response DTO
+     */
+    default VetDto toVetDto(Vet vet) {
+        return new VetDto(vet.id(), vet.firstName(), vet.lastName(),
+                vet.specialities().stream().map(this::toSpecialityDto).collect(Collectors.toSet()), vet.etag());
+    }
+
+    /**
+     * Maps a speciality to specialityDto.
+     *
+     * @param speciality source speciality
+     * @return the speciality response DTO
+     */
+    SpecialityDto toSpecialityDto(Speciality speciality);
 }

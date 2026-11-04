@@ -12,6 +12,7 @@ import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.samples.petclinic.dto.OwnerForm;
+import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.mapper.FormMapper;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.service.ClinicService;
@@ -26,7 +27,6 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import static io.micronaut.samples.petclinic.model.Role.Authority.ROLE_ADMIN_;
 import static io.micronaut.samples.petclinic.model.Role.Authority.ROLE_STAFF_;
@@ -233,13 +233,11 @@ public class OwnerController {
      */
     @Secured({ROLE_STAFF_, ROLE_ADMIN_})
     @Post(value = "/{ownerId}/edit", consumes = MediaType.APPLICATION_FORM_URLENCODED)
-    public HttpResponse<?> processUpdateOwnerForm(@PathVariable Integer ownerId, @Valid @Body OwnerForm form) {
-        Optional<Owner> existingOwner = clinicService.findOwnerById(ownerId);
-        if (existingOwner.isEmpty()) {
-            return HttpResponse.notFound();
-        }
+    public HttpResponse<?> processUpdateOwnerForm(@PathVariable Integer ownerId, @Valid @Body OwnerForm form)
+            throws NotFoundEntityException {
+        Owner existingOwner = clinicService.findOwnerById(ownerId).orElseThrow(NotFoundEntityException::new);
 
-        Owner owner = formMapper.updateOwner(existingOwner.get(), form);
+        Owner owner = formMapper.updateOwner(existingOwner, form);
         clinicService.saveOwner(owner);
 
         URI uri = UriBuilder.of("/owners/{ownerId}").expand(Map.of("ownerId", ownerId));

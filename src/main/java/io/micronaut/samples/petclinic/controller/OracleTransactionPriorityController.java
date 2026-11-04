@@ -13,6 +13,7 @@ import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.samples.petclinic.dto.OracleBookingResult;
+import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.repository.AppointmentRepository;
 import io.micronaut.samples.petclinic.service.OracleTransactionPriorityService;
 import io.micronaut.scheduling.TaskExecutors;
@@ -84,7 +85,7 @@ public class OracleTransactionPriorityController {
 
     @Post("/book")
     public HttpResponse<OracleBookingResult> book(@QueryValue Integer appointmentId,
-                                                  @QueryValue BookingType type) {
+                                                  @QueryValue BookingType type) throws NotFoundEntityException {
         Runnable transaction = switch (type) {
             case REGULAR -> () -> service.bookRegular(appointmentId);
             case EMERGENCY -> () -> service.bookEmergency(appointmentId);
@@ -92,9 +93,10 @@ public class OracleTransactionPriorityController {
         return executeBooking(appointmentId, transaction);
     }
 
-    private HttpResponse<OracleBookingResult> executeBooking(Integer appointmentId, Runnable transaction) {
+    private HttpResponse<OracleBookingResult> executeBooking(Integer appointmentId, Runnable transaction)
+            throws NotFoundEntityException {
         if (!appointments.existsById(appointmentId)) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Appointment not found.");
+            throw new NotFoundEntityException("Appointment not found.");
         }
         Outcome outcome = Outcome.COMMITTED;
         try {
@@ -106,7 +108,7 @@ public class OracleTransactionPriorityController {
             }
         }
         var booked = appointments.findById(appointmentId)
-                .orElseThrow(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "Appointment not found."));
+                .orElseThrow(() -> new NotFoundEntityException("Appointment not found."));
         var result = new OracleBookingResult(appointmentId, outcome, booked.status(),
                 appointments.findAvailableAppointments());
         HttpStatus status = switch (outcome) {

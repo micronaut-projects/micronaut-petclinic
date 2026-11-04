@@ -89,11 +89,13 @@ The database password is passed to the Oracle container as a Docker Compose secr
    docker-compose --profile oracle-deepsec up -d
    ```
 
-   Compose runs `00-initialize-petclinic.sql` as the local `petclinic` user,
-   then applies `01-configure-deepsec.sql` as `SYSTEM`, and finally runs the
-   optional identity fixture. The SQL migration skips an already populated
-   schema. The terminal-launched application still uses Entra/OJDBC for
-   DeepSec queries.
+   Compose runs `00-initialize-petclinic.sql` and the idempotent
+   `03-vet-specialities-etag.sql` migration as the local `petclinic` user, then
+   applies `01-configure-deepsec.sql` as `SYSTEM`, and finally runs the optional
+   identity fixture. The migration adds and backfills
+   `VETS.SPECIALITIES_ETAG_HASH` from sorted speciality IDs in existing and fresh
+   schemas. The terminal-launched application still uses Entra/OJDBC for DeepSec
+   queries.
 
 4. TCPS is configured automatically by the Oracle container. It creates a self-signed server/client wallet under `oracle_data`. Export it to the host for the terminal-launched application:
 
