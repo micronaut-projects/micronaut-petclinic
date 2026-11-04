@@ -98,7 +98,9 @@ public interface OwnerLoyaltyService {
      * @param account the persisted account funding the reward
      * @return the committed voucher and subsequently read balance, or {@code null} when disabled
      * @throws IllegalRequestArgumentException if the configured reward cost is not positive
+     * @throws NotFoundEntityException if the account disappears before the debit or balance lookup
      * @throws InsufficientLoyaltyPointsException if the points reservation is rejected for insufficient funds
      */
-    @Nullable LoyaltyRedemptionResponse redeem(OwnerLoyaltyAccount account) throws IllegalRequestArgumentException;
+    @Nullable LoyaltyRedemptionResponse redeem(OwnerLoyaltyAccount account)
+            throws IllegalRequestArgumentException, NotFoundEntityException;
 }

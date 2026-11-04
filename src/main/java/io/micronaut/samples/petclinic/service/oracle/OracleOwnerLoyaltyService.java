@@ -135,7 +135,8 @@ public class OracleOwnerLoyaltyService implements OwnerLoyaltyService {
     }
 
     @Override
-    public LoyaltyRedemptionResponse redeem(OwnerLoyaltyAccount account) throws IllegalRequestArgumentException {
+    public LoyaltyRedemptionResponse redeem(OwnerLoyaltyAccount account)
+            throws IllegalRequestArgumentException, NotFoundEntityException {
         final OwnerRewardVoucher voucher;
         try {
             voucher = redemptionService.redeem(account, REWARD_COST);
@@ -146,7 +147,8 @@ public class OracleOwnerLoyaltyService implements OwnerLoyaltyService {
             throw exception;
         }
         // The transaction proxy has committed the reservation before this balance is read.
-        long points = ownerLoyaltyAccountRepository.findById(account.id()).orElseThrow().points();
+        long points = ownerLoyaltyAccountRepository.findById(account.id())
+                .orElseThrow(NotFoundEntityException::new).points();
         return new LoyaltyRedemptionResponse(points, toView(voucher));
     }
 

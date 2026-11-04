@@ -607,6 +607,24 @@ class OracleOwnerLoyaltyIntegrationTest {
         assertThat(ownerLoyaltyService.findOwnerLoyaltyAccount(created.id()).points()).isEqualTo(75L);
     }
 
+    @Test
+    @Order(25)
+    void redemptionOfAnAccountDeletedAfterLookupReportsNotFound() {
+        Owner owner = createOwner();
+        OwnerLoyaltyAccount account = findOwnerLoyaltyAccount(owner);
+        incrementPoints(account, 100L);
+
+        clinicService.deleteOwner(owner);
+
+        assertThatThrownBy(() -> redemptionService.redeem(account, 100L))
+                .isExactlyInstanceOf(NotFoundEntityException.class);
+        assertThatThrownBy(() -> ownerLoyaltyService.redeem(account))
+                .isExactlyInstanceOf(NotFoundEntityException.class);
+        assertThat(accountRepository.findById(account.id())).isEmpty();
+        assertThat(voucherRepository.findTop10ByOwnerLoyaltyAccountOrderByCreatedAtDescAndIdDesc(account))
+                .isEmpty();
+    }
+
     private List<OwnerRewardVoucher> vouchers(Owner owner) {
         return voucherRepository.findTop10ByOwnerLoyaltyAccountOrderByCreatedAtDescAndIdDesc(
                 accountRepository.findByOwner(owner).orElseThrow());
