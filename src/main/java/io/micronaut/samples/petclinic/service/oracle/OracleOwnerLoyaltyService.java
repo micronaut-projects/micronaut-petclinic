@@ -24,9 +24,12 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * Loyalty persistence for the regular Oracle profile, excluding Oracle Deep Data Security.
- * Point credits join the visit transaction. Reward redemption uses a separate transaction
- * bean so the debit and voucher commit before the response balance is reloaded.
+ * Manages loyalty balances and reward vouchers using Oracle lock-free points reservations.
+ * New visits earn {@value #POINTS_PER_VISIT} points in the visit transaction; each reward
+ * spends {@value #REWARD_COST} points. Oracle's {@code CHECK (POINTS >= 0)} rejects
+ * overspending, including pending debit reservations from concurrent transactions.
+ * Oracle applies reserved balance changes at commit, so redemption uses a separate
+ * transaction bean to commit the debit and voucher before reloading the response balance.
  * Account lookup creates a zero-balance account as a fallback when one is missing.
  */
 @Singleton

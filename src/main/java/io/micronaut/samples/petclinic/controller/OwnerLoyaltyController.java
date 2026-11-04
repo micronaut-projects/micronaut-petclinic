@@ -21,6 +21,8 @@ import io.micronaut.samples.petclinic.oracle.model.OwnerLoyaltyAccount;
 import io.micronaut.samples.petclinic.service.ClinicService;
 import io.micronaut.samples.petclinic.service.InsufficientLoyaltyPointsException;
 import io.micronaut.samples.petclinic.service.OwnerLoyaltyService;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 
@@ -28,10 +30,15 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Loyalty JSON endpoints for the regular Oracle profile, excluding Oracle Deep Data Security.
- * Missing owners return HTTP 404; rejected points reservations return HTTP 409.
+ * REST API for an owner's loyalty points, backed by an Oracle lock-free reservable column.
+ * GET returns the balance and up to ten newest vouchers; POST {@code /redemptions} spends
+ * the fixed reward cost on a voucher. The debit reserves {@code POINTS = POINTS - ?},
+ * allowing concurrent points reservations without row locks. Oracle's
+ * {@code CHECK (POINTS >= 0)} rejects overspending, reported as HTTP 409 Conflict.
+ * Unknown owners return HTTP 404 Not Found.
  */
 @Controller("/owners/{ownerId}/loyalty")
+@ExecuteOn(TaskExecutors.BLOCKING)
 @Requires(env = "oracle", notEnv = "oracle-deepsec")
 @Secured(SecurityRule.IS_ANONYMOUS)
 public class OwnerLoyaltyController {
