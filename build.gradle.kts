@@ -74,19 +74,6 @@ jte {
     generate()
 }
 
-graalvmNative {
-    binaries {
-        named("main") {
-            buildArgs.add("--enable-native-access=ALL-UNNAMED")
-            buildArgs.add("--exclude-config")
-            buildArgs.add(".*micronaut-http-netty-[^/]+\\.jar")
-            buildArgs.add("^/META-INF/native-image/io\\.micronaut\\.micronaut\\.http\\.netty/native-image\\.properties$")
-            buildArgs.add("--initialize-at-run-time=io.netty.util.internal.CleanerJava25")
-            buildArgs.add("--initialize-at-run-time=sun.security.util.Password\$ConsoleHolder")
-            buildArgs.add("--initialize-at-run-time=jdk.internal.io.JdkConsoleImpl\$1ConsoleHolder")
-        }
-    }
-}
 
 tasks.withType<JavaCompile>().configureEach {
     options.release.set(25)
@@ -106,18 +93,4 @@ tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     maxParallelForks = 1
     systemProperty("micronaut.server.port", "-1")
-}
-
-graalvmNative {
-    metadataRepository {
-        enabled = true
-    }
-    binaries {
-        all {
-            resources.autodetect()
-            if (JavaVersion.current().majorVersion == "25") {
-                buildArgs.add("-H:+SharedArenaSupport")
-            }
-        }
-    }
 }
