@@ -1,5 +1,6 @@
 package io.micronaut.samples.petclinic.service;
 
+import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.geo.LineString;
 import io.micronaut.data.model.geo.Point;
@@ -79,6 +80,7 @@ public class ClinicService {
      * @return the persisted owner
      * @throws NotFoundEntityException if the owner does not exist
      */
+    @Cacheable("owner-details")
     public Owner findOwnerById(Integer id) throws NotFoundEntityException {
         return ownerRepository.findById(id).orElseThrow(NotFoundEntityException::new);
     }

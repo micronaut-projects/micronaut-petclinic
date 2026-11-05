@@ -131,7 +131,6 @@ public class VisitController {
                                                 @Valid @Body VisitForm form) throws NotFoundEntityException {
         Pet pet = clinicService.findPetById(petId);
         validateOwnerPetPath(ownerId, pet);
-        Pet pet = clinicService.findPetById(petId);
 
         Visit visit = formMapper.toVisit(form).withPet(pet);
         clinicService.saveVisit(visit);
