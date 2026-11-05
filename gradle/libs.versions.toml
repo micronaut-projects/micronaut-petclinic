@@ -1,10 +1,6 @@
 [versions]
-micronaut-platform = "5.2.4"
-#TODO: temperory, Remove once the micronaut platform v5.2.3 is published
-micronaut-data = "5.2.4"
-micronaut-cache = "6.2.0"
+micronaut-platform = "5.2.5"
 micronaut-gradle-plugin = "5.0.2"
-micronaut-sourcegen = "2.2.4"
 # Azure provider 1.1.0 uses oracle.jdbc.util.OracleConfigurationCache,
 # which moved to oracle.jdbc.util.configuration in driver 23.26.2.0.0.
 # TODO: Remove once ojdbc-provider-azure is upgraded to latest versions & this issue [https://github.com/oracle/ojdbc-extensions/issues/286] is addressed.
@@ -32,20 +28,16 @@ micronaut-security-processor = { module = "io.micronaut.security:micronaut-secur
 micronaut-serde-jackson = { module = "io.micronaut.serde:micronaut-serde-jackson" }
 micronaut-serde-oracle-jdbc-json = { module = "io.micronaut.serde:micronaut-serde-oracle-jdbc-json" }
 micronaut-views-jte = { module = "io.micronaut.views:micronaut-views-jte" }
-micronaut-data-jdbc = { module = "io.micronaut.data:micronaut-data-jdbc", version.ref = "micronaut-data" }
+micronaut-data-jdbc = { module = "io.micronaut.data:micronaut-data-jdbc" }
 micronaut-jdbc-hikari = { module = "io.micronaut.sql:micronaut-jdbc-hikari" }
 micronaut-validation = { module = "io.micronaut.validation:micronaut-validation" }
-micronaut-cache-caffeine = { module = "io.micronaut.cache:micronaut-cache-caffeine", version.ref = "micronaut-cache" }
-micronaut-cache-core = { module = "io.micronaut.cache:micronaut-cache-core", version.ref = "micronaut-cache" }
-micronaut-cache-oracle = { module = "io.micronaut.cache:micronaut-cache-oracle", version.ref = "micronaut-cache" }
-flyway-core = { module = "org.flywaydb:flyway-core" }
-flyway-database-oracle = { module = "org.flywaydb:flyway-database-oracle" }
+micronaut-cache-caffeine = { module = "io.micronaut.cache:micronaut-cache-caffeine" }
 micronaut-inject-java = { module = "io.micronaut:micronaut-inject-java" }
-micronaut-data-processor = { module = "io.micronaut.data:micronaut-data-processor", version.ref = "micronaut-data" }
+micronaut-data-processor = { module = "io.micronaut.data:micronaut-data-processor" }
 micronaut-validation-processor = { module = "io.micronaut.validation:micronaut-validation-processor" }
 micronaut-serde-processor = { module = "io.micronaut.serde:micronaut-serde-processor" }
-micronaut-sourcegen-annotations = { module = "io.micronaut.sourcegen:micronaut-sourcegen-annotations", version.ref = "micronaut-sourcegen" }
-micronaut-sourcegen-generator-java = { module = "io.micronaut.sourcegen:micronaut-sourcegen-generator-java", version.ref = "micronaut-sourcegen" }
+micronaut-sourcegen-annotations = { module = "io.micronaut.sourcegen:micronaut-sourcegen-annotations" }
+micronaut-sourcegen-generator-java = { module = "io.micronaut.sourcegen:micronaut-sourcegen-generator-java" }
 micronaut-test-junit5 = { module = "io.micronaut.test:micronaut-test-junit5" }
 micronaut-managment = { module = "io.micronaut:micronaut-management" }
 
