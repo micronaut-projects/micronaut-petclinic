@@ -6,11 +6,13 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Transient;
 import io.micronaut.serde.annotation.Serdeable;
 import io.micronaut.sourcegen.annotations.Builder;
 import io.micronaut.sourcegen.annotations.Wither;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -48,6 +50,7 @@ public record Visit(
 
         @Relation(MANY_TO_ONE)
         @MappedProperty("PET_ID")
+        @NonNull
         Pet pet,
 
         @MappedProperty(value = "DURATION")
@@ -153,6 +156,14 @@ public record Visit(
         return BaseEntity.entityHashCode(this);
     }
 
+    /**
+     * Returns the associated pet's identifier.
+     * @return the pet ID; the pet must be present
+     */
+    @Transient
+    public @NonNull Integer getPetId() {
+        return this.pet.id();
+    }
     /**
      * Returns a diagnostic representation of the visit.
      *

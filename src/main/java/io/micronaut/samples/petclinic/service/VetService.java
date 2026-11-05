@@ -83,11 +83,11 @@ public class VetService {
     }
 
     /**
-     * Finds a specialities by their identifiers.
+     * Finds specialities by their identifiers.
      *
-     * @param  ids specialities identifiers
-     * @return Set of the persisted specialities
-     * @throws NotFoundEntityException if the identifier does not exist
+     * @param ids the speciality identifiers
+     * @return the persisted specialities
+     * @throws IllegalRequestArgumentException if an identifier is invalid or missing from the database
      */
     public Set<Speciality> findSpecialityByIds(@NonNull Set<Integer> ids) throws IllegalRequestArgumentException {
         return resolveSpecialities(ids);
