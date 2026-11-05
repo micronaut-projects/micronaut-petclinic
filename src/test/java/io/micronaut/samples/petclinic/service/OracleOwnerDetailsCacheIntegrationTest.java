@@ -1,12 +1,20 @@
 package io.micronaut.samples.petclinic.service;
 
+import io.micronaut.cache.CacheManager;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.client.HttpClient;
+import io.micronaut.http.client.annotation.Client;
 import io.micronaut.samples.petclinic.ClinicServiceFixtures;
 import io.micronaut.samples.petclinic.model.Owner;
+import io.micronaut.samples.petclinic.oracle.model.OwnerCareView;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
@@ -41,6 +49,48 @@ class OracleOwnerDetailsCacheIntegrationTest {
     @Inject
     Environment environment;
 
+    @Inject
+    CacheManager<?> cacheManager;
+
+    @Inject
+    OwnerCareViewService ownerCareViewService;
+
+    @Inject
+    @Client("/")
+    HttpClient client;
+
+    @BeforeEach
+    @AfterEach
+    void clearTestCache() {
+        // Cache tables outlive the application schema recreated by other test contexts.
+        cacheManager.getCache(CACHE_NAME).invalidateAll();
+    }
+
+    @Test
+    void ownerCareDocumentUpdatesInvalidateCachedOwnerDetails() throws Exception {
+        Owner owner = clinicService.saveOwner(new Owner(
+                "Document", "CacheInvalidation", "Original address", "Madison", "1234567890"));
+        try {
+            clinicService.findOwnerById(owner.id());
+            assertThat(cacheManager.getCache(CACHE_NAME).get(owner.id(), Owner.class)).contains(owner);
+
+            OwnerCareView document = ownerCareViewService.findById(owner.id());
+            OwnerCareView updated = new OwnerCareView(document.id(), document.firstName(), document.lastName(),
+                    document.address(), "Updated city", document.telephone(), document.pets(), document.metadata());
+            var response = client.toBlocking().exchange(HttpRequest.PUT(
+                    "/owners/" + owner.id() + "/care-record", updated)
+                    .contentType(MediaType.APPLICATION_JSON_TYPE), OwnerCareView.class);
+            assertThat(response.code()).isEqualTo(200);
+
+            assertThat(cacheManager.getCache(CACHE_NAME).get(owner.id(), Owner.class)).isEmpty();
+            Owner refreshed = clinicService.findOwnerById(owner.id());
+            assertThat(refreshed.city()).isEqualTo("Updated city");
+            assertThat(cacheManager.getCache(CACHE_NAME).get(owner.id(), Owner.class)).contains(refreshed);
+        } finally {
+            clinicService.deleteOwner(owner);
+        }
+    }
+
     @Test
     void ownerDetailsAreCachedByIdPersistAcrossContextsAndExpire() throws Exception {
         Integer ownerId = clinicServiceFixtures.requiredOwner("Jean", "Coleman").id();
@@ -61,7 +111,7 @@ class OracleOwnerDetailsCacheIntegrationTest {
         assertThat(first.id()).isEqualTo(ownerId);
         assertThat(first.getPets()).isNotEmpty();
         assertThat(first.getPets()).anyMatch(pet -> !pet.getVisits().isEmpty());
-        awaitEntryCount(startingEntries + 1);
+        assertThat(entryCount()).isEqualTo(startingEntries + 1);
 
         Owner second = clinicService.findOwnerById(ownerId);
         assertThat(second).isEqualTo(first);
@@ -78,11 +128,11 @@ class OracleOwnerDetailsCacheIntegrationTest {
         awaitStatistics(startingHits + 2, startingMisses + 2);
 
         clinicService.findOwnerById(otherOwnerIds.get(0));
-        awaitEntryCount(startingEntries + 2);
+        assertThat(entryCount()).isEqualTo(startingEntries + 2);
         awaitStatistics(startingHits + 2, startingMisses + 3);
 
         clinicService.findOwnerById(otherOwnerIds.get(1));
-        awaitEntryCount(startingEntries + 3);
+        assertThat(entryCount()).isEqualTo(startingEntries + 3);
         byte[] cleanupKeyHash = newestEntryHash();
         expireEntry(cleanupKeyHash);
         awaitEntryRemoved(cleanupKeyHash);
@@ -186,11 +236,6 @@ class OracleOwnerDetailsCacheIntegrationTest {
     private String databaseUrl() {
         return environment.getProperty("datasources.default.url", String.class)
                 .orElseThrow(() -> new IllegalStateException("Oracle Test Resources did not provide a datasource URL"));
-    }
-
-    private void awaitEntryCount(long expectedMinimum) throws Exception {
-        await(() -> entryCount() >= expectedMinimum,
-                "expected at least " + expectedMinimum + " Oracle cache entries");
     }
 
     private void awaitStatistics(long expectedHits, long expectedMisses) throws Exception {

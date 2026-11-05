@@ -374,53 +374,47 @@ curl -X POST http://localhost:8080/clinics/intersects \
   -d '{"coordinates":[{"latitude":43.0753,"longitude":-89.5186},{"latitude":43.1020,"longitude":-89.3545},{"latitude":43.1836,"longitude":-89.2137}]}'
 ```
 
-### Oracle Database cache showcase
+### Micronaut Cache showcase
 
-The owner details page loads an owner together with its pets and visit history.
-That read is keyed by the owner's ID, so refreshing the same owner page reuses the cached result.
-The cache is named `owner-details`; the cache manager exposes its Oracle implementation in the `oracle` environment and Caffeine in other environments.
-The Oracle cache uses a 60-second write expiry, 30-second access expiry, and a 100-entry limit.
-Its cleanup job runs every 10 seconds in batches of 100. The cache keeps the provider's default non-blocking write mode.
+`ClinicService.findOwnerById()` caches owners with their pets and visits in `owner-details`,
+keyed by owner ID. The `oracle` environment uses Oracle Database; other environments use
+Caffeine. Both limit the cache to 100 entries, with 60-second write expiry and 30-second access expiry.
 
-Start the Oracle database and application using the existing Oracle setup:
+Controller writes use `@CacheInvalidate(value = "owner-details", parameters = "ownerId")`
+to evict the affected owner's entry. Vets stay uncached to keep ETags current. Pet-type
+caching is deferred to keep this example focused on owner details.
+
+Start the Oracle profile:
 
 ```bash
 MICRONAUT_ENVIRONMENTS=oracle ./gradlew run
 ```
 
-Open the same owner detail page more than once. The first request reads the owner, pets,
-and visits from the application tables and queues the serialized owner for Oracle storage.
-Writes use the provider's default non-blocking mode, so wait briefly before repeating the request:
+In another terminal, request the same owner twice, replacing `1` with an existing ID:
 
 ```bash
 curl http://localhost:8080/owners/1
-sleep 1
 curl http://localhost:8080/owners/1
 ```
 
-Replace `1` with an owner ID in your database; choose one with recorded visits to see the full nested details. 
-Each owner ID has a separate entry. Owner details can be stale for up to 60 seconds; 
-restarting the application does not clear Oracle entries because cache tables are migrated separately from the application tables.
-
-Connect as `petclinic` to inspect entries, asynchronously updated statistics, and the scheduled cleanup job:
+Connect as `petclinic` to inspect entries, statistics, and cleanup:
 
 ```sql
-SELECT CACHE_NAME, COUNT(*) AS ENTRY_COUNT
-FROM PETCLINIC_CACHE_ENTRY
-GROUP BY CACHE_NAME;
+SELECT COUNT(*) AS ENTRY_COUNT
+FROM PETCLINIC_CACHE_ENTRY WHERE CACHE_NAME = 'owner-details';
 
-SELECT CACHE_NAME, HIT_COUNT, MISS_COUNT, PUT_COUNT, INVALIDATE_COUNT, UPDATED_AT
+SELECT HIT_COUNT, MISS_COUNT, PUT_COUNT, INVALIDATE_COUNT, UPDATED_AT
 FROM PETCLINIC_CACHE_STATS
 WHERE CACHE_NAME = 'owner-details';
 
-SELECT JOB_NAME, STATE, REPEAT_INTERVAL, LAST_START_DATE, NEXT_RUN_DATE
+SELECT JOB_NAME, STATE, NEXT_RUN_DATE
 FROM USER_SCHEDULER_JOBS
 WHERE JOB_NAME = 'PETCLINIC_CACHE_CLEANUP_OWNER_DETAILS';
 ```
 
-Allow a short delay before checking statistics or scheduler cleanup because both update asynchronously. A cache hit still queries Oracle's cache tables to read and deserialize the owner details, while avoiding the owner, pet, and visit queries against the application tables.
-
----
+Hits query Oracle's cache tables while avoiding the owner, pet, and visit queries.
+Statistics update asynchronously; cleanup runs every 10 seconds. Entries survive application
+restarts when reusing the same database.
 
 ### Oracle semantic chunk retrieval
 

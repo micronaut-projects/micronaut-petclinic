@@ -1,5 +1,6 @@
 package io.micronaut.samples.petclinic.controller;
 
+import io.micronaut.cache.annotation.CacheInvalidate;
 import io.micronaut.http.BasicHttpAttributes;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -20,6 +21,8 @@ import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.PetType;
 import io.micronaut.samples.petclinic.service.ClinicService;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.ModelAndView;
@@ -30,6 +33,7 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -37,6 +41,7 @@ import java.util.Optional;
  * Handles CRUD operations for pets within the context of their owners.
  */
 @Controller("/owners/{ownerId}/pets")
+@ExecuteOn(TaskExecutors.BLOCKING)
 @Secured(SecurityRule.IS_ANONYMOUS)
 public class PetController {
 
@@ -145,13 +150,14 @@ public class PetController {
     }
 
     /**
-     * Process the form to create a new pet.
+     * Creates a pet and evicts its owner's cached details.
      *
      * @param ownerId the owner ID
      * @param form    the pet form data
      * @return redirect to owner details
      */
     @Post(value = "/new", consumes = MediaType.APPLICATION_FORM_URLENCODED)
+    @CacheInvalidate(value = "owner-details", parameters = "ownerId")
     public HttpResponse<?> processCreationForm(@PathVariable Integer ownerId, @Valid @Body PetForm form)
             throws NotFoundEntityException {
         Owner owner = getOwner(ownerId);
@@ -199,7 +205,7 @@ public class PetController {
     }
 
     /**
-     * Process the form to update an existing pet.
+     * Updates a pet belonging to the owner in the URL and evicts that owner's cached details.
      *
      * @param ownerId the owner ID
      * @param petId   the pet ID
@@ -207,11 +213,15 @@ public class PetController {
      * @return redirect to owner details
      */
     @Post(value = "/{petId}/edit", consumes = MediaType.APPLICATION_FORM_URLENCODED)
+    @CacheInvalidate(value = "owner-details", parameters = "ownerId")
     public HttpResponse<?> processUpdateForm(@PathVariable Integer ownerId,
                                              @PathVariable Integer petId,
                                              @Valid @Body PetForm form) throws NotFoundEntityException {
         Owner owner = getOwner(ownerId);
         Pet existingPet = clinicService.findPetById(petId);
+        if (!Objects.equals(ownerId, existingPet.getOwnerId())) {
+            throw new NotFoundEntityException();
+        }
 
         Pet pet = formMapper.updatePet(existingPet, form).withOwner(owner);
 

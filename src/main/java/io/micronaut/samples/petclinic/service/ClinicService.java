@@ -76,6 +76,10 @@ public class ClinicService {
     /**
      * Finds an owner by ID, including its pets and visit history. The result is cached as {@code owner-details}.
      *
+     * <p>The cache uses Oracle in the {@code oracle} environment and Caffeine otherwise.
+     * Owner edits, pet saves, visit creation, and owner-care document updates through the controllers
+     * invalidate the entry keyed by the owner ID in the URL, so the next read loads the saved details.</p>
+     *
      * @param id the owner ID
      * @return the persisted owner
      * @throws NotFoundEntityException if the owner does not exist

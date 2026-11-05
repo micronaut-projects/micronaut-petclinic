@@ -1,5 +1,6 @@
 package io.micronaut.samples.petclinic.controller;
 
+import io.micronaut.cache.annotation.CacheInvalidate;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.http.HttpResponse;
@@ -44,6 +45,7 @@ class OwnerCareRecordController {
     }
 
     @Put(consumes = MediaType.APPLICATION_JSON)
+    @CacheInvalidate(value = "owner-details", parameters = "ownerId")
     public OwnerCareView updateDocument(@PathVariable @NonNull Integer ownerId,
                                         @NotNull @Valid @Body OwnerCareView document) throws NotFoundEntityException {
         if (!ownerId.equals(document.id())) {

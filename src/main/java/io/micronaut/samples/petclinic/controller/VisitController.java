@@ -1,5 +1,6 @@
 package io.micronaut.samples.petclinic.controller;
 
+import io.micronaut.cache.annotation.CacheInvalidate;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
@@ -17,6 +18,8 @@ import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.samples.petclinic.service.ClinicService;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
@@ -34,6 +37,7 @@ import java.util.Optional;
  * Handles creating visits for pets.
  */
 @Controller("/owners/{ownerId}/pets/{petId}/visits")
+@ExecuteOn(TaskExecutors.BLOCKING)
 @Secured(SecurityRule.IS_ANONYMOUS)
 public class VisitController {
 
@@ -118,7 +122,7 @@ public class VisitController {
     }
 
     /**
-     * Process the form to create a new visit.
+     * Creates a visit and evicts its owner's cached details.
      *
      * @param ownerId the owner ID
      * @param petId   the pet ID
@@ -126,6 +130,7 @@ public class VisitController {
      * @return redirect to owner details
      */
     @Post(value = "/new", consumes = MediaType.APPLICATION_JSON)
+    @CacheInvalidate(value = "owner-details", parameters = "ownerId")
     public HttpResponse<?> processNewVisitForm(@PathVariable Integer ownerId,
                                                 @PathVariable Integer petId,
                                                 @Valid @Body VisitForm form) throws NotFoundEntityException {
