@@ -45,7 +45,7 @@ public class OwnerCareSummaryController {
      */
     @Get(produces = MediaType.APPLICATION_JSON)
     public HttpResponse<OwnerCareSummary> download(@PathVariable Integer ownerId) throws NotFoundEntityException {
-        Owner owner = clinicService.findOwnerById(ownerId).orElseThrow(NotFoundEntityException::new);
+        Owner owner = clinicService.findOwnerById(ownerId);
         return HttpResponse.ok(formMapper.toOwnerCareSummary(owner))
                 .contentType(MediaType.APPLICATION_JSON_TYPE)
                 .header(HttpHeaders.CONTENT_DISPOSITION,

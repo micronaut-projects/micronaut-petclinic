@@ -10,6 +10,7 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.samples.petclinic.ClinicServiceFixtures;
+import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.Visit;
@@ -43,13 +44,13 @@ class OwnerCareSummaryControllerTest {
             clinicService.deletePet(testPet.id());
         }
         if (testOwner != null) {
-            clinicService.deleteOwner(testOwner.id());
+            clinicService.deleteOwner(testOwner);
         }
     }
 
     @Test
-    void downloadsGeneratedRecordWithOwnerPetsVisitsAndDates() {
-        Owner owner = clinicService.findOwnerById(fixtures.requiredOwner("Jean", "Coleman").id()).orElseThrow();
+    void downloadsGeneratedRecordWithOwnerPetsVisitsAndDates() throws NotFoundEntityException {
+        Owner owner = clinicService.findOwnerById(fixtures.requiredOwner("Jean", "Coleman").id());
         HttpResponse<Map<String, Object>> response = download(owner.id());
 
         assertThat(response.code()).isEqualTo(HttpStatus.OK.getCode());
