@@ -1,9 +1,13 @@
 @import io.micronaut.samples.petclinic.model.Owner
 @import io.micronaut.samples.petclinic.model.Pet
 @import io.micronaut.samples.petclinic.model.Visit
+@import io.micronaut.samples.petclinic.dto.OwnerLoyaltySummary
 @import java.util.Locale
+@import java.time.format.DateTimeFormatter
+@import java.time.format.FormatStyle
 
 @param Owner owner
+@param OwnerLoyaltySummary loyalty
 @param io.micronaut.samples.petclinic.system.I18nViewModelProcessor.Msg msg
 @param io.micronaut.http.HttpRequest<?> request
 @param java.util.Locale locale
@@ -82,6 +86,47 @@
                         </div>
                     </div>
                 </div>
+                @if(loyalty != null)
+                    <section id="owner-loyalty-card" class="card mt-4 animate-fade-in-up"
+                             data-owner-id="${owner.id()}" data-reward-cost="${loyalty.rewardCost()}" data-locale="${locale.toLanguageTag()}"
+                             data-success-label="${msg.text("loyalty.success")}" data-insufficient-label="${msg.text("loyalty.insufficientPoints")}"
+                             data-error-label="${msg.text("loyalty.requestFailed")}" data-owner-not-found-label="${msg.text("loyalty.ownerNotFound")}">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-star me-2"></i>${msg.text("loyalty.title")}</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>${msg.text("loyalty.balance")}</span>
+                                <strong><span id="loyalty-balance">${loyalty.points()}</span> ${msg.text("loyalty.points")}</strong>
+                            </div>
+                            <p class="text-muted mb-3">${msg.text("loyalty.earnRate", loyalty.pointsPerVisit())}</p>
+                            @if(loyalty.points() < loyalty.rewardCost())
+                                <button id="loyalty-redeem" type="button" class="btn btn-primary w-100" disabled>
+                                    ${msg.text("loyalty.redeem", loyalty.rewardCost())}
+                                </button>
+                            @else
+                                <button id="loyalty-redeem" type="button" class="btn btn-primary w-100">
+                                    ${msg.text("loyalty.redeem", loyalty.rewardCost())}
+                                </button>
+                            @endif
+                            <div id="loyalty-status" class="alert mt-3 mb-0" role="status" aria-live="polite" hidden></div>
+                            <h6 class="mt-4">${msg.text("loyalty.recentVouchers")}</h6>
+                            <ul id="loyalty-vouchers" class="list-group list-group-flush">
+                                @for(OwnerLoyaltySummary.Voucher voucher : loyalty.recentVouchers())
+                                    <li class="list-group-item px-0 d-flex justify-content-between gap-3">
+                                        <span data-voucher-reference>${voucher.reference()}</span>
+                                        <time data-voucher-date datetime="${voucher.createdAt().toString()}">${voucher.createdAt().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale))}</time>
+                                    </li>
+                                @endfor
+                            </ul>
+                            @if(loyalty.recentVouchers().isEmpty())
+                                <p id="loyalty-vouchers-empty" class="text-muted mb-0">${msg.text("loyalty.noVouchers")}</p>
+                            @else
+                                <p id="loyalty-vouchers-empty" class="text-muted mb-0" hidden>${msg.text("loyalty.noVouchers")}</p>
+                            @endif
+                        </div>
+                    </section>
+                @endif
             </div>
             <div class="col-lg-8">
                 <div class="card animate-fade-in-up stagger-1">
@@ -339,6 +384,9 @@
                     }
                 })();
             </script>
+        @endif
+        @if(loyalty != null)
+            <script type="module" src="/resources/js/owner-loyalty.js"></script>
         @endif
     </main>
 `, msg = msg, request = request, locale = locale, activeNames = activeNames)

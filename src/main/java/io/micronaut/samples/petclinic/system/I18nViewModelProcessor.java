@@ -27,6 +27,7 @@ public class I18nViewModelProcessor implements ViewModelProcessor<Object, HttpRe
      *
      * @param messageSource the application message source
      * @param httpLocaleResolver the resolver used to select the request locale
+     * @param environment the active environments exposed to templates
      */
     public I18nViewModelProcessor(MessageSource messageSource,
                                   io.micronaut.http.server.util.locale.HttpLocaleResolver httpLocaleResolver,

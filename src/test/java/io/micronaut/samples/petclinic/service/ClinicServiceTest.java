@@ -1,7 +1,7 @@
 package io.micronaut.samples.petclinic.service;
 
-import io.micronaut.samples.petclinic.dto.VisitSearchCriteria;
 import io.micronaut.samples.petclinic.ClinicServiceFixtures;
+import io.micronaut.samples.petclinic.dto.VisitSearchCriteria;
 import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
@@ -14,8 +14,8 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -51,8 +51,8 @@ class ClinicServiceTest {
     }
 
     @Test
-    void shouldTrowWhenOwnerNotFound() {
-        assertThrows(NotFoundEntityException.class , () -> clinicService.findOwnerById(999));
+    void shouldThrowWhenOwnerNotFound() {
+        assertThrows(NotFoundEntityException.class, () -> clinicService.findOwnerById(999));
     }
 
     @Test
@@ -65,9 +65,9 @@ class ClinicServiceTest {
     @Test
     void shouldSaveNewOwner() {
         Owner owner = new Owner("John", "Doe", "123 Main St", "Springfield", "1234567890");
-        
+
         Owner savedOwner = clinicService.saveOwner(owner);
-        
+
         assertThat(savedOwner.id()).isNotNull();
         assertThat(savedOwner.getFirstName()).isEqualTo("John");
     }
@@ -104,6 +104,7 @@ class ClinicServiceTest {
         Pet found = clinicService.findPetById(leo.id());
         assertThat(found).isNotNull();
         assertThat(found.name()).isEqualTo("Leo");
+        assertThat(found.name()).isEqualTo("Leo");
     }
 
     @Test
@@ -116,7 +117,7 @@ class ClinicServiceTest {
 
         Pet pet = new Pet("Whiskers", LocalDate.of(2023, 1, 1), catType, owner);
         Pet savedPet = clinicService.savePet(pet);
-        
+
         assertThat(savedPet.id()).isNotNull();
         assertThat(savedPet.name()).isEqualTo("Whiskers");
     }

@@ -26,6 +26,7 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -61,19 +62,14 @@ public class VisitController {
     @View("pets/createOrUpdateVisitForm")
     public Map<String, Object> onConstraintViolation(HttpRequest<?> request,
                                                      ConstraintViolationException e) {
-        Integer ownerId = request.getParameters().get("ownerId", Integer.class).orElse(null);
-        Integer petId = request.getParameters().get("petId", Integer.class).orElse(null);
+        Optional<Integer> petId = request.getParameters().get("petId", Integer.class);
         Pet pet = null;
-        try {
-            if (petId != null) {
-                pet = clinicService.findPetById(petId);
-            }
-        } catch (NotFoundEntityException ignore) {
-        }
-
         Owner owner = null;
-        if (pet != null && pet.getOwner() != null) {
-            owner = pet.getOwner();
+        if (petId.isPresent()) {
+            try {
+                pet = clinicService.findPetById(petId.get());
+                owner = pet.getOwner();
+            } catch (NotFoundEntityException ignored) {}
         }
 
         Map<String, String> validationErrors = new LinkedHashMap<>();
@@ -94,7 +90,6 @@ public class VisitController {
         model.put("owner", owner);
         model.put("validationErrors", validationErrors);
         model.put("visit", form);
-
         return model;
     }
 
@@ -108,9 +103,10 @@ public class VisitController {
     @Get("/new")
     @View("pets/createOrUpdateVisitForm")
     public Map<String, Object> initNewVisitForm(@PathVariable Integer ownerId, @PathVariable Integer petId) {
-        Pet pet = null;
+        Pet pet;
         try {
             pet = clinicService.findPetById(petId);
+            validateOwnerPetPath(ownerId, pet);
         } catch (NotFoundEntityException e) {
             throw new NotFoundException();
         }
@@ -134,11 +130,19 @@ public class VisitController {
                                                 @PathVariable Integer petId,
                                                 @Valid @Body VisitForm form) throws NotFoundEntityException {
         Pet pet = clinicService.findPetById(petId);
+        validateOwnerPetPath(ownerId, pet);
+        Pet pet = clinicService.findPetById(petId);
 
         Visit visit = formMapper.toVisit(form).withPet(pet);
         clinicService.saveVisit(visit);
 
         URI uri = UriBuilder.of("/owners/{ownerId}").expand(Map.of("ownerId", ownerId));
         return HttpResponse.redirect(uri);
+    }
+
+    private static void validateOwnerPetPath(Integer ownerId, Pet pet) throws NotFoundEntityException {
+        if (!Objects.equals(ownerId, pet.getOwnerId())) {
+            throw new NotFoundEntityException();
+        }
     }
 }
