@@ -28,6 +28,7 @@ import io.micronaut.samples.petclinic.repository.UserJdbcRepository;
 import io.micronaut.samples.petclinic.repository.UserRoleJdbcRepository;
 import io.micronaut.samples.petclinic.repository.VetRepository;
 import io.micronaut.samples.petclinic.repository.VisitRepository;
+import io.micronaut.samples.petclinic.service.OwnerLoyaltyService;
 import io.micronaut.samples.petclinic.utils.PasswordEncoder;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
@@ -63,6 +64,7 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
     private final ClinicRepository clinicRepository;
     private final ClinicServiceOfferingRepository clinicServiceOfferingRepository;
     private final AppointmentRepository appointmentRepository;
+    private final OwnerLoyaltyService ownerLoyaltyService;
     private final RoleJdbcRepository roleJdbcRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserRoleJdbcRepository userRoleJdbcRepository;
@@ -170,6 +172,7 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
      * @param passwordEncoder encoder for sample user passwords
      * @param userRoleJdbcRepository repository for sample user-role assignments
      * @param userJdbcRepository repository for sample users
+     * @param ownerLoyaltyService profile-specific zero-balance account reconciliation
      */
     public DataLoader(VetRepository vetRepository,
                       SpecialityRepository specialityRepository,
@@ -180,6 +183,7 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
                       ClinicRepository clinicRepository,
                       AppointmentRepository appointmentRepository,
                       ClinicServiceOfferingRepository clinicServiceOfferingRepository,
+                      OwnerLoyaltyService ownerLoyaltyService,
                       RoleJdbcRepository roleJdbcRepository,
                       PasswordEncoder passwordEncoder,
                       UserRoleJdbcRepository userRoleJdbcRepository,
@@ -197,10 +201,13 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
         this.userJdbcRepository = userJdbcRepository;
         this.appointmentRepository = appointmentRepository;
         this.clinicServiceOfferingRepository = clinicServiceOfferingRepository;
+        this.ownerLoyaltyService = ownerLoyaltyService;
     }
 
     /**
-     * Seeds the database when the application starts.
+     * Seeds the database when the application starts and initializes zero-balance loyalty accounts.
+     * With loyalty enabled, an existing owner set is reconciled without reseeding sample data
+     * or backfilling historical visit credits. This listener runs only when sample loading is enabled.
      *
      * @param event the startup event
      */
@@ -208,8 +215,18 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
     @Transactional
     public void onApplicationEvent(StartupEvent event) {
         LOG.info("Loading sample data...");
+        if (ownerLoyaltyService.isEnabled() && ownerRepository.findAll().iterator().hasNext()) {
+            ensureLoyaltyAccountsForExistingOwners();
+            LOG.info("Existing Oracle owner data found; loyalty accounts reconciled without reseeding sample data.");
+            return;
+        }
         loadData();
+        ensureLoyaltyAccountsForExistingOwners();
         LOG.info("Sample data loaded successfully.");
+    }
+
+    private void ensureLoyaltyAccountsForExistingOwners() {
+        ownerLoyaltyService.ensureAccounts(ownerRepository.findAll());
     }
 
     private void loadData() {
