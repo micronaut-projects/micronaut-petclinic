@@ -484,7 +484,11 @@ for discovery (local Compose example):
 export DATASOURCES_DEFAULT_URL='jdbc:oracle:thin:@localhost:1521/FREEPDB1'
 export DATASOURCES_DEFAULT_USERNAME=petclinic
 export DATASOURCES_DEFAULT_PASSWORD=petclinic
+export DATASOURCES_DEFAULT_DRIVER_CLASS_NAME=oracle.jdbc.OracleDriver
 ```
+
+The driver-class setting prevents Test Resources from starting an unused Oracle
+container during application initialization.
 
 If the view already exists, run discovery directly with either build tool:
 
@@ -510,7 +514,7 @@ then initialize with either build tool:
 docker-compose --profile oracle up -d oracle
 MICRONAUT_ENVIRONMENTS=oracle ./gradlew run
 # Or Maven
-./mvnw -Dmicronaut.environments=oracle mn:run
+MICRONAUT_ENVIRONMENTS=oracle ./mvnw -Dmicronaut.environments=oracle mn:run
 ```
 
 After startup succeeds, stop the app with Ctrl+C and keep Oracle running.
