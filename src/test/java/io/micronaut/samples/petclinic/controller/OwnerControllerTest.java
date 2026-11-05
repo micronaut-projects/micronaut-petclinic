@@ -6,13 +6,16 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.samples.petclinic.ClinicServiceFixtures;
 import io.micronaut.samples.petclinic.model.Owner;
+import io.micronaut.samples.petclinic.controller.OwnerLoyaltyController;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Integration tests for {@link OwnerController}.
@@ -72,9 +75,19 @@ class OwnerControllerTest {
             assertThat(response.body()).contains("id=\"care-record-tab\"");
         } else {
             assertThat(response.body()).doesNotContain("id=\"care-record-tab\"");
+            assertThat(response.body()).doesNotContain("id=\"owner-loyalty-card\"");
+            assertThat(context.containsBean(OwnerLoyaltyController.class)).isFalse();
         }
         assertThat(response.body()).contains("id=\"export-care-summary\"");
         assertThat(response.body()).contains("href=\"/owners/" + owner.id() + "/care-summary\"");
+    }
+
+    @Test
+    void shouldReturnNotFoundForAnUnknownOwner() {
+        HttpClientResponseException failure = assertThrows(HttpClientResponseException.class,
+                () -> client.toBlocking().exchange(HttpRequest.GET("/owners/2147483647"), String.class));
+
+        assertThat((CharSequence) failure.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     @Test

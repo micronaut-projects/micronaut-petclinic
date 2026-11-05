@@ -15,14 +15,13 @@
     <parent>
         <groupId>io.micronaut.platform</groupId>
         <artifactId>micronaut-parent</artifactId>
-        <version>5.2.4</version>
+        <version>5.2.5</version>
     </parent>
 
     <properties>
         <packaging>jar</packaging>
         <jdk.version>25</jdk.version>
         <release.version>25</release.version>
-        <micronaut.version>5.1.0</micronaut.version>
         <micronaut.runtime>netty</micronaut.runtime>
         <micronaut.aot.enabled>false</micronaut.aot.enabled>
         <exec.mainClass>io.micronaut.samples.petclinic.Application</exec.mainClass>
@@ -515,14 +514,6 @@
                                 </goals>
                             </execution>
                         </executions>
-                    <!-- TODO: Remove once The native build tools are upgraded to use this version or higher.-->
-                        <configuration>
-                            <classesDirectory>${project.build.outputDirectory}</classesDirectory>
-                            <metadataRepository>
-                                <enabled>true</enabled>
-                                <version>1.0.17</version>
-                            </metadataRepository>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>
