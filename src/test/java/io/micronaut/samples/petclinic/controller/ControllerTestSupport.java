@@ -15,12 +15,12 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-final class ControllerTestSupport {
+public final class ControllerTestSupport {
 
     private ControllerTestSupport() {
     }
 
-    static HttpClient createNoRedirectClient(EmbeddedServer server) {
+    public static HttpClient createNoRedirectClient(EmbeddedServer server) {
         DefaultHttpClientConfiguration configuration = new DefaultHttpClientConfiguration();
         configuration.setFollowRedirects(false);
         configuration.setExceptionOnErrorStatus(false);
@@ -48,7 +48,7 @@ final class ControllerTestSupport {
         )));
     }
 
-    static String login(HttpClient client, String username, String password) {
+    public static String login(HttpClient client, String username, String password) {
         HttpResponse<String> response = loginResponse(client, username, password);
         assertThat(response.status().getCode()).isBetween(300, 399);
         assertThat(response.getHeaders().get(HttpHeaders.LOCATION)).isEqualTo("/");
