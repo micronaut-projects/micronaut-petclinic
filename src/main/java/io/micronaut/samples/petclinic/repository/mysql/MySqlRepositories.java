@@ -13,7 +13,10 @@ import io.micronaut.samples.petclinic.repository.ClinicServiceOfferingRepository
 import io.micronaut.samples.petclinic.repository.OwnerRepository;
 import io.micronaut.samples.petclinic.repository.PetRepository;
 import io.micronaut.samples.petclinic.repository.PetTypeRepository;
+import io.micronaut.samples.petclinic.repository.RoleJdbcRepository;
 import io.micronaut.samples.petclinic.repository.SpecialityRepository;
+import io.micronaut.samples.petclinic.repository.UserJdbcRepository;
+import io.micronaut.samples.petclinic.repository.UserRoleJdbcRepository;
 import io.micronaut.samples.petclinic.repository.VetRepository;
 import io.micronaut.samples.petclinic.repository.VisitRepository;
 import org.jspecify.annotations.NonNull;
@@ -21,6 +24,9 @@ import org.jspecify.annotations.NonNull;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+
+import static io.micronaut.samples.petclinic.repository.RepositoryRequirements.DEFAULT_DIALECT_PROPERTY;
+import static io.micronaut.samples.petclinic.repository.RepositoryRequirements.DIALECT_MYSQL;
 
 /**
  * MySQL-backed Micronaut Data repository beans active in the {@code mysql} environment.
@@ -32,7 +38,7 @@ public final class MySqlRepositories {
     /**
      * MySQL owner repository bean.
      */
-    @Requires(env = "mysql")
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
     @JdbcRepository(dialect = Dialect.MYSQL)
     public interface MySqlOwnerRepository extends OwnerRepository {
     }
@@ -40,7 +46,7 @@ public final class MySqlRepositories {
     /**
      * MySQL pet repository bean.
      */
-    @Requires(env = "mysql")
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
     @JdbcRepository(dialect = Dialect.MYSQL)
     public interface MySqlPetRepository extends PetRepository {
         /**
@@ -67,7 +73,7 @@ public final class MySqlRepositories {
     /**
      * MySQL pet type repository bean.
      */
-    @Requires(env = "mysql")
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
     @JdbcRepository(dialect = Dialect.MYSQL)
     public interface MySqlPetTypeRepository extends PetTypeRepository {
     }
@@ -75,7 +81,7 @@ public final class MySqlRepositories {
     /**
      * MySQL speciality repository bean.
      */
-    @Requires(env = "mysql")
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
     @JdbcRepository(dialect = Dialect.MYSQL)
     public interface MySqlSpecialityRepository extends SpecialityRepository {
     }
@@ -83,7 +89,7 @@ public final class MySqlRepositories {
     /**
      * MySQL vet repository bean.
      */
-    @Requires(env = "mysql")
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
     @JdbcRepository(dialect = Dialect.MYSQL)
     public interface MySqlVetRepository extends VetRepository {
     }
@@ -91,7 +97,7 @@ public final class MySqlRepositories {
     /**
      * MySQL visit repository bean.
      */
-    @Requires(env = "mysql")
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
     @JdbcRepository(dialect = Dialect.MYSQL)
     public interface MySqlVisitRepository extends VisitRepository {
         /**
@@ -103,28 +109,17 @@ public final class MySqlRepositories {
         @Override
         @Query(value = "SELECT v.* FROM VISITS v WHERE v.PET_ID = :petId ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
         Collection<Visit> findByPetId(Integer petId);
-
-        /**
-         * Finds visits for a pet using Oracle SQL.
-         *
-         * @param petName the pet name
-         * @return visits for the pet
-         */
-        @Override
-        @Query(value = "SELECT v.* FROM VISITS v LEFT JOIN PETS p ON v.PET_ID = p.ID WHERE p.NAME = :petName  ORDER BY v.VISIT_DATE DESC", nativeQuery = true)
-        Collection<Visit> findByPetName(String petName);
     }
 
-    @Requires(env = "mysql")
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
     @JdbcRepository(dialect = Dialect.MYSQL)
     public interface MySqlClinicRepository extends ClinicRepository {
-
     }
 
     /**
      * Mysql appointment repository used by the transaction-priority showcase.
      */
-    @Requires(env = {"mysql"})
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
     @JdbcRepository(dialect = Dialect.MYSQL)
     public interface MysqlAppointmentRepository extends AppointmentRepository {
 
@@ -141,9 +136,47 @@ public final class MySqlRepositories {
     }
 
     /**
+     * MySQL user repository bean.
+     */
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
+    @JdbcRepository(dialect = Dialect.MYSQL)
+    public interface MysqlUserJdbcRepository extends UserJdbcRepository {
+    }
+
+    /**
+     * MySQL role repository bean.
+     */
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
+    @JdbcRepository(dialect = Dialect.MYSQL)
+    public interface MysqlRoleJdbcRepository extends RoleJdbcRepository {
+    }
+
+    /**
+     * MySQL user-role repository bean.
+     */
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
+    @JdbcRepository(dialect = Dialect.MYSQL)
+    public interface MysqlUserRoleJdbcRepository extends UserRoleJdbcRepository {
+        /**
+         * Finds authority names for a user using MySQL SQL.
+         *
+         * @param username the user name whose authorities should be loaded
+         * @return authority names granted to the user
+         */
+        @Override
+        @Query(value = """
+                SELECT r.authority FROM `ROLE` r
+                INNER JOIN `USER_ROLE` ur ON ur.role_id = r.id
+                INNER JOIN `USER` u ON ur.user_id = u.ID
+                WHERE u.USERNAME = :username
+                """, nativeQuery = true)
+        List<String> findAllAuthoritiesByUsername(String username);
+    }
+
+    /**
      * MySQL clinic service offering repository bean.
      */
-    @Requires(env = "mysql")
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_MYSQL)
     @JdbcRepository(dialect = Dialect.MYSQL)
     public interface MySqlClinicServiceOfferingRepository extends ClinicServiceOfferingRepository {
     }

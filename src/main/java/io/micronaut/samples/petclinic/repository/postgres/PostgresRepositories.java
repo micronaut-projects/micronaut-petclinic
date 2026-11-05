@@ -14,7 +14,10 @@ import io.micronaut.samples.petclinic.repository.ClinicServiceOfferingRepository
 import io.micronaut.samples.petclinic.repository.OwnerRepository;
 import io.micronaut.samples.petclinic.repository.PetRepository;
 import io.micronaut.samples.petclinic.repository.PetTypeRepository;
+import io.micronaut.samples.petclinic.repository.RoleJdbcRepository;
 import io.micronaut.samples.petclinic.repository.SpecialityRepository;
+import io.micronaut.samples.petclinic.repository.UserJdbcRepository;
+import io.micronaut.samples.petclinic.repository.UserRoleJdbcRepository;
 import io.micronaut.samples.petclinic.repository.VetRepository;
 import io.micronaut.samples.petclinic.repository.VisitRepository;
 import org.jspecify.annotations.NonNull;
@@ -22,6 +25,9 @@ import org.jspecify.annotations.NonNull;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+
+import static io.micronaut.samples.petclinic.repository.RepositoryRequirements.DEFAULT_DIALECT_PROPERTY;
+import static io.micronaut.samples.petclinic.repository.RepositoryRequirements.DIALECT_POSTGRES;
 
 /**
  * PostgreSQL-backed Micronaut Data repository beans active in the {@code postgres} environment.
@@ -33,7 +39,7 @@ public final class PostgresRepositories {
     /**
      * PostgreSQL owner repository bean.
      */
-    @Requires(env = "postgres")
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_POSTGRES)
     @JdbcRepository(dialect = Dialect.POSTGRES)
     public interface PostgresOwnerRepository extends OwnerRepository {
     }
@@ -41,7 +47,7 @@ public final class PostgresRepositories {
     /**
      * PostgreSQL pet repository bean.
      */
-    @Requires(env = "postgres")
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_POSTGRES)
     @JdbcRepository(dialect = Dialect.POSTGRES)
     public interface PostgresPetRepository extends PetRepository {
         /**
@@ -81,7 +87,7 @@ public final class PostgresRepositories {
     /**
      * PostgreSQL pet type repository bean.
      */
-    @Requires(env = "postgres")
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_POSTGRES)
     @JdbcRepository(dialect = Dialect.POSTGRES)
     public interface PostgresPetTypeRepository extends PetTypeRepository {
     }
@@ -89,7 +95,7 @@ public final class PostgresRepositories {
     /**
      * PostgreSQL speciality repository bean.
      */
-    @Requires(env = "postgres")
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_POSTGRES)
     @JdbcRepository(dialect = Dialect.POSTGRES)
     public interface PostgresSpecialityRepository extends SpecialityRepository {
     }
@@ -97,7 +103,7 @@ public final class PostgresRepositories {
     /**
      * PostgreSQL vet repository bean.
      */
-    @Requires(env = "postgres")
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_POSTGRES)
     @JdbcRepository(dialect = Dialect.POSTGRES)
     public interface PostgresVetRepository extends VetRepository {
         /**
@@ -114,15 +120,15 @@ public final class PostgresRepositories {
          */
         @Override
         @Query(value = """
-            INSERT INTO "VET_SPECIALTIES" ("VET_ID", "SPECIALTY_ID") VALUES (:vetId, :specialityId)
-            """, nativeQuery = true)
+                INSERT INTO "VET_SPECIALTIES" ("VET_ID", "SPECIALTY_ID") VALUES (:vetId, :specialityId)
+                """, nativeQuery = true)
         void insertSpecialityLink(Integer vetId, Integer specialityId);
     }
 
     /**
      * PostgreSQL visit repository bean.
      */
-    @Requires(env = "postgres")
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_POSTGRES)
     @JdbcRepository(dialect = Dialect.POSTGRES)
     public interface PostgresVisitRepository extends VisitRepository {
         /**
@@ -150,7 +156,45 @@ public final class PostgresRepositories {
         Collection<Visit> findByPetName(String petName);
     }
 
-    @Requires(env = "postgres")
+    /**
+     * PostgreSQL user repository bean.
+     */
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_POSTGRES)
+    @JdbcRepository(dialect = Dialect.POSTGRES)
+    public interface PostgesUserJdbcRepository extends UserJdbcRepository {
+    }
+
+    /**
+     * PostgreSQL role repository bean.
+     */
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_POSTGRES)
+    @JdbcRepository(dialect = Dialect.POSTGRES)
+    public interface PostgesRoleJdbcRepository extends RoleJdbcRepository {
+    }
+
+    /**
+     * PostgreSQL user-role repository bean.
+     */
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_POSTGRES)
+    @JdbcRepository(dialect = Dialect.POSTGRES)
+    public interface PostgesUserRoleJdbcRepository extends UserRoleJdbcRepository {
+        /**
+         * Finds authority names for a user using PostgreSQL SQL.
+         *
+         * @param username the user name whose authorities should be loaded
+         * @return authority names granted to the user
+         */
+        @Override
+        @Query(value = """
+                SELECT r.authority FROM "ROLE" r
+                INNER JOIN "USER_ROLE" ur ON ur.role_id = r.id
+                INNER JOIN "USER" u ON ur.user_id = u."ID"
+                WHERE u."USERNAME" = :username
+                """, nativeQuery = true)
+        List<String> findAllAuthoritiesByUsername(String username);
+    }
+
+    @Requires(property = DEFAULT_DIALECT_PROPERTY, value = DIALECT_POSTGRES)
     @JdbcRepository(dialect = Dialect.POSTGRES)
     public interface PostgresClinicRepository extends ClinicRepository {
     }
@@ -171,11 +215,15 @@ public final class PostgresRepositories {
     public interface PostgresAppointmentRepository extends AppointmentRepository {
         @NonNull
         @Override
-        @Query(value = "SELECT a.* FROM \"APPOINTMENTS\" a WHERE a.\"id\" = :appointmentId FOR UPDATE", nativeQuery = true)
+        @Query(value = """
+                SELECT a.* FROM "APPOINTMENTS" a WHERE a."id" = :appointmentId FOR UPDATE
+                """, nativeQuery = true)
         Optional<Appointment> findByIdForUpdate(Integer appointmentId);
 
         @Override
-        @Query(value = "SELECT a.* FROM \"APPOINTMENTS\" a WHERE a.\"STATUS\" = 'AVAILABLE' ORDER BY a.\"DISPLAY_ORDER\", a.\"id\"", nativeQuery = true)
+        @Query(value = """
+                SELECT a.* FROM "APPOINTMENTS" a WHERE a."STATUS" = 'AVAILABLE' ORDER BY a."DISPLAY_ORDER", a."id"
+                """, nativeQuery = true)
         List<Appointment> findAvailableAppointments();
     }
 }

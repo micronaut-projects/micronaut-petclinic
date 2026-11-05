@@ -8,6 +8,7 @@ import io.micronaut.samples.petclinic.repository.oracle.OracleRepositories;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -16,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @MicronautTest
 @Requires(env = "oracle")
+@EnabledIfSystemProperty(named = "micronaut.environments", matches = ".*oracle.*")
 class OracleGeneratedQueryTest {
 
     @Inject

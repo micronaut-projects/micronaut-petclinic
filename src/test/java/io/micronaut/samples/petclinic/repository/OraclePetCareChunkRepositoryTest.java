@@ -1,5 +1,6 @@
 package io.micronaut.samples.petclinic.repository;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.model.vector.search.Score;
 import io.micronaut.data.model.vector.search.ScoringFunction;
 import io.micronaut.data.model.vector.search.SearchResults;
@@ -8,18 +9,19 @@ import io.micronaut.samples.petclinic.service.PetCareEmbeddingService;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Oracle integration tests for Micronaut Data vector repository support.
  * <p>
- * These tests are enabled explicitly with {@code MICRONAUT_ENVIRONMENTS=oracle}
+ * These tests are enabled by the {@code testOracleIntegration} profile
  * because they require the Oracle container and VECTOR column support.
  */
-@MicronautTest(environments = "oracle")
-@EnabledIfEnvironmentVariable(named = "MICRONAUT_ENVIRONMENTS", matches = ".*oracle.*")
+@MicronautTest
+@Requires(env = "oracle")
+@EnabledIfSystemProperty(named = "micronaut.environments", matches = ".*oracle.*")
 class OraclePetCareChunkRepositoryTest {
 
     @Inject

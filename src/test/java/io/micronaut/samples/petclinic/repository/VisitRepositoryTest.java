@@ -5,6 +5,7 @@ import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @MicronautTest
 @Requires(env= "oracle")
+@EnabledIfSystemProperty(named = "micronaut.environments", matches = ".*oracle.*")
 class VisitRepositoryTest {
 
     @Inject

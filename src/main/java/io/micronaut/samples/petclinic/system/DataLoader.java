@@ -9,7 +9,11 @@ import io.micronaut.samples.petclinic.model.ClinicServiceOffering;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.PetType;
+import io.micronaut.samples.petclinic.model.Role;
 import io.micronaut.samples.petclinic.model.Speciality;
+import io.micronaut.samples.petclinic.model.User;
+import io.micronaut.samples.petclinic.model.UserRole;
+import io.micronaut.samples.petclinic.model.UserRoleId;
 import io.micronaut.samples.petclinic.model.Vet;
 import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.samples.petclinic.repository.AppointmentRepository;
@@ -18,12 +22,17 @@ import io.micronaut.samples.petclinic.repository.ClinicServiceOfferingRepository
 import io.micronaut.samples.petclinic.repository.OwnerRepository;
 import io.micronaut.samples.petclinic.repository.PetRepository;
 import io.micronaut.samples.petclinic.repository.PetTypeRepository;
+import io.micronaut.samples.petclinic.repository.RoleJdbcRepository;
 import io.micronaut.samples.petclinic.repository.SpecialityRepository;
+import io.micronaut.samples.petclinic.repository.UserJdbcRepository;
+import io.micronaut.samples.petclinic.repository.UserRoleJdbcRepository;
 import io.micronaut.samples.petclinic.repository.VetRepository;
 import io.micronaut.samples.petclinic.repository.VisitRepository;
 import io.micronaut.samples.petclinic.service.OwnerLoyaltyService;
+import io.micronaut.samples.petclinic.utils.PasswordEncoder;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.NotBlank;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +65,11 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
     private final ClinicServiceOfferingRepository clinicServiceOfferingRepository;
     private final AppointmentRepository appointmentRepository;
     private final OwnerLoyaltyService ownerLoyaltyService;
+    private final RoleJdbcRepository roleJdbcRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final UserRoleJdbcRepository userRoleJdbcRepository;
+    private final UserJdbcRepository userJdbcRepository;
+
 
     private static final Map<String, List<ClinicOfferingSeed>> CLINIC_OFFERINGS = Map.ofEntries(
             Map.entry("Downtown Madison Pet Clinic", List.of(
@@ -154,6 +168,10 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
      * @param clinicRepository repository for clinic locations
      * @param appointmentRepository appointment repository for the active database
      * @param clinicServiceOfferingRepository repository for clinic service offerings
+     * @param roleJdbcRepository repository for sample security roles
+     * @param passwordEncoder encoder for sample user passwords
+     * @param userRoleJdbcRepository repository for sample user-role assignments
+     * @param userJdbcRepository repository for sample users
      * @param ownerLoyaltyService profile-specific zero-balance account reconciliation
      */
     public DataLoader(VetRepository vetRepository,
@@ -165,7 +183,11 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
                       ClinicRepository clinicRepository,
                       AppointmentRepository appointmentRepository,
                       ClinicServiceOfferingRepository clinicServiceOfferingRepository,
-                      OwnerLoyaltyService ownerLoyaltyService) {
+                      OwnerLoyaltyService ownerLoyaltyService,
+                      RoleJdbcRepository roleJdbcRepository,
+                      PasswordEncoder passwordEncoder,
+                      UserRoleJdbcRepository userRoleJdbcRepository,
+                      UserJdbcRepository userJdbcRepository) {
         this.vetRepository = vetRepository;
         this.specialityRepository = specialityRepository;
         this.petTypeRepository = petTypeRepository;
@@ -173,6 +195,10 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
         this.petRepository = petRepository;
         this.visitRepository = visitRepository;
         this.clinicRepository = clinicRepository;
+        this.roleJdbcRepository = roleJdbcRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.userRoleJdbcRepository = userRoleJdbcRepository;
+        this.userJdbcRepository = userJdbcRepository;
         this.appointmentRepository = appointmentRepository;
         this.clinicServiceOfferingRepository = clinicServiceOfferingRepository;
         this.ownerLoyaltyService = ownerLoyaltyService;
@@ -204,6 +230,14 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
     }
 
     private void loadData() {
+        // create roles
+        Role roleStaff = createRole(Role.Authority.ROLE_STAFF);
+        Role roleAdmin = createRole(Role.Authority.ROLE_ADMIN);
+
+        createUser("admin@example.com", "password123", roleAdmin);
+        createUser("staff@example.com", "password123", roleStaff);
+
+
         // Create specialities
         Speciality radiology = createSpeciality("radiology");
         Speciality surgery = createSpeciality("surgery");
@@ -281,6 +315,23 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
 
         loadClinicData();
         loadAppointments();
+    }
+
+    private Role createRole(Role.Authority authority) {
+        return roleJdbcRepository.save(new Role(null, authority));
+    }
+
+    private User createUser(@NotBlank String username, @NotBlank String rawPassword, Role role) {
+        User user = new User(username, passwordEncoder.encode(rawPassword));
+        user = userJdbcRepository.save(user);
+        UserRoleId userRoleId = new UserRoleId(user, role);
+        userRoleJdbcRepository.save(new UserRole(userRoleId));
+        return user;
+    }
+
+    private void createUserRole(User user, Role role) {
+        UserRoleId userRoleId = new UserRoleId(user, role);
+        userRoleJdbcRepository.save(new UserRole(userRoleId));
     }
 
     private Speciality createSpeciality(String name) {

@@ -20,6 +20,7 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import java.util.Collection;
 import java.util.Map;
@@ -29,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest(transactional = false)
 @Requires(env = "oracle")
+@EnabledIfSystemProperty(named = "micronaut.environments", matches = ".*oracle.*")
 @Property(name = "micronaut.http.client.exception-on-error-status", value = "false")
 class OwnerCareRecordControllerTest {
 

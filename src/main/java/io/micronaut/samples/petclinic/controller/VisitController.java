@@ -102,6 +102,7 @@ public class VisitController {
      */
     @Get("/new")
     @View("pets/createOrUpdateVisitForm")
+    @Secured(SecurityRule.IS_ANONYMOUS)
     public Map<String, Object> initNewVisitForm(@PathVariable Integer ownerId, @PathVariable Integer petId) {
         Pet pet;
         try {
@@ -125,6 +126,7 @@ public class VisitController {
      * @param form    the visit form data
      * @return redirect to owner details
      */
+    @Secured(SecurityRule.IS_AUTHENTICATED)
     @Post(value = "/new", consumes = MediaType.APPLICATION_JSON)
     public HttpResponse<?> processNewVisitForm(@PathVariable Integer ownerId,
                                                 @PathVariable Integer petId,

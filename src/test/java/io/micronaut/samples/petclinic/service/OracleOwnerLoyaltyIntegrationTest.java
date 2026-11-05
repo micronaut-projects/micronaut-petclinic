@@ -3,6 +3,7 @@ package io.micronaut.samples.petclinic.service;
 import io.micronaut.context.MessageSource;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.exceptions.DataIntegrityViolationException;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -10,6 +11,7 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.samples.petclinic.dto.LoyaltyRedemptionResponse;
 import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
 import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
@@ -51,6 +53,8 @@ import java.util.concurrent.TimeUnit;
 import java.sql.Connection;
 import io.micronaut.transaction.TransactionOperations;
 
+import static io.micronaut.samples.petclinic.controller.ControllerTestSupport.createNoRedirectClient;
+import static io.micronaut.samples.petclinic.controller.ControllerTestSupport.login;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -99,6 +103,9 @@ class OracleOwnerLoyaltyIntegrationTest {
     @Inject
     @Client("/")
     HttpClient client;
+
+    @Inject
+    EmbeddedServer server;
 
     @Test
     @Order(1)
@@ -184,17 +191,23 @@ class OracleOwnerLoyaltyIntegrationTest {
         Owner owner = createOwner();
         Pet pet = createPet(owner);
         String body = """
-                {"date":"2025-01-01","description":"Routine checkup","durationMinutes":30,"followUpPeriodMonths":6}
-                """;
+                {"date":"%s","description":"Routine checkup","durationMinutes":30,"followUpPeriodMonths":6}
+                """.formatted(LocalDate.now().plusDays(1));
+        String sessionCookie;
+        try (HttpClient loginClient = createNoRedirectClient(server)) {
+            sessionCookie = login(loginClient, "staff@example.com", "password123");
+        }
 
         HttpClientResponseException exception = org.junit.jupiter.api.Assertions.assertThrows(
                 HttpClientResponseException.class,
                 () -> client.toBlocking().exchange(HttpRequest.POST(
                                 "/owners/2147483647/pets/" + pet.id() + "/visits/new", body)
                         .contentType(MediaType.APPLICATION_JSON_TYPE)
-                        .accept(MediaType.APPLICATION_JSON_TYPE), String.class));
+                        .accept(MediaType.APPLICATION_JSON_TYPE)
+                        .header(HttpHeaders.COOKIE, sessionCookie), String.class));
 
         assertThat((CharSequence) exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(visitRepository.findByPetId(pet.id())).isEmpty();
         assertThat(accountRepository.findByOwner(owner).orElseThrow().points()).isZero();
     }
 

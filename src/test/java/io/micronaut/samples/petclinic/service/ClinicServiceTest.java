@@ -1,7 +1,11 @@
 package io.micronaut.samples.petclinic.service;
 
+import io.micronaut.samples.petclinic.dto.VetForm;
+import io.micronaut.samples.petclinic.dto.VisitSearchCriteria;
 import io.micronaut.samples.petclinic.ClinicServiceFixtures;
 import io.micronaut.samples.petclinic.dto.VisitSearchCriteria;
+import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
+import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
 import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
@@ -17,6 +21,7 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -85,6 +90,17 @@ class ClinicServiceTest {
         Collection<Vet> vets = vetService.findAll();
         assertThat(vets).isNotEmpty();
         assertThat(vets.size()).isGreaterThanOrEqualTo(6);
+    }
+
+    @Test
+    void shouldSaveNewVet() throws IllegalRequestArgumentException, NotFoundEntityException {
+        VetForm vetForm = new VetForm("Casey", "Morgan", Set.of());
+
+        Vet savedVet = vetService.create(vetForm);
+
+        assertThat(savedVet.id()).isNotNull();
+        assertThat(savedVet.getFirstName()).isEqualTo("Casey");
+        assertThat(savedVet.getLastName()).isEqualTo("Morgan");
     }
 
     @Test
