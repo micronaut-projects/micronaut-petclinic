@@ -1,13 +1,14 @@
 package io.micronaut.samples.petclinic.controller;
 
 import io.micronaut.http.BasicHttpAttributes;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
-import io.micronaut.http.cookie.Cookie;
+import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.samples.petclinic.ClinicServiceFixtures;
 import io.micronaut.samples.petclinic.service.ClinicService;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -17,6 +18,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
+import static io.micronaut.samples.petclinic.controller.ControllerTestSupport.createNoRedirectClient;
+import static io.micronaut.samples.petclinic.controller.ControllerTestSupport.login;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -27,6 +30,9 @@ class PetControllerTest {
     @Inject
     @Client("/")
     HttpClient client;
+
+    @Inject
+    EmbeddedServer server;
 
     @Inject
     ClinicServiceFixtures fixtures;
@@ -103,12 +109,19 @@ class PetControllerTest {
     }
 
     private HttpClientResponseException submitInvalidPet(String uri, String form) {
+        String sessionCookie;
+        try (HttpClient loginClient = createNoRedirectClient(server)) {
+            sessionCookie = login(loginClient, "staff@example.com", "password123");
+        }
         var failure = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(
                 HttpRequest.POST(uri, form)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
                         .accept(MediaType.ALL_TYPE)
-                        .cookie(Cookie.of("locale", "en")), String.class));
-        assertThat(failure.getResponse().getContentType()).contains(MediaType.TEXT_HTML_TYPE);
+                        .header(HttpHeaders.COOKIE, sessionCookie + "; locale=en"), String.class));
+        assertThat(failure.getResponse().getContentType())
+                .as("response status %s, body %s", failure.getStatus(),
+                        failure.getResponse().getBody(String.class).orElse(""))
+                .contains(MediaType.TEXT_HTML_TYPE);
         return failure;
     }
 }
