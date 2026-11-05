@@ -1,5 +1,6 @@
 package io.micronaut.samples.petclinic.service;
 
+import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.geo.LineString;
 import io.micronaut.data.model.geo.Point;
@@ -73,11 +74,17 @@ public class ClinicService {
     // ========== Owner Operations ==========
 
     /**
-     * Find an owner by ID.
+     * Finds an owner by ID, including its pets and visit history. The result is cached as {@code owner-details}.
+     *
+     * <p>The cache uses Oracle in the {@code oracle} environment and Caffeine otherwise.
+     * Owner edits, pet saves, visit creation, and owner-care document updates through the controllers
+     * invalidate the entry keyed by the owner ID in the URL, so the next read loads the saved details.</p>
+     *
      * @param id the owner ID
      * @return the persisted owner
      * @throws NotFoundEntityException if the owner does not exist
      */
+    @Cacheable("owner-details")
     public Owner findOwnerById(Integer id) throws NotFoundEntityException {
         return ownerRepository.findById(id).orElseThrow(NotFoundEntityException::new);
     }

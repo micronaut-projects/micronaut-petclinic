@@ -15,6 +15,14 @@ micronaut:
       binary-static-content: true
   messages:
     basename: i18n/messages
+  caches:
+    owner-details:
+      expire-after-write: 60s
+      expire-after-access: 30s
+      maximum-size: 100
+      record-stats: true
+      cleanup-interval: 10s
+      cleanup-batch-size: 100
 
   security:
     intercept-url-map:
@@ -26,6 +34,10 @@ micronaut:
 petclinic:
   sample-data:
     enabled: true
+
+# Oracle cache infrastructure is enabled only by application-oracle.yml.
+cache:
+  enabled: false
 
 # Logging configuration
 logger:

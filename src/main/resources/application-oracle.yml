@@ -1,4 +1,7 @@
 # Oracle Configuration Profile
+cache:
+  enabled: true
+
 datasources:
   default:
     db-type: oracle
@@ -14,6 +17,12 @@ datasources:
     minimum-idle: 2
     dialect-options:
       version: 23.1
+
+micronaut:
+  oracle:
+    cache:
+      datasource: default
+      prefix: PETCLINIC
 
 # We used this image because the default version that ships with test resources doesn't support geospatial features.
 # If you're not using geospatial features the default option should be sufficient & the following section can be removed.

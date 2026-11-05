@@ -1,5 +1,6 @@
 package io.micronaut.samples.petclinic.controller;
 
+import io.micronaut.cache.annotation.CacheInvalidate;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
@@ -18,6 +19,8 @@ import io.micronaut.samples.petclinic.mapper.FormMapper;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.service.ClinicService;
 import io.micronaut.samples.petclinic.service.OwnerLoyaltyService;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
@@ -36,6 +39,7 @@ import java.util.Map;
  * Handles CRUD operations and searching for pet owners.
  */
 @Controller("/owners")
+@ExecuteOn(TaskExecutors.BLOCKING)
 @Secured(SecurityRule.IS_ANONYMOUS)
 public class OwnerController {
 
@@ -219,7 +223,7 @@ public class OwnerController {
         );
     }
 
-    /**
+	/**
      * Display the form to edit an existing owner.
      *
      * @param ownerId the owner ID
@@ -244,13 +248,14 @@ public class OwnerController {
 
 
     /**
-     * Process the form to update an existing owner.
+     * Updates an existing owner and evicts that owner's cached details.
      *
      * @param ownerId the owner ID
      * @param form    the updated owner form data
      * @return redirect to owner details on success
      */
     @Post(value = "/{ownerId}/edit", consumes = MediaType.APPLICATION_FORM_URLENCODED)
+    @CacheInvalidate(value = "owner-details", parameters = "ownerId")
     public HttpResponse<?> processUpdateOwnerForm(@PathVariable Integer ownerId, @Valid @Body OwnerForm form)
             throws NotFoundEntityException {
         Owner existingOwner = clinicService.findOwnerById(ownerId);
