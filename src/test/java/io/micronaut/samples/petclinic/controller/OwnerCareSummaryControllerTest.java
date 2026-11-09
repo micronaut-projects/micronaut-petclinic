@@ -1,5 +1,6 @@
 package io.micronaut.samples.petclinic.controller;
 
+import io.micronaut.cache.CacheManager;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpHeaders;
@@ -34,6 +35,7 @@ class OwnerCareSummaryControllerTest {
     @Inject @Client("/") HttpClient client;
     @Inject ClinicService clinicService;
     @Inject ClinicServiceFixtures fixtures;
+    @Inject CacheManager<?> cacheManager;
 
     private Owner testOwner;
     private Pet testPet;
@@ -45,6 +47,7 @@ class OwnerCareSummaryControllerTest {
         }
         if (testOwner != null) {
             clinicService.deleteOwner(testOwner);
+            cacheManager.getCache("owner-details").invalidate(testOwner.id());
         }
     }
 
@@ -98,6 +101,12 @@ class OwnerCareSummaryControllerTest {
         assertThat(withoutPets.code()).isEqualTo(HttpStatus.OK.getCode());
         assertThat(withoutPets.body()).containsEntry("_id", testOwner.id()).containsEntry("pets", List.of());
         assertThat(withoutPets.body().get("telephone")).isNull();
+    }
+
+    @Test
+    void preservesRequiredEmptyVisitsForAPet() {
+        testOwner = clinicService.saveOwner(new Owner(
+                "Morgan", "NoVisits", "100 Example Way", "Madison", null));
 
         testPet = clinicService.savePet(new Pet("Mittens", LocalDate.of(2012, 9, 4),
                 clinicService.findPetTypes().getFirst(), testOwner));
