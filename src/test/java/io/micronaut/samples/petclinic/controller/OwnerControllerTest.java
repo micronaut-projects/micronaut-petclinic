@@ -78,6 +78,8 @@ class OwnerControllerTest {
             assertThat(response.body()).doesNotContain("id=\"owner-loyalty-card\"");
             assertThat(context.containsBean(OwnerLoyaltyController.class)).isFalse();
         }
+        assertThat(response.body()).contains("id=\"export-care-summary\"");
+        assertThat(response.body()).contains("href=\"/owners/" + owner.id() + "/care-summary\"");
     }
 
     @Test
