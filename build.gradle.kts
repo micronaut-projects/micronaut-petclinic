@@ -1,4 +1,5 @@
 import gg.jte.ContentType
+import io.micronaut.jsonschema.gradle.GenerateFromJsonSchemaSourcesTask
 import org.graalvm.buildtools.gradle.tasks.NativeRunTask
 
 plugins {
@@ -7,6 +8,8 @@ plugins {
     jacoco
     alias(libs.plugins.graalvm.native)
     alias(libs.plugins.jte)
+    alias(libs.plugins.micronaut.jsonschema)
+    alias(libs.plugins.jsonschema.records)
 }
 
 group = providers.gradleProperty("projectGroup").orElse("io.micronaut.samples").get()
@@ -45,10 +48,18 @@ val databaseIntegrations = listOf(
 )
 
 val testResourcesClientTimeoutSeconds = 180
+val oracleSchemaDiscovery = providers.gradleProperty("oracleSchemaDiscovery").isPresent
 
 micronaut {
     runtime("netty")
     testRuntime("junit5")
+    jsonschema {
+        fromFile(file("src/main/resources/jsonschema/owner-care-summary.schema.json")) {
+            lang.set("java")
+            outputDirectory.set(layout.buildDirectory.dir("generated/sources/jsonschema/main"))
+            outputPackageName.set("io.micronaut.samples.petclinic.generated")
+        }
+    }
     testResources {
         enabled = true
         inferClasspath = false
@@ -62,6 +73,8 @@ micronaut {
         clientTimeout.set(testResourcesClientTimeoutSeconds)
     }
 }
+
+val jsonSchemaRecordsJdbc = configurations.create("jsonSchemaRecordsJdbc")
 
 dependencies {
     implementation(platform(libs.micronaut.platform.parent))
@@ -131,6 +144,49 @@ dependencies {
     testImplementation(libs.assertj.core)
     testImplementation(libs.ojdbc11)
     jteGenerate(libs.jte.native.resources)
+    jsonSchemaRecordsJdbc(libs.ojdbc11)
+}
+
+jsonSchemaRecords {
+    // Optional Oracle discovery only; compileJava uses the resource schema above.
+    providers.oracle.jdbcUrl.set(project.providers.environmentVariable("DATASOURCES_DEFAULT_URL"))
+    providers.oracle.username.set(project.providers.environmentVariable("DATASOURCES_DEFAULT_USERNAME"))
+    providers.oracle.password.set(project.providers.environmentVariable("DATASOURCES_DEFAULT_PASSWORD"))
+    jdbcClasspath.from(jsonSchemaRecordsJdbc)
+    targetPackage.set("io.micronaut.samples.petclinic.oracle.discoverygenerated")
+    languageLevel.set(25)
+    outputDir.set(layout.buildDirectory.dir("generated/sources/oracle-schema-discovery"))
+    sources.set(listOf(
+        mapOf(
+            "name" to "owner-care-duality-view",
+            "provider" to "oracle-duality-views",
+            "options" to mapOf(
+                "owner" to "PETCLINIC",
+                "include" to "OWNER_CARE_DV"
+            )
+        )
+    ))
+}
+
+tasks.named<GenerateFromJsonSchemaSourcesTask>("generateFromJsonSchemaSources") {
+    onlyIf("Enable Oracle schema discovery with -PoracleSchemaDiscovery") {
+        oracleSchemaDiscovery
+    }
+    // Database schema changes are not tracked by Gradle inputs.
+    outputs.upToDateWhen { false }
+    doFirst {
+        if (jdbcUrl.orNull.isNullOrBlank()) {
+            throw GradleException(
+                "Oracle discovery requires a JDBC URL. Export DATASOURCES_DEFAULT_URL in this terminal, " +
+                    "and set DATASOURCES_DEFAULT_USERNAME and DATASOURCES_DEFAULT_PASSWORD before running the task."
+            )
+        }
+    }
+}
+
+sourceSets.named("main") {
+    // Only the portable resource schema generates application models.
+    java.exclude("io/micronaut/samples/petclinic/oracle/discoverygenerated/**")
 }
 
 jte {

@@ -1,7 +1,9 @@
 [versions]
+
 micronaut-platform = "5.2.5"
 micronaut-cache = "6.2.0"
 micronaut-gradle-plugin = "5.0.2"
+micronaut-jsonschema-records = "2.3.1"
 # Azure provider 1.1.0 uses oracle.jdbc.util.OracleConfigurationCache,
 # which moved to oracle.jdbc.util.configuration in driver 23.26.2.0.0.
 # TODO: Remove once ojdbc-provider-azure is upgraded to latest versions & this issue [https://github.com/oracle/ojdbc-extensions/issues/286] is addressed.
@@ -66,6 +68,8 @@ assertj-core = { module = "org.assertj:assertj-core" }
 
 [plugins]
 micronaut-application = { id = "io.micronaut.application", version.ref = "micronaut-gradle-plugin" }
+micronaut-jsonschema = { id = "io.micronaut.jsonschema", version.ref = "micronaut-gradle-plugin" }
 micronaut-test-resources = { id = "io.micronaut.test-resources", version.ref = "micronaut-test-resources" }
 graalvm-native = { id = "org.graalvm.buildtools.native", version.ref = "graalvm-native" }
 jte = { id = "gg.jte.gradle", version.ref = "jte" }
+jsonschema-records = { id = "io.micronaut.jsonschema.records", version.ref = "micronaut-jsonschema-records" }
