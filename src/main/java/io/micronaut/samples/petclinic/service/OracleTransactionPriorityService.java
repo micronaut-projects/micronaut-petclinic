@@ -2,6 +2,8 @@ package io.micronaut.samples.petclinic.service;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
+import io.micronaut.samples.petclinic.exception.AppointmentUnavailableException;
+import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.model.Appointment;
 import io.micronaut.samples.petclinic.repository.AppointmentRepository;
 import io.micronaut.transaction.annotation.OracleTransactional;
@@ -9,6 +11,7 @@ import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
 
 import java.time.Duration;
+import java.util.List;
 
 import static io.micronaut.samples.petclinic.model.Appointment.Status.*;
 
@@ -30,19 +33,38 @@ public class OracleTransactionPriorityService {
     private final AppointmentRepository appointments;
     private final int reservationSeconds;
 
+    /**
+     * Creates the service that owns priority booking transactions.
+     *
+     * @param appointments appointment repository
+     * @param reservationSeconds demo pause used by regular bookings
+     */
     public OracleTransactionPriorityService(AppointmentRepository appointments,
                                             @Value("${petclinic.transaction-priority.reservation-seconds:15}") int reservationSeconds) {
         this.appointments = appointments;
         this.reservationSeconds = reservationSeconds;
     }
 
-    /** Pause used by LOW and the page's estimated response countdown. */
+    /**
+     * Returns the pause used by LOW and the page's estimated response countdown.
+     *
+     * @return regular-booking pause in seconds
+     */
     public int getReservationSeconds() {
         return reservationSeconds;
     }
 
-    @OracleTransactional(priority = OracleTransactional.Priority.LOW, timeout = 30)
-    public void bookRegular(Integer appointmentId) {
+    /**
+     * Attempts to book an available priority appointment at LOW priority after the demo pause.
+     *
+     * @param appointmentId identifier of the priority appointment
+     * @throws NotFoundEntityException if the appointment is missing or belongs to another showcase
+     * @throws AppointmentUnavailableException if the appointment is already booked
+     * @throws IllegalStateException if the demo pause is interrupted
+     * @throws io.micronaut.transaction.exceptions.OracleTransactionPriorityException if Oracle rolls back LOW
+     */
+    @OracleTransactional(priority = OracleTransactional.Priority.LOW, timeout = 30, rollbackFor = Exception.class)
+    public void bookRegular(Integer appointmentId) throws NotFoundEntityException, AppointmentUnavailableException {
         Appointment appointment = lockAvailable(appointmentId);
         appointment = appointments.save(appointment.withStatus(HELD_BY_REGULAR));
         try {
@@ -55,32 +77,59 @@ public class OracleTransactionPriorityService {
         appointments.save(appointment.withStatus(BOOKED_FOR_REGULAR));
     }
 
-    @OracleTransactional(priority = OracleTransactional.Priority.HIGH, timeout = 30)
-    public void bookEmergency(Integer appointmentId) {
+    /**
+     * Books an available priority appointment at HIGH priority.
+     *
+     * @param appointmentId identifier of the priority appointment
+     * @throws NotFoundEntityException if the appointment is missing or belongs to another showcase
+     * @throws AppointmentUnavailableException if the appointment is already booked
+     */
+    @OracleTransactional(priority = OracleTransactional.Priority.HIGH, timeout = 30, rollbackFor = Exception.class)
+    public void bookEmergency(Integer appointmentId) throws NotFoundEntityException, AppointmentUnavailableException {
         Appointment appointment = lockAvailable(appointmentId);
         appointments.save(appointment.withStatus(BOOKED_FOR_EMERGENCY));
     }
 
     /**
-     * Makes all appointments available. Use only after booking requests finish:
-     * reset runs at Oracle's default HIGH priority and can trigger rollback of a
-     * blocking LOW booking when priority rollback is enabled. It can also clear
-     * a booking that commits while reset waits for its row lock.
+     * Makes priority appointments available. It runs at Oracle's default HIGH priority and,
+     * when priority rollback is enabled, can trigger rollback of a blocking LOW booking.
+     * It can also clear a booking that commits while reset waits for its row lock.
+     *
+     * <p>Use this only after booking requests finish.</p>
      */
     @Transactional
     public void resetFixture() {
-        for (Appointment appointment : appointments.findAll()) {
+        for (Appointment appointment : appointments.findByScenarioOrderByDisplayOrderAscAndIdAsc(Appointment.Scenario.PRIORITY)) {
             appointments.save(appointment.withStatus(AVAILABLE));
         }
     }
 
-    private Appointment lockAvailable(Integer appointmentId) {
-        Appointment appointment = appointments.findByIdForUpdate(appointmentId).orElseThrow(BookingTaken::new);
-        if (appointment.status() != AVAILABLE) throw new BookingTaken();
-        return appointment;
+    /**
+     * Lists available appointments in the priority showcase.
+     *
+     * @return available priority appointments in display order
+     */
+    public List<Appointment> findAvailableAppointments() {
+        return appointments.findAvailableAppointments(Appointment.Scenario.PRIORITY);
     }
 
-    public static class BookingTaken extends RuntimeException {
-        public BookingTaken() { super("The appointment has already been booked"); }
+    /**
+     * Finds an appointment only if it belongs to the priority showcase.
+     *
+     * @param appointmentId identifier of the appointment
+     * @return the matching priority appointment
+     * @throws NotFoundEntityException if the appointment is missing or belongs to another showcase
+     */
+    public Appointment findById(Integer appointmentId) throws NotFoundEntityException {
+        return appointments.findByIdAndScenario(appointmentId, Appointment.Scenario.PRIORITY)
+                .orElseThrow(() -> new NotFoundEntityException("Appointment not found."));
+    }
+
+    private Appointment lockAvailable(Integer appointmentId)
+            throws NotFoundEntityException, AppointmentUnavailableException {
+        Appointment appointment = appointments.findByIdAndScenarioForUpdate(appointmentId, Appointment.Scenario.PRIORITY)
+                .orElseThrow(() -> new NotFoundEntityException("Appointment not found."));
+        if (appointment.status() != AVAILABLE) throw new AppointmentUnavailableException();
+        return appointment;
     }
 }

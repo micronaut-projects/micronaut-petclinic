@@ -412,11 +412,14 @@ startup fails if MySQL rejects function creation. Docker Compose and Test
 Resources enable the trust setting for their local MySQL servers. Configure the
 same prerequisite on external MySQL servers before starting the app.
 
-### Oracle transaction priority
+### Oracle booking transactions: priority and sessionless holds
 
 With the Oracle profile running, open http://localhost:8080/oracle/transaction-priority.
-Sample data provides two appointments, without calendar or time-slot management.
-The page lists all available appointments in display order.
+Sample data provides two priority appointments and two separate sessionless
+appointments, without calendar or time-slot management. Each example lists its
+own appointments in display order and has its own reset.
+
+#### Transaction priority
 
 1. Choose an available appointment and start **regular booking (LOW)**. It locks
    the row and pauses for 15 seconds to simulate checkout.
@@ -451,13 +454,71 @@ docker compose --profile oracle logs oracle
 Check for `Oracle Priority Transactions enabled`; unsupported images and setup
 errors are reported in the startup logs.
 
-Use one browser and a disposable database. **Reset currently makes every appointment
-available**, not just the two demo rows. The UI disables reset while its requests run.
+Use one browser and a disposable database. **Reset makes priority-scenario appointments
+available** and leaves sessionless appointments alone. The UI disables reset while its requests run.
 Wait for bookings in any other tabs or clients to finish too. Reset uses plain
 `@Transactional`, so it runs at Oracle's default HIGH priority. With priority
 rollback enabled, a reset blocked by a LOW booking can cause Oracle to roll that
 booking back after the configured 3-second HIGH wait target. Reset can also clear
 a booking that commits while it waits for the row lock.
+
+#### Sessionless appointment holds
+
+On the same page, use **Hold an appointment, then confirm**:
+
+1. Choose a sessionless appointment and select **Hold appointment**. The request
+   returns after Oracle suspends the transaction, releasing the JDBC connection
+   to Hikari. Oracle retains the uncommitted hold and its row lock.
+2. Select **Refresh committed state**. The row still reads `AVAILABLE` because
+   another transaction cannot see the uncommitted `HELD_FOR_CONFIRMATION` status.
+   A competing hold waits for the row lock for up to ten seconds, then reports a conflict.
+3. Within 60 seconds, select **Confirm booking** to resume the original transaction
+   and commit `BOOKED_AFTER_CONFIRMATION`, or **Cancel hold** to resume it and roll
+   back the original change. Both requests finish after the transaction completes.
+4. Alternatively, abandon the hold. Oracle rolls it back after the 60-second
+   suspension timeout, releasing the lock. A later completion reports that the
+   transaction is unavailable; this can also mean it already completed.
+
+The countdown is approximate. Refresh does not resume or extend the transaction.
+Pending hold details are kept in `sessionStorage` so reloading the same tab, including
+after a priority reset, preserves Confirm/Cancel. Closing the tab can lose the
+handle; Oracle's timeout still releases the hold. Reset confirmed bookings resets
+only completed sessionless bookings; pending holds must be cancelled or expire.
+
+`OracleSessionlessBookingTransactions` uses `@OracleTransactional(sessionless = SUSPEND,
+timeout = 60)` for Hold and `REQUIRES_SUSPENDED` for Confirm/Cancel. The booking service
+creates explicit `OracleSessionlessTransactionPropagationOperations.withPropagation`
+scopes, exports the encoded GTRID after suspension, and imports it on completion.
+Controllers delegate to services; missing appointments, unavailable bookings, and
+invalid transaction IDs are reported through checked domain exceptions. Transaction
+boundaries roll back on checked failures before those errors reach the controller.
+These are top-level transaction boundaries on an injected bean, outside any other
+transaction, using default `REQUIRED` propagation. They are not combined with
+`@OracleTransactional.Recoverable`. See the [Micronaut Data sessionless transaction documentation](https://micronaut-projects.github.io/micronaut-data/latest/guide/#oracleSessionlessTransactions).
+
+The API base is `/oracle/transaction-priority/sessionless`:
+
+- `POST /hold?appointmentId=ID`: 201 with `appointmentId`, `transactionId`,
+  `holdSeconds`, outcome `HELD`, committed `databaseStatus`, and sessionless `appointments`.
+- `POST /confirm` or `/cancel`: JSON body `{"appointmentId":ID,"transactionId":"..."}`;
+  200 after completion, with outcome `CONFIRMED` or `CANCELLED` and no transaction ID.
+- `GET /appointments`: committed sessionless appointment states.
+- `POST /reset`: reset confirmed sessionless bookings and return their committed states.
+
+Malformed input returns 400, missing/wrong-scenario appointments 404, and busy or
+unavailable appointments/transactions 409. The encoded GTRID is an opaque bearer
+handle for this anonymous local showcase: keep it out of URLs, logs, and shared
+screenshots. This example does not add production booking authorization or recovery
+for ambiguous completion responses. Refresh committed state before retrying a failed
+completion. A short hold reduces connection use, but still retains a database row lock.
+
+The existing Data 5.2.4, Oracle JDBC 23.26.3, and Oracle 23.26.x profile support this
+example without new dependencies. The local profiles generate the `SCENARIO` column
+with the schema. Persistent installations must add that non-null string column to
+`APPOINTMENTS`, default existing rows to `PRIORITY`, and add their sessionless fixtures
+before deploying; there is no automatic production migration. Oracle-specific
+HTTP integration tests cover suspension, pool release with one connection,
+confirmation, cancellation, expiry, contention, fixture isolation, and localization.
 
 ### Owner care summary export with generated records
 

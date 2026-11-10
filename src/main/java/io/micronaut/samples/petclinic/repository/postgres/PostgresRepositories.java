@@ -175,7 +175,14 @@ public final class PostgresRepositories {
         Optional<Appointment> findByIdForUpdate(Integer appointmentId);
 
         @Override
-        @Query(value = "SELECT a.* FROM \"APPOINTMENTS\" a WHERE a.\"STATUS\" = 'AVAILABLE' ORDER BY a.\"DISPLAY_ORDER\", a.\"id\"", nativeQuery = true)
-        List<Appointment> findAvailableAppointments();
+        @Query(value = "SELECT a.* FROM \"APPOINTMENTS\" a WHERE a.\"STATUS\" = 'AVAILABLE' AND a.\"SCENARIO\" = :scenario ORDER BY a.\"DISPLAY_ORDER\", a.\"id\"", nativeQuery = true)
+        List<Appointment> findAvailableAppointments(Appointment.Scenario scenario);
+
+        @NonNull
+        @Override
+        @Query(value = """
+                SELECT a.* FROM "APPOINTMENTS" a WHERE a."id" = :appointmentId AND a."SCENARIO" = :scenario FOR UPDATE
+                """, nativeQuery = true)
+        Optional<Appointment> findByIdAndScenarioForUpdate(Integer appointmentId, Appointment.Scenario scenario);
     }
 }
