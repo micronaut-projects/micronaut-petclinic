@@ -85,6 +85,8 @@ if (root) {
         if (!response.ok) {
             const error = new Error(result.message || text("error"));
             error.code = result.code;
+            error.status = response.status;
+            error.missingAppointment = response.status === 404 && (path === "/confirm" || path === "/cancel");
             throw error;
         }
         return result;
@@ -104,8 +106,9 @@ if (root) {
         try {
             await operation();
         } catch (error) {
-            if (error.code === "UNAVAILABLE") remember(null);
-            element("message").textContent = error.code ? text("error." + error.code) : text("error");
+            if (error.code === "UNAVAILABLE" || error.missingAppointment) remember(null);
+            element("message").textContent = error.code ? text("error." + error.code)
+                : error.status ? error.message : text("error");
             element("message").classList.add("text-danger");
             // Refreshing committed state never resumes or prolongs a hold.
             await refresh().catch(() => {});

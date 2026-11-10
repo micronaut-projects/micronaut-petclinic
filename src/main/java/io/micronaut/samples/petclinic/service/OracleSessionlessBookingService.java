@@ -14,8 +14,11 @@ import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import static io.micronaut.samples.petclinic.dto.SessionlessBookingResult.Outcome.CANCELLED;
@@ -182,28 +185,36 @@ public class OracleSessionlessBookingService {
      */
     @Nullable
     static Reason unavailabilityReason(RuntimeException error) {
-        for (Throwable cause = error; cause != null; cause = cause.getCause()) {
-            if (cause instanceof TransactionTimedOutException) {
-                return Reason.BUSY;
-            }
-            if (cause instanceof SQLException sql) {
-                // A pipelined resume can report its SQL failure in the JDBC next-exception chain.
-                for (SQLException current = sql; current != null; current = current.getNextException()) {
-                    OracleErrorCode code = OracleErrorCode.fromCode(current.getErrorCode());
-                    if (code == null) continue;
-                    switch (code) {
-                        case ORA_26218_SESSIONLESS_TRANSACTION_DOES_NOT_EXIST,
-                             ORA_24756_TRANSACTION_DOES_NOT_EXIST -> { return Reason.UNAVAILABLE; }
-                        case ORA_00054_RESOURCE_BUSY,
-                             ORA_01013_USER_REQUESTED_CANCEL,
-                             ORA_25351_TRANSACTION_ATTACHED_TO_OTHER_SESSION,
-                             ORA_30006_RESOURCE_BUSY_WAIT_TIMEOUT -> { return Reason.BUSY; }
-                        default -> { }
-                    }
+        return unavailabilityReason(error, Collections.newSetFromMap(new IdentityHashMap<>()));
+    }
+
+    private static @Nullable Reason unavailabilityReason(@Nullable Throwable error, Set<Throwable> seen) {
+        if (error == null || !seen.add(error)) {
+            return null;
+        }
+        if (error instanceof TransactionTimedOutException) {
+            return Reason.BUSY;
+        }
+        if (error instanceof SQLException sql) {
+            OracleErrorCode code = OracleErrorCode.fromCode(sql.getErrorCode());
+            if (code != null) {
+                switch (code) {
+                    case ORA_26218_SESSIONLESS_TRANSACTION_DOES_NOT_EXIST,
+                         ORA_24756_TRANSACTION_DOES_NOT_EXIST -> { return Reason.UNAVAILABLE; }
+                    case ORA_00054_RESOURCE_BUSY,
+                         ORA_01013_USER_REQUESTED_CANCEL,
+                         ORA_25351_TRANSACTION_ATTACHED_TO_OTHER_SESSION,
+                         ORA_30006_RESOURCE_BUSY_WAIT_TIMEOUT -> { return Reason.BUSY; }
+                    default -> { }
                 }
             }
+            // Each JDBC next exception may have its own cause, including a deferred resume failure.
+            Reason reason = unavailabilityReason(sql.getNextException(), seen);
+            if (reason != null) {
+                return reason;
+            }
         }
-        return null;
+        return unavailabilityReason(error.getCause(), seen);
     }
 
     @FunctionalInterface

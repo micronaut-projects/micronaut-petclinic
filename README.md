@@ -485,7 +485,7 @@ after a priority reset, preserves Confirm/Cancel. Closing the tab can lose the
 handle; Oracle's timeout still releases the hold. Reset confirmed bookings resets
 only completed sessionless bookings; pending holds must be cancelled or expire.
 
-`OracleSessionlessBookingTransactions` uses `@OracleTransactional(sessionless = SUSPEND,
+`OracleSessionlessBookingTransactionsService` uses `@OracleTransactional(sessionless = SUSPEND,
 timeout = 60)` for Hold and `REQUIRES_SUSPENDED` for Confirm/Cancel. The booking service
 creates explicit `OracleSessionlessTransactionPropagationOperations.withPropagation`
 scopes, exports the encoded GTRID after suspension, and imports it on completion.
