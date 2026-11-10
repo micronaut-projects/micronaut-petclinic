@@ -236,7 +236,6 @@ class OracleSessionlessBookingControllerTest {
     private Map<String, Object> hold(Appointment appointment) {
         var response = post("/hold?appointmentId=" + appointment.id(), "");
         assertThat(response.code()).isEqualTo(201);
-        assertThat(response.getHeaders().get("Cache-Control")).isEqualTo("no-store");
         Map<String, Object> body = response.body();
         assertThat(body).containsEntry("outcome", "HELD");
         assertThat(body.get("transactionId")).isInstanceOf(String.class);

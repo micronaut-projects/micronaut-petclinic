@@ -78,7 +78,7 @@ if (root) {
 
     async function request(path, body, method = "POST") {
         const response = await fetch(base + path, {
-            method, cache: "no-store", headers: {Accept: "application/json", ...(body ? {"Content-Type": "application/json"} : {})},
+            method, headers: {Accept: "application/json", ...(body ? {"Content-Type": "application/json"} : {})},
             ...(body ? {body: JSON.stringify(body)} : {})
         });
         const result = await response.json();

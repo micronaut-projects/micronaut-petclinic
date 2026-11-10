@@ -1,16 +1,15 @@
 package io.micronaut.samples.petclinic.controller;
 
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Error;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.annotation.Status;
 import io.micronaut.samples.petclinic.dto.SessionlessBookingRequest;
 import io.micronaut.samples.petclinic.dto.SessionlessBookingResult;
 import io.micronaut.samples.petclinic.exception.AppointmentUnavailableException;
@@ -53,8 +52,8 @@ public class OracleSessionlessBookingController {
      * @return sessionless appointments in display order
      */
     @Get("/appointments")
-    public HttpResponse<List<Appointment>> appointments() {
-        return noStore(HttpResponse.ok(service.findByScenario(SESSIONLESS)));
+    public List<Appointment> appointments() {
+        return service.findByScenario(SESSIONLESS);
     }
 
     /**
@@ -67,9 +66,10 @@ public class OracleSessionlessBookingController {
      * @throws IllegalRequestArgumentException if the request or transaction setup is invalid
      */
     @Post("/hold")
-    public HttpResponse<SessionlessBookingResult> hold(@Positive @QueryValue Integer appointmentId)
+    @Status(HttpStatus.CREATED)
+    public SessionlessBookingResult hold(@Positive @QueryValue Integer appointmentId)
             throws NotFoundEntityException, IllegalRequestArgumentException {
-        return noStore(HttpResponse.created(service.hold(appointmentId)));
+        return service.hold(appointmentId);
     }
 
     /**
@@ -82,9 +82,9 @@ public class OracleSessionlessBookingController {
      * @throws IllegalRequestArgumentException if the transaction handle is missing or malformed
      */
     @Post("/confirm")
-    public HttpResponse<SessionlessBookingResult> confirm(@Valid @Body SessionlessBookingRequest request)
+    public SessionlessBookingResult confirm(@Valid @Body SessionlessBookingRequest request)
             throws NotFoundEntityException, IllegalRequestArgumentException {
-        return noStore(HttpResponse.ok(service.confirm(request.appointmentId(), request.transactionId())));
+        return service.confirm(request.appointmentId(), request.transactionId());
     }
 
     /**
@@ -97,9 +97,9 @@ public class OracleSessionlessBookingController {
      * @throws IllegalRequestArgumentException if the transaction handle is missing or malformed
      */
     @Post("/cancel")
-    public HttpResponse<SessionlessBookingResult> cancel(@Valid @Body SessionlessBookingRequest request)
+    public SessionlessBookingResult cancel(@Valid @Body SessionlessBookingRequest request)
             throws NotFoundEntityException, IllegalRequestArgumentException {
-        return noStore(HttpResponse.ok(service.cancel(request.appointmentId(), request.transactionId())));
+        return service.cancel(request.appointmentId(), request.transactionId());
     }
 
     /**
@@ -110,9 +110,9 @@ public class OracleSessionlessBookingController {
      * @throws AppointmentUnavailableException if a booking or lock prevents the reset
      */
     @Post("/reset")
-    public HttpResponse<List<Appointment>> reset() throws NotFoundEntityException, AppointmentUnavailableException {
+    public List<Appointment> reset() throws NotFoundEntityException, AppointmentUnavailableException {
         service.resetFixture();
-        return noStore(HttpResponse.ok(service.findByScenario(SESSIONLESS)));
+        return service.findByScenario(SESSIONLESS);
     }
 
     /**
@@ -127,11 +127,6 @@ public class OracleSessionlessBookingController {
                 ? "The appointment or transaction is unavailable."
                 : error.getMessage();
         return HttpResponse.<Map<String, String>>status(HttpStatus.CONFLICT)
-                .body(Map.of("code", error.getReason().name(), "message", message))
-                .header(HttpHeaders.CACHE_CONTROL, "no-store");
-    }
-
-    private static <T> HttpResponse<T> noStore(MutableHttpResponse<T> response) {
-        return response.header(HttpHeaders.CACHE_CONTROL, "no-store");
+                .body(Map.of("code", error.getReason().name(), "message", message));
     }
 }
