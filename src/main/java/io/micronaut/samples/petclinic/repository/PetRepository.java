@@ -15,6 +15,15 @@ import java.util.Optional;
  * Dialect-specific {@code @JdbcRepository} beans extend this interface.
  */
 public interface PetRepository extends CrudRepository<Pet, Integer> {
+    /** Locks the pet row until the caller's transaction completes. */
+    @Query("SELECT ID FROM PETS WHERE ID = :id FOR UPDATE")
+    Optional<Integer> lockById(Integer id);
+
+    /** Reloads the complete pet after acquiring its row lock. Requires a transaction. */
+    default Optional<Pet> findByIdForUpdate(Integer id) {
+        return lockById(id).flatMap(lockedId -> findById(lockedId));
+    }
+
     /**
      * Find all pets.
      * @return collection of pets.

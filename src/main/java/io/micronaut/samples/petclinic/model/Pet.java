@@ -33,6 +33,7 @@ import static io.micronaut.data.annotation.Relation.Kind.ONE_TO_MANY;
  * @param type the pet type
  * @param owner the owning owner
  * @param visits the visits recorded for the pet
+ * @param photoFilename the generated local filename for the pet photo, if present
  */
 @MappedEntity("PETS")
 @Serdeable
@@ -62,11 +63,41 @@ public record Pet(
         Owner owner,
 
         @Relation(value = ONE_TO_MANY, mappedBy = "pet")
-        List<Visit> visits
+        List<Visit> visits,
+
+        @MappedProperty("PHOTO_FILENAME")
+        @Nullable String photoFilename
 ) implements NamedEntity, PetWither {
 
     /**
      * Creates a pet and normalizes a {@code null} visit list to an empty immutable list.
+     *
+     * @param id the database identifier, or {@code null} for a new pet
+     * @param name the pet's name
+     * @param birthDate the pet's birth date
+     * @param type the pet type
+     * @param owner the owning owner
+     * @param visits the visits recorded for the pet
+     * @param photoFilename the generated local filename for the pet photo, if present
+     */
+    public Pet(Integer id,
+               String name,
+               LocalDate birthDate,
+               PetType type,
+               @Nullable Owner owner,
+               List<Visit> visits,
+               @Nullable String photoFilename) {
+        this.id = id;
+        this.name = name;
+        this.birthDate = birthDate;
+        this.type = type;
+        this.owner = owner;
+        this.visits = visits != null ? List.copyOf(visits) : List.of();
+        this.photoFilename = photoFilename;
+    }
+
+    /**
+     * Creates a pet with the legacy argument list and no photo.
      *
      * @param id the database identifier, or {@code null} for a new pet
      * @param name the pet's name
@@ -81,12 +112,7 @@ public record Pet(
                PetType type,
                @Nullable Owner owner,
                List<Visit> visits) {
-        this.id = id;
-        this.name = name;
-        this.birthDate = birthDate;
-        this.type = type;
-        this.owner = owner;
-        this.visits = visits != null ? List.copyOf(visits) : List.of();
+        this(id, name, birthDate, type, owner, visits, null);
     }
 
     /**

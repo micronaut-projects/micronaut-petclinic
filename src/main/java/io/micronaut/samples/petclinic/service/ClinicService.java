@@ -128,6 +128,28 @@ public class ClinicService {
 
     // ========== Pet Operations ==========
 
+    /** Persists editable pet details while preserving the current photo key. */
+    @Transactional
+    public void updatePetDetails(Pet pet) throws NotFoundEntityException {
+        Pet current = petRepository.findByIdForUpdate(pet.id()).orElseThrow(NotFoundEntityException::new);
+        if (!current.getOwnerId().equals(pet.getOwnerId())) {
+            throw new NotFoundEntityException();
+        }
+        savePet(current.withName(pet.name()).withBirthDate(pet.birthDate()).withType(pet.type()));
+    }
+
+
+    /** Updates photo metadata without overwriting pet details changed by another request. */
+    @Transactional
+    public boolean replacePetPhoto(Integer petId, @io.micronaut.core.annotation.Nullable String previousFilename, String filename) {
+        Optional<Pet> current = petRepository.findByIdForUpdate(petId);
+        if (current.isEmpty() || !Objects.equals(current.get().photoFilename(), previousFilename)) {
+            return false;
+        }
+        savePet(current.get().withPhotoFilename(filename));
+        return true;
+    }
+
     /**
      * Find a pet by ID.
      * @param id the pet ID

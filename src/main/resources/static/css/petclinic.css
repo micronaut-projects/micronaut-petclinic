@@ -862,3 +862,72 @@ h1, h2, h3, h4, h5, h6 {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--gray-400);
 }
+
+/* Pet photo editor and owner detail thumbnails */
+.pet-photo-preview {
+    aspect-ratio: 4 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 1px solid var(--gray-200);
+    border-radius: 14px;
+    background: var(--gray-50);
+}
+
+.pet-photo-preview img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.pet-photo-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--gray-500);
+    font-size: 0.875rem;
+}
+
+.pet-photo-placeholder i {
+    font-size: 2.5rem;
+    color: var(--gray-300);
+}
+
+.pet-photo-input {
+    padding: 0;
+    overflow: hidden;
+    font-size: 0.875rem;
+}
+
+.pet-photo-input::file-selector-button {
+    padding: 0.75rem;
+    margin: 0 0.75rem 0 0;
+    border: 0;
+    border-right: 1px solid var(--gray-200);
+    background: var(--gray-50);
+    color: var(--gray-700);
+}
+
+.pet-photo-avatar {
+    width: 50px;
+    height: 50px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 1px solid var(--gray-200);
+    background: white;
+}
+
+@media (max-width: 575.98px) {
+    .pet-details-panel,
+    .pet-photo-panel {
+        padding: 1.5rem;
+    }
+
+    .pet-form-actions .btn {
+        width: 100%;
+    }
+}

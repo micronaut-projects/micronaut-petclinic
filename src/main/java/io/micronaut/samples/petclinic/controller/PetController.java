@@ -1,14 +1,20 @@
 package io.micronaut.samples.petclinic.controller;
 
 import io.micronaut.http.BasicHttpAttributes;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.Part;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.http.multipart.CompletedFileUpload;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.http.uri.UriMatchInfo;
@@ -20,13 +26,20 @@ import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.PetType;
 import io.micronaut.samples.petclinic.service.ClinicService;
+import io.micronaut.samples.petclinic.service.InvalidPetPhotoException;
+import io.micronaut.samples.petclinic.service.PetPhotoStorage;
+import io.micronaut.samples.petclinic.service.PetPhotoValidator;
+import io.micronaut.samples.petclinic.service.PetPhotoTooLargeException;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.ModelAndView;
 import io.micronaut.views.View;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -40,8 +53,12 @@ import java.util.Optional;
 @Secured(SecurityRule.IS_ANONYMOUS)
 public class PetController {
 
+    private static final Logger LOG = LoggerFactory.getLogger(PetController.class);
+
     private final ClinicService clinicService;
     private final FormMapper formMapper;
+    private final PetPhotoStorage petPhotoStorage;
+    private final PetPhotoValidator petPhotoValidator;
 
     /**
      * Creates the controller with its service and mapper dependencies.
@@ -49,9 +66,11 @@ public class PetController {
      * @param clinicService the facade used for pet operations
      * @param formMapper the mapper used to convert pet forms
      */
-    public PetController(ClinicService clinicService, FormMapper formMapper) {
+    public PetController(ClinicService clinicService, FormMapper formMapper, PetPhotoStorage petPhotoStorage, PetPhotoValidator petPhotoValidator) {
         this.clinicService = clinicService;
         this.formMapper = formMapper;
+        this.petPhotoStorage = petPhotoStorage;
+        this.petPhotoValidator = petPhotoValidator;
     }
 
     /**
@@ -66,6 +85,7 @@ public class PetController {
                                                  ConstraintViolationException e) {
         Owner owner;
         Integer petId;
+        String photoUrl = "";
         try {
             // Error handling replaces the route match, but retains the original URI template.
             Map<String, Object> pathVariables = BasicHttpAttributes.getUriTemplate(request)
@@ -77,6 +97,15 @@ public class PetController {
             petId = Optional.ofNullable(pathVariables.get("petId"))
                     .map(Object::toString).map(Integer::valueOf).orElse(null);
             owner = getOwner(ownerId);
+            if (petId != null) {
+                Pet existing = clinicService.findPetById(petId);
+                if (!ownerId.equals(existing.getOwnerId())) {
+                    throw new NotFoundEntityException();
+                }
+                if (existing.photoFilename() != null) {
+                    photoUrl = "/owners/" + ownerId + "/pets/" + petId + "/photo";
+                }
+            }
         } catch (NotFoundEntityException notFound) {
             return HttpResponse.notFound(new ModelAndView<>("error/404", Map.of(
                     "path", request.getPath(), "message", notFound.getMessage())));
@@ -103,6 +132,8 @@ public class PetController {
         model.put("isNew", petId == null);
         model.put("validationErrors", validationErrors);
         model.put("pet", form);
+        model.put("photoError", "");
+        model.put("photoUrl", photoUrl);
         if (petId != null) {
             model.put("petId", petId);
         }
@@ -140,7 +171,9 @@ public class PetController {
                 "owner", owner,
                 "types", clinicService.findPetTypes(),
                 "isNew", true,
-                "validationErrors", Map.of()
+                "validationErrors", Map.of(),
+                "photoError", "",
+                "photoUrl", ""
         );
     }
 
@@ -182,7 +215,9 @@ public class PetController {
      */
     @Get("/{petId}/edit")
     @View("pets/createOrUpdatePetForm")
-    public Map<String, Object> initUpdateForm(@PathVariable Integer ownerId, @PathVariable Integer petId) {
+    public Map<String, Object> initUpdateForm(@PathVariable Integer ownerId,
+                                             @PathVariable Integer petId,
+                                             @io.micronaut.http.annotation.QueryValue(defaultValue = "") String photoError) {
         Pet pet;
         try {
             pet = clinicService.findPetById(petId);
@@ -194,8 +229,102 @@ public class PetController {
                 "owner", pet.getOwner(),
                 "types", clinicService.findPetTypes(),
                 "isNew", false,
-                "validationErrors", Map.of()
+                "validationErrors", Map.of(),
+                "photoError", photoError,
+                "photoUrl", pet.photoFilename() != null
+                        ? "/owners/" + ownerId + "/pets/" + petId + "/photo" : ""
         );
+    }
+
+    /**
+     * Upload or replace a pet photo. Only generated filenames are persisted and served.
+     *
+     * @param ownerId the owner in the route
+     * @param petId the pet receiving the photo
+     * @param upload the multipart image
+     * @return redirect to the owner details page, or a validation response
+     */
+    @Post(value = "/{petId}/photo", consumes = MediaType.MULTIPART_FORM_DATA)
+    @ExecuteOn(TaskExecutors.BLOCKING)
+    public HttpResponse<?> uploadPhoto(@PathVariable Integer ownerId,
+                                       @PathVariable Integer petId,
+                                       @Part("photo") CompletedFileUpload upload) {
+        Pet pet;
+        try {
+            pet = clinicService.findPetById(petId);
+        } catch (NotFoundEntityException e) {
+            throw new NotFoundException();
+        }
+        if (!ownerId.equals(pet.getOwnerId())) {
+            throw new NotFoundException();
+        }
+
+        String previousFilename = pet.photoFilename();
+        String newFilename;
+        try (upload) {
+            newFilename = petPhotoStorage.store(petPhotoValidator.validate(upload));
+        } catch (InvalidPetPhotoException invalidPhoto) {
+            return HttpResponse.redirect(URI.create("/owners/" + ownerId + "/pets/" + petId
+                    + "/edit?photoError=invalid-type"));
+        } catch (PetPhotoTooLargeException tooLarge) {
+            return HttpResponse.status(HttpStatus.REQUEST_ENTITY_TOO_LARGE);
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to store the pet photo", e);
+        }
+
+        try {
+            if (!clinicService.replacePetPhoto(petId, previousFilename, newFilename)) {
+                petPhotoStorage.delete(newFilename);
+                return HttpResponse.status(HttpStatus.CONFLICT);
+            }
+        } catch (RuntimeException e) {
+            try {
+                petPhotoStorage.delete(newFilename);
+            } catch (IOException cleanupFailure) {
+                e.addSuppressed(cleanupFailure);
+            }
+            throw e;
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to clean up the unreferenced pet photo", e);
+        }
+
+        if (previousFilename != null && !previousFilename.equals(newFilename)) {
+            try {
+                petPhotoStorage.delete(previousFilename);
+            } catch (IOException cleanupFailure) {
+                LOG.warn("Could not delete replaced pet photo {}", previousFilename, cleanupFailure);
+            }
+        }
+        return HttpResponse.redirect(UriBuilder.of("/owners/{ownerId}").expand(Map.of("ownerId", ownerId)));
+    }
+
+    /**
+     * Serves the stored photo for the pet without accepting a filesystem path from the request.
+     *
+     * @param ownerId the owner in the route
+     * @param petId the pet whose photo is requested
+     * @return the verified image, or not found
+     * @throws IOException if the image cannot be read
+     */
+    @Get("/{petId}/photo")
+    @ExecuteOn(TaskExecutors.BLOCKING)
+    public HttpResponse<byte[]> showPhoto(@PathVariable Integer ownerId, @PathVariable Integer petId)
+            throws IOException {
+        Pet pet;
+        try {
+            pet = clinicService.findPetById(petId);
+        } catch (NotFoundEntityException e) {
+            throw new NotFoundException();
+        }
+        if (!ownerId.equals(pet.getOwnerId())) {
+            throw new NotFoundException();
+        }
+        PetPhotoStorage.StoredPhoto photo = petPhotoStorage.load(pet.photoFilename())
+                .orElseThrow(NotFoundException::new);
+        return HttpResponse.ok(photo.bytes())
+                .contentType(photo.mediaType())
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .header("X-Content-Type-Options", "nosniff");
     }
 
     /**
@@ -224,7 +353,7 @@ public class PetController {
             pet = pet.withType(petType.get());
         }
 
-        clinicService.savePet(pet);
+        clinicService.updatePetDetails(pet);
 
         URI uri = UriBuilder.of("/owners/{ownerId}").expand(Map.of("ownerId", ownerId));
         return HttpResponse.redirect(uri);

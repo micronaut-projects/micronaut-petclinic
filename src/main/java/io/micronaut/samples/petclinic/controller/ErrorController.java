@@ -7,6 +7,7 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Error;
 import io.micronaut.http.annotation.Status;
+import io.micronaut.http.exceptions.ContentLengthExceededException;
 import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.json.JsonSyntaxException;
 import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
@@ -90,6 +91,18 @@ public class ErrorController {
     @Error(exception = ConversionErrorException.class, global = true)
     public HttpResponse<Map<String, String>> invalidValue(ConversionErrorException error) {
         return HttpResponse.badRequest(Map.of("message", "Invalid request value."));
+    }
+
+    /**
+     * Returns HTTP 413 when a multipart part exceeds Micronaut's configured limit.
+     *
+     * @param error the multipart size failure
+     * @return a payload-too-large response
+     */
+    @Error(exception = ContentLengthExceededException.class, global = true)
+    public HttpResponse<Map<String, String>> contentTooLarge(ContentLengthExceededException error) {
+        return HttpResponse.status(HttpStatus.REQUEST_ENTITY_TOO_LARGE)
+                .body(Map.of("message", "The uploaded file exceeds the maximum size."));
     }
 
     /**

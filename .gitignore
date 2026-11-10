@@ -63,3 +63,6 @@ rebel.xml
 # Env files
 .env
 .env.local
+
+# Local pet photo uploads
+/var/pet-photos/

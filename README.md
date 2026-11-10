@@ -217,6 +217,20 @@ MICRONAUT_ENVIRONMENTS=h2 ./build/native/nativeCompile/micronaut-petclinic
 3. Select pet type (dog, cat, bird, etc.) and enter details
 4. Submit the form
 
+### Uploading Pet Photos
+
+1. Open a pet's edit page from the owner details page
+2. Choose a JPEG, PNG, or GIF image (up to 5 MB) and upload it
+3. The photo appears beside the pet on the owner details page; uploading another photo replaces the previous one
+
+Photos are stored outside the classpath in the local directory
+`./var/pet-photos` by default. Set
+`PETCLINIC_PHOTO_STORAGE_DIR` to choose another directory. The maximum upload
+size defaults to 5 MiB and can be changed with
+`PETCLINIC_PHOTO_MAX_SIZE_BYTES`; multipart uploads and the photo validator use
+the same limit. Images are decoded before storage and are limited to 4096 pixels per side by default (`petclinic.photos.max-dimension`). Only generated photo filenames are stored in the database and
+the photo endpoint serves files associated with a pet.
+
 ### Scheduling Visits
 
 1. Go to an owner's page

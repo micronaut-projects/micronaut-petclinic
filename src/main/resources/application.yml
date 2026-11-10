@@ -3,6 +3,9 @@ micronaut:
     name: micronaut-petclinic
   server:
     port: 8080
+    multipart:
+      enabled: true
+      max-file-size: ${petclinic.photos.max-size-bytes}
   router:
     static-resources:
       default:
@@ -24,6 +27,9 @@ micronaut:
 
 # Sample data configuration
 petclinic:
+  photos:
+    storage-dir: ${PETCLINIC_PHOTO_STORAGE_DIR:./var/pet-photos}
+    max-size-bytes: ${PETCLINIC_PHOTO_MAX_SIZE_BYTES:5242880}
   sample-data:
     enabled: true
 
