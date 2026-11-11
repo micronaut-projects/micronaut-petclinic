@@ -67,6 +67,9 @@ class OracleOwnerLoyaltyIntegrationTest {
     ClinicService clinicService;
 
     @Inject
+    PetService petService;
+
+    @Inject
     TransactionOperations<Connection> transactions;
 
     @Inject
@@ -718,10 +721,10 @@ class OracleOwnerLoyaltyIntegrationTest {
     }
 
     private Pet createPet(Owner owner) {
-        PetType type = clinicService.findPetTypes().stream()
+        PetType type = petService.findPetTypes().stream()
                 .filter(petType -> petType.name().equals("cat"))
                 .findFirst().orElseThrow();
-        return clinicService.savePet(new Pet("Pet" + owner.id(), LocalDate.of(2020, 1, 1), type, owner));
+        return petService.savePet(new Pet("Pet" + owner.id(), LocalDate.of(2020, 1, 1), type, owner));
     }
 
     private void createVisits(Pet pet, int count) {

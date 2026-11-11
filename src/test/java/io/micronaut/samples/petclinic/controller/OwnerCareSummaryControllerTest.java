@@ -15,6 +15,7 @@ import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.samples.petclinic.service.ClinicService;
+import io.micronaut.samples.petclinic.service.PetService;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
@@ -33,6 +34,7 @@ class OwnerCareSummaryControllerTest {
 
     @Inject @Client("/") HttpClient client;
     @Inject ClinicService clinicService;
+    @Inject PetService petService;
     @Inject ClinicServiceFixtures fixtures;
 
     private Owner testOwner;
@@ -41,7 +43,7 @@ class OwnerCareSummaryControllerTest {
     @AfterEach
     void deleteTestData() {
         if (testPet != null) {
-            clinicService.deletePet(testPet.id());
+            petService.deletePet(testPet.id());
         }
         if (testOwner != null) {
             clinicService.deleteOwner(testOwner);
@@ -99,8 +101,8 @@ class OwnerCareSummaryControllerTest {
         assertThat(withoutPets.body()).containsEntry("_id", testOwner.id()).containsEntry("pets", List.of());
         assertThat(withoutPets.body().get("telephone")).isNull();
 
-        testPet = clinicService.savePet(new Pet("Mittens", LocalDate.of(2012, 9, 4),
-                clinicService.findPetTypes().getFirst(), testOwner));
+        testPet = petService.savePet(new Pet("Mittens", LocalDate.of(2012, 9, 4),
+                petService.findPetTypes().getFirst(), testOwner));
         HttpResponse<Map<String, Object>> withoutVisits = download(testOwner.id());
 
         assertThat(withoutVisits.code()).isEqualTo(HttpStatus.OK.getCode());

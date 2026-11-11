@@ -9,7 +9,7 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.samples.petclinic.ClinicServiceFixtures;
-import io.micronaut.samples.petclinic.service.ClinicService;
+import io.micronaut.samples.petclinic.service.PetService;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
@@ -32,10 +32,19 @@ class PetControllerTest {
     ClinicServiceFixtures fixtures;
 
     @Inject
-    ClinicService clinicService;
+    PetService petService;
 
     @Inject
     PetController controller;
+
+    @Test
+    void photoUploadUsesAnInlineErrorAreaAndClientSubmission() {
+        var pet = fixtures.requiredPet("George", "Franklin", "Leo");
+        String path = "/owners/" + pet.getOwnerId() + "/pets/" + pet.id() + "/edit";
+        String page = client.toBlocking().retrieve(HttpRequest.GET(path).cookie(Cookie.of("locale", "en")));
+        assertThat(page).contains("data-pet-photo-upload", "data-upload-error", "pet-photo-upload.js")
+                .doesNotContain("equals(photoError)", "photoError=");
+    }
 
     @Test
     void missingUriTemplateReturnsNotFoundFromValidationHandler() {
@@ -58,7 +67,7 @@ class PetControllerTest {
     @Test
     void invalidNewPetKeepsItsOwnerAndSubmittedFieldsDespiteConflictingQueryIds() {
         var owner = fixtures.requiredOwner("George", "Franklin");
-        var type = clinicService.findPetTypes().iterator().next();
+        var type = petService.findPetTypes().iterator().next();
         String action = "/owners/" + owner.id() + "/pets/new";
 
         var failure = submitInvalidPet(action + "?ownerId=2147483647&petId=2147483647",
@@ -75,7 +84,7 @@ class PetControllerTest {
     void invalidEditKeepsThePathPetIdAndDoesNotPersistSubmittedChanges() throws Exception {
         var owner = fixtures.requiredOwner("George", "Franklin");
         var pet = fixtures.requiredPet("George", "Franklin", "Leo");
-        var type = clinicService.findPetTypes().stream()
+        var type = petService.findPetTypes().stream()
                 .filter(candidate -> !candidate.id().equals(pet.type().id()))
                 .findFirst().orElseThrow();
         String action = "/owners/" + owner.id() + "/pets/" + pet.id() + "/edit";
@@ -88,7 +97,7 @@ class PetControllerTest {
         assertThat(page).contains("George", "Franklin", "Pet name",
                 "action=\"" + action + "\"", "value=\"2024-02-03\"",
                 "<option value=\"" + type.id() + "\" selected>");
-        var unchanged = clinicService.findPetById(pet.id());
+        var unchanged = petService.findById(pet.id());
         assertThat(unchanged.name()).isEqualTo(pet.name());
         assertThat(unchanged.birthDate()).isEqualTo(pet.birthDate());
         assertThat(unchanged.type().id()).isEqualTo(pet.type().id());

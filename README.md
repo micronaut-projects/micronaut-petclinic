@@ -219,17 +219,20 @@ MICRONAUT_ENVIRONMENTS=h2 ./build/native/nativeCompile/micronaut-petclinic
 
 ### Uploading Pet Photos
 
-1. Open a pet's edit page from the owner details page
-2. Choose a JPEG, PNG, or GIF image (up to 5 MB) and upload it
-3. The photo appears beside the pet on the owner details page; uploading another photo replaces the previous one
+Open a pet's edit page, choose a JPEG, PNG, or GIF image, and click **Upload Photo**.
+The photo appears on owner details; uploading another image replaces it.
+Upload errors appear inline.
 
-Photos are stored outside the classpath in the local directory
-`./var/pet-photos` by default. Set
-`PETCLINIC_PHOTO_STORAGE_DIR` to choose another directory. The maximum upload
-size defaults to 5 MiB and can be changed with
-`PETCLINIC_PHOTO_MAX_SIZE_BYTES`; multipart uploads and the photo validator use
-the same limit. Images are decoded before storage and are limited to 4096 pixels per side by default (`petclinic.photos.max-dimension`). Only generated photo filenames are stored in the database and
-the photo endpoint serves files associated with a pet.
+Files are stored outside the classpath in `./var/pet-photos` (relative to the working
+directory). Configure storage and validation with:
+
+- `PETCLINIC_PHOTO_STORAGE_DIR`: storage directory.
+- `PETCLINIC_PHOTO_MAX_SIZE_BYTES`: upload limit in bytes (default: `5242880`, or 5 MiB).
+- `petclinic.photos.max-dimension`: maximum width and height (default: `4096` pixels).
+
+Multipart processing and image validation share the byte limit. Validation decodes the
+first image frame before storage. The database stores a generated photo key; display
+requests resolve that key through the pet, without accepting local file paths.
 
 ### Scheduling Visits
 

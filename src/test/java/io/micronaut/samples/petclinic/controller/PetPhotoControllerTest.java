@@ -1,6 +1,7 @@
 package io.micronaut.samples.petclinic.controller;
 
 import io.micronaut.http.HttpRequest;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
@@ -10,8 +11,9 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.samples.petclinic.ClinicServiceFixtures;
 import io.micronaut.samples.petclinic.model.Pet;
-import io.micronaut.samples.petclinic.service.ClinicService;
-import io.micronaut.samples.petclinic.service.PetPhotoStorage;
+import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
+import io.micronaut.samples.petclinic.service.PetService;
+import io.micronaut.samples.petclinic.service.FileStorage;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /** HTTP coverage for pet photo validation, replacement, and display. */
 @MicronautTest(transactional = false)
+@Property(name = "micronaut.server.multipart.max-file-size", value = "2048")
 class PetPhotoControllerTest {
 
     private static final byte[] PNG = Base64.getDecoder().decode(
@@ -37,17 +40,17 @@ class PetPhotoControllerTest {
     ClinicServiceFixtures fixtures;
 
     @Inject
-    ClinicService clinicService;
+    PetService petService;
 
     @Inject
-    PetPhotoStorage petPhotoStorage;
+    FileStorage fileStorage;
 
     @BeforeEach
     void clearExistingPhoto() throws Exception {
         Pet pet = fixtures.requiredPet("George", "Franklin", "Leo");
         if (pet.photoFilename() != null) {
-            petPhotoStorage.delete(pet.photoFilename());
-            clinicService.savePet(pet.withPhotoFilename(null));
+            fileStorage.delete(pet.photoFilename());
+            petService.savePet(pet.withPhotoFilename(null));
         }
     }
 
@@ -60,8 +63,8 @@ class PetPhotoControllerTest {
         try {
             HttpResponse<String> uploadResponse = upload(path, "image/png", "pet.png", PNG);
 
-            assertThat((CharSequence) uploadResponse.getStatus()).isEqualTo(HttpStatus.OK);
-            Pet updatedPet = clinicService.findPetById(pet.id());
+            assertThat((CharSequence) uploadResponse.getStatus()).isEqualTo(HttpStatus.NO_CONTENT);
+            Pet updatedPet = petService.findById(pet.id());
             storedFilename = updatedPet.photoFilename();
             assertThat(storedFilename).matches("[0-9a-f]{32}\\.png");
 
@@ -75,12 +78,12 @@ class PetPhotoControllerTest {
                     HttpRequest.GET("/owners/" + pet.getOwnerId()), String.class);
             assertThat(ownerPage).contains("src=\"" + path + "\"");
         } finally {
-            Pet current = clinicService.findPetById(pet.id());
+            Pet current = petService.findById(pet.id());
             if (current.photoFilename() != null) {
-                petPhotoStorage.delete(current.photoFilename());
-                clinicService.savePet(current.withPhotoFilename(null));
+                fileStorage.delete(current.photoFilename());
+                petService.savePet(current.withPhotoFilename(null));
             } else if (storedFilename != null) {
-                petPhotoStorage.delete(storedFilename);
+                fileStorage.delete(storedFilename);
             }
         }
     }
@@ -90,35 +93,43 @@ class PetPhotoControllerTest {
         Pet pet = fixtures.requiredPet("George", "Franklin", "Leo");
         byte[] text = "not an image".getBytes(java.nio.charset.StandardCharsets.UTF_8);
 
-        HttpResponse<String> response = upload(photoPath(pet), "image/png", "notes.png", text);
-
-        assertThat((CharSequence) response.getStatus()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().orElseThrow()).contains("Choose a valid JPEG, PNG, or GIF image.");
-        assertThat(clinicService.findPetById(pet.id()).photoFilename()).isNull();
+        var failure = assertThrows(HttpClientResponseException.class,
+                () -> upload(photoPath(pet), "image/png", "notes.png", text));
+        assertThat((CharSequence) failure.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(failure.getResponse().getHeaders().get("Location")).isNull();
+        assertThat(failure.getResponse().getBody(String.class).orElseThrow()).contains("invalid_file_format");
+        assertThat(petService.findById(pet.id()).photoFilename()).isNull();
     }
 
     @Test
     void rejectsUnsupportedContentTypeEvenForImageBytes() throws Exception {
         Pet pet = fixtures.requiredPet("George", "Franklin", "Leo");
-        HttpResponse<String> response = upload(photoPath(pet), "text/plain", "pet.png", PNG);
-        assertThat(response.getBody().orElseThrow()).contains("Choose a valid JPEG, PNG, or GIF image.");
-        assertThat(clinicService.findPetById(pet.id()).photoFilename()).isNull();
+        var failure = assertThrows(HttpClientResponseException.class,
+                () -> upload(photoPath(pet), "text/plain", "pet.png", PNG));
+        assertThat((CharSequence) failure.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(failure.getResponse().getBody(String.class).orElseThrow()).contains("invalid_file_format");
+        assertThat(petService.findById(pet.id()).photoFilename()).isNull();
     }
 
     @Test
-    void stalePhotoReplacementDoesNotOverwriteCurrentPhotoOrPetDetails() throws Exception {
+    void editingStalePetDetailsPreservesTheUploadedPhoto() throws Exception {
         Pet pet = fixtures.requiredPet("George", "Franklin", "Leo");
         try {
-            clinicService.savePet(pet.withName("Updated Leo"));
-            assertThat(clinicService.replacePetPhoto(pet.id(), null, "first.png")).isTrue();
-            assertThat(clinicService.replacePetPhoto(pet.id(), null, "stale.png")).isFalse();
-            // An edit based on the original snapshot must preserve the newer photo key.
-            clinicService.updatePetDetails(pet.withName("Edited Leo"));
-            Pet current = clinicService.findPetById(pet.id());
+            upload(photoPath(pet), "image/png", "pet.png", PNG);
+            String filename = petService.findById(pet.id()).photoFilename();
+            assertThat(filename).isNotNull();
+
+            petService.updatePetDetails(pet.withName("Edited Leo"));
+            Pet current = petService.findById(pet.id());
             assertThat(current.name()).isEqualTo("Edited Leo");
-            assertThat(current.photoFilename()).isEqualTo("first.png");
+            assertThat(current.photoFilename()).isEqualTo(filename);
+            assertThat(petService.loadPetPhoto(current).bytes()).containsExactly(PNG);
         } finally {
-            clinicService.savePet(pet.withPhotoFilename(null));
+            Pet current = petService.findById(pet.id());
+            if (current.photoFilename() != null) {
+                fileStorage.delete(current.photoFilename());
+            }
+            petService.savePet(pet.withPhotoFilename(null));
         }
     }
 
@@ -132,7 +143,18 @@ class PetPhotoControllerTest {
                 () -> upload(photoPath(pet), "image/png", "large.png", tooLarge));
 
         assertThat((CharSequence) failure.getStatus()).isEqualTo(HttpStatus.REQUEST_ENTITY_TOO_LARGE);
-        assertThat(clinicService.findPetById(pet.id()).photoFilename()).isNull();
+        assertThat(failure.getResponse().getBody(String.class).orElseThrow()).contains("file_too_large");
+        assertThat(petService.findById(pet.id()).photoFilename()).isNull();
+    }
+
+    @Test
+    void frameworkMultipartLimitAlsoReturnsFileTooLarge() throws Exception {
+        Pet pet = fixtures.requiredPet("George", "Franklin", "Leo");
+        var failure = assertThrows(HttpClientResponseException.class,
+                () -> upload(photoPath(pet), "image/png", "large.png", new byte[2049]));
+        assertThat((CharSequence) failure.getStatus()).isEqualTo(HttpStatus.REQUEST_ENTITY_TOO_LARGE);
+        assertThat(failure.getResponse().getBody(String.class).orElseThrow()).contains("file_too_large");
+        assertThat(petService.findById(pet.id()).photoFilename()).isNull();
     }
 
     @Test
@@ -143,22 +165,22 @@ class PetPhotoControllerTest {
 
         try {
             upload(path, "image/png", "first.png", PNG);
-            String firstFilename = clinicService.findPetById(pet.id()).photoFilename();
+            String firstFilename = petService.findById(pet.id()).photoFilename();
             assertThat(firstFilename).isNotNull();
 
             upload(path, "image/png", "second.png", PNG);
-            replacementFilename = clinicService.findPetById(pet.id()).photoFilename();
+            replacementFilename = petService.findById(pet.id()).photoFilename();
 
             assertThat(replacementFilename).isNotEqualTo(firstFilename);
-            assertThat(petPhotoStorage.load(firstFilename)).isEmpty();
-            assertThat(petPhotoStorage.load(replacementFilename)).isPresent();
+            assertThrows(NotFoundEntityException.class, () -> fileStorage.load(firstFilename));
+            assertThat(fileStorage.load(replacementFilename)).isNotNull();
         } finally {
-            Pet current = clinicService.findPetById(pet.id());
+            Pet current = petService.findById(pet.id());
             if (current.photoFilename() != null) {
-                petPhotoStorage.delete(current.photoFilename());
-                clinicService.savePet(current.withPhotoFilename(null));
+                fileStorage.delete(current.photoFilename());
+                petService.savePet(current.withPhotoFilename(null));
             } else if (replacementFilename != null) {
-                petPhotoStorage.delete(replacementFilename);
+                fileStorage.delete(replacementFilename);
             }
         }
     }

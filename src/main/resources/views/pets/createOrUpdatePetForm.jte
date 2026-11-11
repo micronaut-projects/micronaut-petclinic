@@ -8,7 +8,6 @@
 @param Collection<PetType> types
 @param boolean isNew
 @param java.util.Map<String, String> validationErrors
-@param String photoError
 @param String photoUrl
 @param io.micronaut.samples.petclinic.system.I18nViewModelProcessor.Msg msg
 @param io.micronaut.http.HttpRequest<?> request
@@ -131,12 +130,13 @@
                                         </div>
                                     @endif
                                 </div>
-                                @if("invalid-type".equals(photoError))
-                                    <div class="alert alert-danger small" role="alert">${msg.text("pet.photo.invalidType")}</div>
-                                @else if("too-large".equals(photoError))
-                                    <div class="alert alert-danger small" role="alert">${msg.text("pet.photo.tooLarge")}</div>
-                                @endif
-                                <form action="/owners/${owner.id()}/pets/${pet.id()}/photo" method="post" enctype="multipart/form-data">
+                                <div class="alert alert-danger small" data-upload-error role="alert" tabindex="-1" hidden></div>
+                                <form action="/owners/${owner.id()}/pets/${pet.id()}/photo" method="post" enctype="multipart/form-data"
+                                      data-pet-photo-upload data-success-url="/owners/${owner.id()}"
+                                      data-invalid-message="${msg.text("pet.photo.invalidType")}"
+                                      data-size-message="${msg.text("pet.photo.tooLarge")}"
+                                      data-conflict-message="${msg.text("pet.photo.conflict")}"
+                                      data-failure-message="${msg.text("pet.photo.failed")}">
                                     <div class="mb-3">
                                         <label for="photo" class="form-label">${msg.text("pet.photo.choose")}</label>
                                         <input type="file" class="form-control pet-photo-input" id="photo" name="photo"
@@ -155,4 +155,7 @@
             </div>
         </div>
     </div>
+    @if(!isNew)
+        <script src="/resources/js/pet-photo-upload.js" defer></script>
+    @endif
 `, msg = msg, request = request, locale = locale, activeNames = activeNames)

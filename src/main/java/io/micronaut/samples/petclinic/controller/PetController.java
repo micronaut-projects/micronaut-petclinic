@@ -4,7 +4,6 @@ import io.micronaut.http.BasicHttpAttributes;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
@@ -12,32 +11,30 @@ import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Part;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.http.annotation.Status;
 import io.micronaut.http.multipart.CompletedFileUpload;
-import io.micronaut.scheduling.TaskExecutors;
-import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.http.uri.UriMatchInfo;
 import io.micronaut.http.uri.UriMatchTemplate;
 import io.micronaut.samples.petclinic.dto.PetForm;
+import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
 import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.mapper.FormMapper;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.PetType;
 import io.micronaut.samples.petclinic.service.ClinicService;
-import io.micronaut.samples.petclinic.service.InvalidPetPhotoException;
-import io.micronaut.samples.petclinic.service.PetPhotoStorage;
-import io.micronaut.samples.petclinic.service.PetPhotoValidator;
-import io.micronaut.samples.petclinic.service.PetPhotoTooLargeException;
+import io.micronaut.samples.petclinic.service.FileStorage;
+import io.micronaut.samples.petclinic.service.PetService;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.ModelAndView;
 import io.micronaut.views.View;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -53,24 +50,21 @@ import java.util.Optional;
 @Secured(SecurityRule.IS_ANONYMOUS)
 public class PetController {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PetController.class);
-
     private final ClinicService clinicService;
+    private final PetService petService;
     private final FormMapper formMapper;
-    private final PetPhotoStorage petPhotoStorage;
-    private final PetPhotoValidator petPhotoValidator;
 
     /**
      * Creates the controller with its service and mapper dependencies.
      *
-     * @param clinicService the facade used for pet operations
+     * @param petService the service used for pet operations
+     * @param clinicService the facade used to look up owners
      * @param formMapper the mapper used to convert pet forms
      */
-    public PetController(ClinicService clinicService, FormMapper formMapper, PetPhotoStorage petPhotoStorage, PetPhotoValidator petPhotoValidator) {
+    public PetController(ClinicService clinicService, PetService petService, FormMapper formMapper) {
         this.clinicService = clinicService;
+        this.petService = petService;
         this.formMapper = formMapper;
-        this.petPhotoStorage = petPhotoStorage;
-        this.petPhotoValidator = petPhotoValidator;
     }
 
     /**
@@ -98,7 +92,7 @@ public class PetController {
                     .map(Object::toString).map(Integer::valueOf).orElse(null);
             owner = getOwner(ownerId);
             if (petId != null) {
-                Pet existing = clinicService.findPetById(petId);
+                Pet existing = petService.findById(petId);
                 if (!ownerId.equals(existing.getOwnerId())) {
                     throw new NotFoundEntityException();
                 }
@@ -128,11 +122,10 @@ public class PetController {
         form = new PetForm(petId, form.name(), form.birthDate(), form.typeId());
         Map<String, Object> model = new LinkedHashMap<>();
         model.put("owner", owner);
-        model.put("types", clinicService.findPetTypes());
+        model.put("types", petService.findPetTypes());
         model.put("isNew", petId == null);
         model.put("validationErrors", validationErrors);
         model.put("pet", form);
-        model.put("photoError", "");
         model.put("photoUrl", photoUrl);
         if (petId != null) {
             model.put("petId", petId);
@@ -169,10 +162,9 @@ public class PetController {
         }
         return Map.of("pet", new PetForm(),
                 "owner", owner,
-                "types", clinicService.findPetTypes(),
+                "types", petService.findPetTypes(),
                 "isNew", true,
                 "validationErrors", Map.of(),
-                "photoError", "",
                 "photoUrl", ""
         );
     }
@@ -183,24 +175,26 @@ public class PetController {
      * @param ownerId the owner ID
      * @param form    the pet form data
      * @return redirect to owner details
+     * @throws NotFoundEntityException if the owner does not exist
+     * @throws IllegalRequestArgumentException if the pet type does not exist
      */
     @Post(value = "/new", consumes = MediaType.APPLICATION_FORM_URLENCODED)
     public HttpResponse<?> processCreationForm(@PathVariable Integer ownerId, @Valid @Body PetForm form)
-            throws NotFoundEntityException {
+            throws NotFoundEntityException, IllegalRequestArgumentException {
         Owner owner = getOwner(ownerId);
 
         Pet pet = formMapper.toPet(form).withOwner(owner);
 
         // Set pet type - validation ensures typeId is not null
         if (form.typeId() != null) {
-            Optional<PetType> petType = clinicService.findPetTypeById(form.typeId());
+            Optional<PetType> petType = petService.findPetTypeById(form.typeId());
             if (petType.isEmpty()) {
-                return HttpResponse.badRequest("Invalid pet type");
+                throw new IllegalRequestArgumentException("Invalid pet type");
             }
             pet = pet.withType(petType.get());
         }
 
-        clinicService.savePet(pet);
+        petService.savePet(pet);
 
         URI uri = UriBuilder.of("/owners/{ownerId}").expand(Map.of("ownerId", ownerId));
         return HttpResponse.redirect(uri);
@@ -216,86 +210,44 @@ public class PetController {
     @Get("/{petId}/edit")
     @View("pets/createOrUpdatePetForm")
     public Map<String, Object> initUpdateForm(@PathVariable Integer ownerId,
-                                             @PathVariable Integer petId,
-                                             @io.micronaut.http.annotation.QueryValue(defaultValue = "") String photoError) {
+                                              @PathVariable Integer petId) {
         Pet pet;
         try {
-            pet = clinicService.findPetById(petId);
+            pet = petService.findByIdAndOwnerId(petId, ownerId);
         } catch (NotFoundEntityException e) {
             throw new NotFoundException();
         }
         return Map.of("pet", formMapper.toPetForm(pet),
                 "petId", petId,
                 "owner", pet.getOwner(),
-                "types", clinicService.findPetTypes(),
+                "types", petService.findPetTypes(),
                 "isNew", false,
                 "validationErrors", Map.of(),
-                "photoError", photoError,
                 "photoUrl", pet.photoFilename() != null
                         ? "/owners/" + ownerId + "/pets/" + petId + "/photo" : ""
         );
     }
 
     /**
-     * Upload or replace a pet photo. Only generated filenames are persisted and served.
+     * Validates and stores a pet photo, saves its key, and returns HTTP 204.
+     * Removes the new file if saving fails and attempts to remove the old file after replacement.
      *
      * @param ownerId the owner in the route
      * @param petId the pet receiving the photo
      * @param upload the multipart image
-     * @return redirect to the owner details page, or a validation response
+     * @throws NotFoundEntityException if the pet does not belong to the specified owner
+     * @throws IllegalRequestArgumentException if upload validation fails
+     * @throws IOException if storage fails
      */
     @Post(value = "/{petId}/photo", consumes = MediaType.MULTIPART_FORM_DATA)
     @ExecuteOn(TaskExecutors.BLOCKING)
-    public HttpResponse<?> uploadPhoto(@PathVariable Integer ownerId,
-                                       @PathVariable Integer petId,
-                                       @Part("photo") CompletedFileUpload upload) {
-        Pet pet;
-        try {
-            pet = clinicService.findPetById(petId);
-        } catch (NotFoundEntityException e) {
-            throw new NotFoundException();
-        }
-        if (!ownerId.equals(pet.getOwnerId())) {
-            throw new NotFoundException();
-        }
-
-        String previousFilename = pet.photoFilename();
-        String newFilename;
-        try (upload) {
-            newFilename = petPhotoStorage.store(petPhotoValidator.validate(upload));
-        } catch (InvalidPetPhotoException invalidPhoto) {
-            return HttpResponse.redirect(URI.create("/owners/" + ownerId + "/pets/" + petId
-                    + "/edit?photoError=invalid-type"));
-        } catch (PetPhotoTooLargeException tooLarge) {
-            return HttpResponse.status(HttpStatus.REQUEST_ENTITY_TOO_LARGE);
-        } catch (IOException e) {
-            throw new IllegalStateException("Unable to store the pet photo", e);
-        }
-
-        try {
-            if (!clinicService.replacePetPhoto(petId, previousFilename, newFilename)) {
-                petPhotoStorage.delete(newFilename);
-                return HttpResponse.status(HttpStatus.CONFLICT);
-            }
-        } catch (RuntimeException e) {
-            try {
-                petPhotoStorage.delete(newFilename);
-            } catch (IOException cleanupFailure) {
-                e.addSuppressed(cleanupFailure);
-            }
-            throw e;
-        } catch (IOException e) {
-            throw new IllegalStateException("Unable to clean up the unreferenced pet photo", e);
-        }
-
-        if (previousFilename != null && !previousFilename.equals(newFilename)) {
-            try {
-                petPhotoStorage.delete(previousFilename);
-            } catch (IOException cleanupFailure) {
-                LOG.warn("Could not delete replaced pet photo {}", previousFilename, cleanupFailure);
-            }
-        }
-        return HttpResponse.redirect(UriBuilder.of("/owners/{ownerId}").expand(Map.of("ownerId", ownerId)));
+    @Status(io.micronaut.http.HttpStatus.NO_CONTENT)
+    public void uploadPhoto(@PathVariable Integer ownerId,
+                            @PathVariable Integer petId,
+                            @Part("photo") CompletedFileUpload upload)
+            throws IllegalRequestArgumentException, NotFoundEntityException, IOException {
+        Pet pet = petService.findByIdAndOwnerId(petId, ownerId);
+        petService.replacePetPhoto(pet, upload);
     }
 
     /**
@@ -303,24 +255,17 @@ public class PetController {
      *
      * @param ownerId the owner in the route
      * @param petId the pet whose photo is requested
-     * @return the verified image, or not found
+     * @return stored image bytes with the content type and cache-control headers
+     * @throws NotFoundEntityException if the pet has no photo or the stored image is missing
+     * @throws IllegalRequestArgumentException if the stored key or file is invalid
      * @throws IOException if the image cannot be read
      */
     @Get("/{petId}/photo")
     @ExecuteOn(TaskExecutors.BLOCKING)
     public HttpResponse<byte[]> showPhoto(@PathVariable Integer ownerId, @PathVariable Integer petId)
-            throws IOException {
-        Pet pet;
-        try {
-            pet = clinicService.findPetById(petId);
-        } catch (NotFoundEntityException e) {
-            throw new NotFoundException();
-        }
-        if (!ownerId.equals(pet.getOwnerId())) {
-            throw new NotFoundException();
-        }
-        PetPhotoStorage.StoredPhoto photo = petPhotoStorage.load(pet.photoFilename())
-                .orElseThrow(NotFoundException::new);
+            throws IOException, NotFoundEntityException, IllegalRequestArgumentException {
+        Pet pet = petService.findByIdAndOwnerId(petId, ownerId);
+        FileStorage.StoredFile photo = petService.loadPetPhoto(pet);
         return HttpResponse.ok(photo.bytes())
                 .contentType(photo.mediaType())
                 .header(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -334,26 +279,28 @@ public class PetController {
      * @param petId   the pet ID
      * @param form    the updated pet form data
      * @return redirect to owner details
+     * @throws NotFoundEntityException if the pet does not belong to the specified owner
+     * @throws IllegalRequestArgumentException if the pet type does not exist
      */
     @Post(value = "/{petId}/edit", consumes = MediaType.APPLICATION_FORM_URLENCODED)
     public HttpResponse<?> processUpdateForm(@PathVariable Integer ownerId,
                                              @PathVariable Integer petId,
-                                             @Valid @Body PetForm form) throws NotFoundEntityException {
+                                             @Valid @Body PetForm form) throws NotFoundEntityException, IllegalRequestArgumentException {
         Owner owner = getOwner(ownerId);
-        Pet existingPet = clinicService.findPetById(petId);
+        Pet existingPet = petService.findByIdAndOwnerId(petId, ownerId);
 
         Pet pet = formMapper.updatePet(existingPet, form).withOwner(owner);
 
         // Set pet type - validation ensures typeId is not null
         if (form.typeId() != null) {
-            Optional<PetType> petType = clinicService.findPetTypeById(form.typeId());
+            Optional<PetType> petType = petService.findPetTypeById(form.typeId());
             if (petType.isEmpty()) {
-                return HttpResponse.badRequest("Invalid pet type");
+                throw new IllegalRequestArgumentException("Invalid pet type");
             }
             pet = pet.withType(petType.get());
         }
 
-        clinicService.updatePetDetails(pet);
+        petService.updatePetDetails(pet);
 
         URI uri = UriBuilder.of("/owners/{ownerId}").expand(Map.of("ownerId", ownerId));
         return HttpResponse.redirect(uri);

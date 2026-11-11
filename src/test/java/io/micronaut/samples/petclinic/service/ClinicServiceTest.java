@@ -5,7 +5,6 @@ import io.micronaut.samples.petclinic.dto.VisitSearchCriteria;
 import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
-import io.micronaut.samples.petclinic.model.PetType;
 import io.micronaut.samples.petclinic.model.Speciality;
 import io.micronaut.samples.petclinic.model.Vet;
 import io.micronaut.samples.petclinic.model.Visit;
@@ -74,13 +73,6 @@ class ClinicServiceTest {
     }
 
     @Test
-    void shouldFindPetTypes() {
-        Collection<PetType> petTypes = clinicService.findPetTypes();
-        assertThat(petTypes).isNotEmpty();
-        assertThat(petTypes.size()).isGreaterThanOrEqualTo(6);
-    }
-
-    @Test
     void shouldFindAllVets() {
         Collection<Vet> vets = vetService.findAll();
         assertThat(vets).isNotEmpty();
@@ -97,28 +89,6 @@ class ClinicServiceTest {
 
         assertThat(vetWithSpecialities).isNotNull();
         assertThat(vetWithSpecialities.specialities()).isNotEmpty();
-    }
-
-    @Test
-    void shouldFindPetById() throws NotFoundEntityException {
-        Pet leo = clinicServiceFixtures.requiredPet("George", "Franklin", "Leo");
-        Pet found = clinicService.findPetById(leo.id());
-        assertThat(found.name()).isEqualTo("Leo");
-    }
-
-    @Test
-    void shouldSaveNewPet() {
-        Owner owner = clinicServiceFixtures.requiredOwner("George", "Franklin");
-        PetType catType = clinicService.findPetTypes().stream()
-                .filter(t -> t.name().equals("cat"))
-                .findFirst()
-                .orElseThrow();
-
-        Pet pet = new Pet("Whiskers", LocalDate.of(2023, 1, 1), catType, owner);
-        Pet savedPet = clinicService.savePet(pet);
-
-        assertThat(savedPet.id()).isNotNull();
-        assertThat(savedPet.name()).isEqualTo("Whiskers");
     }
 
     @Test

@@ -97,7 +97,7 @@ public record Pet(
     }
 
     /**
-     * Creates a pet with the legacy argument list and no photo.
+     * Creates a pet without a photo.
      *
      * @param id the database identifier, or {@code null} for a new pet
      * @param name the pet's name

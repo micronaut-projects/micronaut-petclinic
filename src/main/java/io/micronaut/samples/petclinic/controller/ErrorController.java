@@ -2,7 +2,6 @@ package io.micronaut.samples.petclinic.controller;
 
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Error;
@@ -11,6 +10,9 @@ import io.micronaut.http.exceptions.ContentLengthExceededException;
 import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.json.JsonSyntaxException;
 import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
+import io.micronaut.samples.petclinic.exception.InvalidFileFormatException;
+import io.micronaut.samples.petclinic.exception.FileTooLargeException;
+import io.micronaut.samples.petclinic.exception.RequestConflictException;
 import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.exception.PreconditionFailedException;
 import io.micronaut.samples.petclinic.exception.PreconditionRequiredException;
@@ -37,14 +39,51 @@ public class ErrorController {
     private final static Logger LOG = LoggerFactory.getLogger(ErrorController.class);
 
     /**
-     * Reports bean-validation failures from any controller.
+     * Reports invalid request data not handled by a more specific exception handler.
      *
      * @param error the request failure
-     * @return HTTP response with a JSON message and status.
+     * @return a client-safe message with HTTP 400
      */
     @Error(exception = IllegalRequestArgumentException.class, global = true)
-    public HttpResponse<Map<String, String>> validationError(IllegalRequestArgumentException error) {
-        return HttpResponse.badRequest(Map.of("message", message(error, "Invalid request.")));
+    @Status(HttpStatus.BAD_REQUEST)
+    public Map<String, String> validationError(IllegalRequestArgumentException error) {
+        return Map.of("message", message(error, "Invalid request."));
+    }
+
+    /**
+     * Reports an invalid file format.
+     *
+     * @param error the request failure
+     * @return a stable error code and client-safe message with HTTP 400
+     */
+    @Error(exception = InvalidFileFormatException.class, global = true)
+    @Status(HttpStatus.BAD_REQUEST)
+    public Map<String, String> invalidFileFormat(InvalidFileFormatException error) {
+        return Map.of("code", "invalid_file_format", "message", error.getMessage());
+    }
+
+    /**
+     * Reports a file size limit violation.
+     *
+     * @param error the request failure
+     * @return a stable error code and client-safe message with HTTP 413
+     */
+    @Error(exception = FileTooLargeException.class, global = true)
+    @Status(HttpStatus.REQUEST_ENTITY_TOO_LARGE)
+    public Map<String, String> fileTooLarge(FileTooLargeException error) {
+        return Map.of("code", "file_too_large", "message", error.getMessage());
+    }
+
+    /**
+     * Reports a concurrent request conflict.
+     *
+     * @param error the request failure
+     * @return a stable error code and client-safe message with HTTP 409
+     */
+    @Error(exception = RequestConflictException.class, global = true)
+    @Status(HttpStatus.CONFLICT)
+    public Map<String, String> requestConflict(RequestConflictException error) {
+        return Map.of("code", "request_conflict", "message", error.getMessage());
     }
 
     /**
@@ -54,9 +93,9 @@ public class ErrorController {
      * @return HTTP 428 with a JSON message
      */
     @Error(exception = PreconditionRequiredException.class, global = true)
-    public HttpResponse<Map<String, String>> preconditionRequired(PreconditionRequiredException error) {
-        return HttpResponse.status(PRECONDITION_REQUIRED)
-                .body(Map.of("message", message(error, "Provide the current ETag.")));
+    @Status(PRECONDITION_REQUIRED)
+    public Map<String, String> preconditionRequired(PreconditionRequiredException error) {
+        return Map.of("message", message(error, "Provide the current ETag."));
     }
 
     /**
@@ -66,9 +105,9 @@ public class ErrorController {
      * @return HTTP 412 with a JSON message
      */
     @Error(exception = PreconditionFailedException.class, global = true)
-    public HttpResponse<Map<String, String>> preconditionFailed(PreconditionFailedException error) {
-        return HttpResponse.status(PRECONDITION_FAILED)
-                .body(Map.of("message", message(error, "The supplied precondition failed.")));
+    @Status(PRECONDITION_FAILED)
+    public Map<String, String> preconditionFailed(PreconditionFailedException error) {
+        return Map.of("message", message(error, "The supplied precondition failed."));
     }
 
     /**
@@ -78,8 +117,9 @@ public class ErrorController {
      * @return HTTP 400 with a JSON message
      */
     @Error(exception = JsonSyntaxException.class, global = true)
-    public HttpResponse<Map<String, String>> malformedJson(JsonSyntaxException error) {
-        return HttpResponse.badRequest(Map.of("message", "Malformed JSON request."));
+    @Status(HttpStatus.BAD_REQUEST)
+    public Map<String, String> malformedJson(JsonSyntaxException error) {
+        return Map.of("message", "Malformed JSON request.");
     }
 
     /**
@@ -89,8 +129,9 @@ public class ErrorController {
      * @return HTTP 400 with a JSON message
      */
     @Error(exception = ConversionErrorException.class, global = true)
-    public HttpResponse<Map<String, String>> invalidValue(ConversionErrorException error) {
-        return HttpResponse.badRequest(Map.of("message", "Invalid request value."));
+    @Status(HttpStatus.BAD_REQUEST)
+    public Map<String, String> invalidValue(ConversionErrorException error) {
+        return Map.of("message", "Invalid request value.");
     }
 
     /**
@@ -100,9 +141,9 @@ public class ErrorController {
      * @return a payload-too-large response
      */
     @Error(exception = ContentLengthExceededException.class, global = true)
-    public HttpResponse<Map<String, String>> contentTooLarge(ContentLengthExceededException error) {
-        return HttpResponse.status(HttpStatus.REQUEST_ENTITY_TOO_LARGE)
-                .body(Map.of("message", "The uploaded file exceeds the maximum size."));
+    @Status(HttpStatus.REQUEST_ENTITY_TOO_LARGE)
+    public Map<String, String> contentTooLarge(ContentLengthExceededException error) {
+        return Map.of("code", "file_too_large", "message", "The uploaded file exceeds the maximum size.");
     }
 
     /**

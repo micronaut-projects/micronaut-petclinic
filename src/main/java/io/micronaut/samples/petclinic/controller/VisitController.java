@@ -17,6 +17,7 @@ import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.samples.petclinic.service.ClinicService;
+import io.micronaut.samples.petclinic.service.PetService;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
@@ -38,16 +39,19 @@ import java.util.Optional;
 public class VisitController {
 
     private final ClinicService clinicService;
+    private final PetService petService;
     private final FormMapper formMapper;
 
     /**
      * Creates the controller with its service and mapper dependencies.
      *
+     * @param petService the service used for pet operations
      * @param clinicService the facade used for visit operations
      * @param formMapper the mapper used to convert visit forms
      */
-    public VisitController(ClinicService clinicService, FormMapper formMapper) {
+    public VisitController(ClinicService clinicService, PetService petService, FormMapper formMapper) {
         this.clinicService = clinicService;
+        this.petService = petService;
         this.formMapper = formMapper;
     }
 
@@ -67,7 +71,7 @@ public class VisitController {
         Owner owner = null;
         if (petId.isPresent()) {
             try {
-                pet = clinicService.findPetById(petId.get());
+                pet = petService.findById(petId.get());
                 owner = pet.getOwner();
             } catch (NotFoundEntityException ignored) {}
         }
@@ -105,7 +109,7 @@ public class VisitController {
     public Map<String, Object> initNewVisitForm(@PathVariable Integer ownerId, @PathVariable Integer petId) {
         Pet pet;
         try {
-            pet = clinicService.findPetById(petId);
+            pet = petService.findById(petId);
             validateOwnerPetPath(ownerId, pet);
         } catch (NotFoundEntityException e) {
             throw new NotFoundException();
@@ -129,7 +133,7 @@ public class VisitController {
     public HttpResponse<?> processNewVisitForm(@PathVariable Integer ownerId,
                                                 @PathVariable Integer petId,
                                                 @Valid @Body VisitForm form) throws NotFoundEntityException {
-        Pet pet = clinicService.findPetById(petId);
+        Pet pet = petService.findById(petId);
         validateOwnerPetPath(ownerId, pet);
 
         Visit visit = formMapper.toVisit(form).withPet(pet);
