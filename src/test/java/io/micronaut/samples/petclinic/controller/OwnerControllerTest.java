@@ -70,6 +70,8 @@ class OwnerControllerTest {
         assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.OK);
         assertThat(response.body()).contains("George");
         assertThat(response.body()).contains("Franklin");
+        assertThat(response.body()).contains("id=\"cat-fact\"",
+                "Cats use their whiskers to sense nearby objects.");
 
         if (context.getEnvironment().getActiveNames().contains("oracle")) {
             assertThat(response.body()).contains("id=\"care-record-tab\"");

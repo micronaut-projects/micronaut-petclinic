@@ -17,6 +17,8 @@ test-resources:
 
 # Enable sample data for tests
 petclinic:
+  cat-facts:
+    enabled: false
   sample-data:
     enabled: true
 
