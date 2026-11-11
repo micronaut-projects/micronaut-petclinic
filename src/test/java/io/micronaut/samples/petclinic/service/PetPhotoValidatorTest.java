@@ -4,62 +4,50 @@ import io.micronaut.samples.petclinic.exception.FileTooLargeException;
 import io.micronaut.samples.petclinic.exception.InvalidFileFormatException;
 import org.junit.jupiter.api.Test;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class PetPhotoValidatorTest {
-    private final PetPhotoValidator validator = new PetPhotoValidator(1024, 32);
+    private final PetPhotoValidator validator = new PetPhotoValidator(1024);
 
     @Test
-    void acceptsDecodableImageAndOwnsAnImmutableCopy() throws Exception {
-        byte[] bytes = png(2, 2);
-        var photo = validator.validate(bytes, "image/png");
-        byte original = bytes[0];
-        bytes[0] = 0;
-        byte[] returned = photo.bytes();
-        assertThat(returned[0]).isEqualTo(original);
-        returned[0] = 0;
-        assertThat(photo.bytes()[0]).isEqualTo(original);
-        assertThat(photo.extension()).isEqualTo("png");
-    }
-
-    @Test
-    void acceptsJpegAndGifWithTheirDeclaredContentTypes() throws Exception {
-        for (String format : new String[]{"jpeg", "gif"}) {
-            var output = new ByteArrayOutputStream();
-            ImageIO.write(new BufferedImage(2, 2, BufferedImage.TYPE_INT_RGB), format, output);
-            var photo = validator.validate(output.toByteArray(), "image/" + format);
+    void acceptsSupportedDeclaredTypesWithoutInspectingContents() throws Exception {
+        byte[] bytes = "showcase upload".getBytes(StandardCharsets.UTF_8);
+        for (String format : new String[]{"jpeg", "png", "gif"}) {
+            var photo = validator.validate(bytes, "image/" + format);
             assertThat(photo.mediaType().getName()).isEqualTo("image/" + format);
             assertThat(photo.extension()).isEqualTo(format);
+            assertThat(photo.bytes()).containsExactly(bytes);
         }
+        assertThat(validator.validate(bytes, "IMAGE/PNG").extension()).isEqualTo("png");
     }
 
     @Test
-    void rejectsTruncatedImageWithValidSignature() throws Exception {
-        byte[] header = java.util.Arrays.copyOf(png(2, 2), 8);
-        assertThrows(InvalidFileFormatException.class, () -> validator.validate(header, "image/png"));
+    void ownsAnImmutableCopy() throws Exception {
+        byte[] bytes = {1, 2, 3};
+        var photo = validator.validate(bytes, "image/png");
+        bytes[0] = 0;
+        byte[] returned = photo.bytes();
+        assertThat(returned).containsExactly(1, 2, 3);
+        returned[0] = 0;
+        assertThat(photo.bytes()).containsExactly(1, 2, 3);
     }
 
     @Test
-    void rejectsImageBeyondDimensionLimit() throws Exception {
-        byte[] bytes = png(33, 1);
-        assertThrows(InvalidFileFormatException.class, () -> validator.validate(bytes, "image/png"));
+    void rejectsUnsupportedOrMissingContentType() {
+        byte[] bytes = {1, 2, 3};
+        for (String type : new String[]{"text/plain", "application/pdf", "image/svg+xml", ""}) {
+            assertThrows(InvalidFileFormatException.class, () -> validator.validate(bytes, type));
+        }
+        assertThrows(InvalidFileFormatException.class, () -> validator.validate(bytes, null));
     }
 
     @Test
-    void rejectsWrongContentTypeAndOversizedData() throws Exception {
-        byte[] bytes = png(2, 2);
-        assertThrows(InvalidFileFormatException.class, () -> validator.validate(bytes, "image/jpeg"));
+    void rejectsOversizedDataAndAcceptsExactLimit() throws Exception {
         assertThrows(FileTooLargeException.class, () -> validator.validate(new byte[1025], "image/png"));
-    }
-
-    private static byte[] png(int width, int height) throws Exception {
-        var output = new ByteArrayOutputStream();
-        ImageIO.write(new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB), "png", output);
-        return output.toByteArray();
+        byte[] bytes = new byte[1024];
+        assertThat(validator.validate(bytes, "image/png").bytes()).containsExactly(bytes);
     }
 }

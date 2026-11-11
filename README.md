@@ -228,11 +228,10 @@ directory). Configure storage and validation with:
 
 - `PETCLINIC_PHOTO_STORAGE_DIR`: storage directory.
 - `PETCLINIC_PHOTO_MAX_SIZE_BYTES`: upload limit in bytes (default: `5242880`, or 5 MiB).
-- `petclinic.photos.max-dimension`: maximum width and height (default: `4096` pixels).
 
-Multipart processing and image validation share the byte limit. Validation decodes the
-first image frame before storage. The database stores a generated photo key; display
-requests resolve that key through the pet, without accepting local file paths.
+Uploads are checked for size and declared content type; file contents are not inspected.
+The database stores a generated photo key; display requests resolve that key through
+the pet, without accepting local file paths.
 
 ### Scheduling Visits
 

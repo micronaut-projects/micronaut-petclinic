@@ -89,12 +89,12 @@ class PetPhotoControllerTest {
     }
 
     @Test
-    void rejectsNonImageUploadEvenWhenItClaimsAnImageType() throws Exception {
+    void rejectsNonImageContentType() throws Exception {
         Pet pet = fixtures.requiredPet("George", "Franklin", "Leo");
         byte[] text = "not an image".getBytes(java.nio.charset.StandardCharsets.UTF_8);
 
         var failure = assertThrows(HttpClientResponseException.class,
-                () -> upload(photoPath(pet), "image/png", "notes.png", text));
+                () -> upload(photoPath(pet), "text/plain", "notes.txt", text));
         assertThat((CharSequence) failure.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(failure.getResponse().getHeaders().get("Location")).isNull();
         assertThat(failure.getResponse().getBody(String.class).orElseThrow()).contains("invalid_file_format");
