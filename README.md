@@ -210,6 +210,11 @@ MICRONAUT_ENVIRONMENTS=h2 ./build/native/nativeCompile/micronaut-petclinic
 3. Fill in the form and submit
 4. Search owners by last name using the search form
 
+The owner list updates pagination and sorting in place using JSON, without a page reload. For example:
+`/owners/list?lastName=av&page=0&size=5&sort=city&direction=asc`.
+Pages start at `0`; page size defaults to `5` (maximum `100`).
+Sort by last name, first name, city, or ID.
+
 ### Adding Pets
 
 1. Find an owner

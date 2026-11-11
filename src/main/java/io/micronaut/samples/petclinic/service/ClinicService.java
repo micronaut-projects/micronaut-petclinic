@@ -1,5 +1,7 @@
 package io.micronaut.samples.petclinic.service;
 
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.geo.LineString;
 import io.micronaut.data.model.geo.Point;
@@ -71,6 +73,21 @@ public class ClinicService {
     }
 
     // ========== Owner Operations ==========
+
+    /**
+     * Pages owner rows before loading their pets and pet types, preserving page boundaries.
+     *
+     * @param lastName case-insensitive last-name fragment; empty matches all owners
+     * @param pageable the requested page index, size, and ordering
+     * @return owners with pets loaded, preserving the page totals and requested order
+     * @throws java.util.NoSuchElementException if an owner disappears before its associations are loaded
+     */
+    public Page<Owner> findOwners(String lastName, Pageable pageable) {
+        var page = lastName.isEmpty() ? ownerRepository.findAll(pageable)
+                : ownerRepository.findByLastNameContainsIgnoreCase(lastName, pageable);
+        return page.map(owner -> ownerRepository.findById(owner.id()).orElseThrow());
+    }
+
 
     /**
      * Find an owner by ID.

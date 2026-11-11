@@ -25,6 +25,23 @@ class OwnerRepositoryTest {
     ClinicServiceFixtures clinicServiceFixtures;
 
     @Test
+    void shouldPageRootOwnersWithAccurateTotals() {
+        var sort = Sort.of(Sort.Order.asc("id"));
+        var all = ownerRepository.findAll(sort);
+        var first = ownerRepository.findAll(io.micronaut.data.model.Pageable.from(0, 2, sort));
+        var second = ownerRepository.findAll(io.micronaut.data.model.Pageable.from(1, 2, sort));
+        assertThat(first.getTotalSize()).isEqualTo(all.size());
+        assertThat(first.getContent()).extracting(Owner::id)
+                .containsExactly(all.get(0).id(), all.get(1).id());
+        assertThat(second.getContent()).extracting(Owner::id)
+                .containsExactly(all.get(2).id(), all.get(3).id());
+        var filtered = ownerRepository.findByLastNameContainsIgnoreCase("dAv",
+                io.micronaut.data.model.Pageable.from(1, 1, sort));
+        assertThat(filtered.getTotalSize()).isEqualTo(2);
+        assertThat(filtered.getContent()).hasSize(1);
+    }
+
+    @Test
     void shouldFindOwnerByLastName() {
         Collection<Owner> owners = ownerRepository.findByLastNameContainsIgnoreCase("Davis", Sort.of(Sort.Order.asc("lastName")));
         assertThat(owners).hasSize(2);

@@ -5,6 +5,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.Error;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
@@ -12,10 +13,13 @@ import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.samples.petclinic.dto.OwnerForm;
+import io.micronaut.samples.petclinic.dto.OwnerListItem;
 import io.micronaut.samples.petclinic.dto.OwnerLoyaltySummary;
+import io.micronaut.samples.petclinic.exception.IllegalRequestArgumentException;
 import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.mapper.FormMapper;
 import io.micronaut.samples.petclinic.model.Owner;
+import io.micronaut.samples.petclinic.model.Pet;
 import io.micronaut.samples.petclinic.service.ClinicService;
 import io.micronaut.samples.petclinic.service.OwnerLoyaltyService;
 import io.micronaut.security.annotation.Secured;
@@ -26,7 +30,10 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 
 import java.net.URI;
-import java.util.Collection;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
+import java.util.Set;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -73,59 +80,101 @@ public class OwnerController {
     }
 
     /**
-     * Process the owner search form.
+     * Searches owners and returns matching owner card data and the total count.
+     * Redirects to the search form when there are no matches, or to owner details
+     * when the only match is present on the requested page.
      *
-     * @param lastName the last name to search for
-     * @return redirect to owner details or list of matching owners
+     * @param lastName case-insensitive last-name fragment; empty matches all owners
+     * @param page zero-based page index, defaulting to 0
+     * @param size owners per page, from 1 to 100; defaults to 5
+     * @param sort sort field: {@code lastName} (default), {@code firstName}, {@code city}, or {@code id}
+     * @param direction case-insensitive {@code asc} or {@code desc}; defaults to {@code asc}
+     * @return a redirect or owner card data with the total matching count
+     * @throws IllegalRequestArgumentException if pagination or ordering parameters are invalid
      */
     @Get
-    public HttpResponse<?> processFindForm(@QueryValue(defaultValue = "") String lastName) {
-        Collection<Owner> results;
-
-        if (lastName.isEmpty()) {
-            results = clinicService.findAllOwners();
-        } else {
-            results = clinicService.findOwnerByLastName(lastName);
+    public HttpResponse<?> processFindForm(@QueryValue(defaultValue = "") String lastName,
+            @QueryValue(defaultValue = "0") int page,
+            @QueryValue(defaultValue = "5") int size,
+            @QueryValue(defaultValue = "lastName") String sort,
+            @QueryValue(defaultValue = "asc") String direction) throws IllegalRequestArgumentException {
+        Page<Owner> results = clinicService.findOwners(lastName, ownerPageable(page, size, sort, direction));
+        if (results.getTotalSize() == 0) {
+            return HttpResponse.redirect(UriBuilder.of("/owners/find").queryParam("notFound", true).build());
         }
-
-        if (results.isEmpty()) {
-            // No owners found - return to search with error
-            URI uri = UriBuilder.of("/owners/find").queryParam("notFound", true).build();
-            return HttpResponse.redirect(uri);
-        } else if (results.size() == 1) {
-            // Single owner found - redirect to owner details
-            Owner owner = results.iterator().next();
-            URI uri = UriBuilder.of("/owners/{ownerId}").expand(Map.of("ownerId", owner.id()));
-            return HttpResponse.redirect(uri);
-        } else {
-            // Multiple owners found - show list
-            return HttpResponse.ok(Map.of(
-                    "owners", results,
-                    "lastName", lastName
-            ));
+        if (results.getTotalSize() == 1 && !results.getContent().isEmpty()) {
+            return HttpResponse.redirect(UriBuilder.of("/owners/{ownerId}")
+                    .expand(Map.of("ownerId", results.getContent().getFirst().id())));
         }
+        return HttpResponse.ok(ownerPageData(results));
     }
 
     /**
-     * Display the list of owners matching search criteria.
+     * Renders the owner-list shell. JavaScript reads query parameters and fetches the page data.
      *
-     * @param lastName the last name filter
-     * @return the owner list view
+     * @return an empty view model; list state and presentation are owned by the frontend
      */
     @Get("/list")
     @View("owners/ownersList")
-    public Map<String, Object> showOwnerList(@QueryValue(defaultValue = "") String lastName) {
-        Collection<Owner> owners;
-        if (lastName.isEmpty()) {
-            owners = clinicService.findAllOwners();
-        } else {
-            owners = clinicService.findOwnerByLastName(lastName);
-        }
+    public Map<String, Object> showOwnerList() {
+        return Map.of();
+    }
 
-        return Map.of(
-                "owners", owners,
-                "lastName", lastName
-        );
+    /**
+     * Returns owner card data and its total matching count for asynchronous updates.
+     * Always returns JSON, including when the result contains zero or one owner.
+     *
+     * @param lastName case-insensitive last-name fragment; empty matches all owners
+     * @param page zero-based page index, defaulting to 0
+     * @param size owners per page, from 1 to 100; defaults to 5
+     * @param sort sort field: {@code lastName} (default), {@code firstName}, {@code city}, or {@code id}
+     * @param direction case-insensitive {@code asc} or {@code desc}; defaults to {@code asc}
+     * @return owner card data and the total matching count
+     * @throws IllegalRequestArgumentException if pagination or ordering parameters are invalid
+     */
+    @Get(value = "/data", produces = MediaType.APPLICATION_JSON)
+    public Map<String, Object> ownerData(@QueryValue(defaultValue = "") String lastName,
+            @QueryValue(defaultValue = "0") int page,
+            @QueryValue(defaultValue = "5") int size,
+            @QueryValue(defaultValue = "lastName") String sort,
+            @QueryValue(defaultValue = "asc") String direction) throws IllegalRequestArgumentException {
+        Page<Owner> owners = clinicService.findOwners(lastName, ownerPageable(page, size, sort, direction));
+        return ownerPageData(owners);
+    }
+
+    /**
+     * Validates paging inputs and adds ascending owner ID as a stable tie-breaker
+     * when the primary sort field is not already the ID.
+     *
+     * @param page the zero-based page index
+     * @param size the number of owners per page, from 1 to 100
+     * @param sort the allowed owner property to sort by
+     * @param direction ascending or descending ordering, ignoring case
+     * @return the validated page request with deterministic ordering
+     * @throws IllegalRequestArgumentException if any input is invalid
+     */
+    private Pageable ownerPageable(int page, int size, String sort, String direction) throws IllegalRequestArgumentException {
+        if (page < 0 || size < 1 || size > 100
+                || !Set.of("id", "firstName", "lastName", "city").contains(sort)
+                || !(direction.equalsIgnoreCase("asc") || direction.equalsIgnoreCase("desc"))) {
+            throw new IllegalRequestArgumentException("Use page >= 0, size 1–100, sort id/firstName/lastName/city, direction asc/desc");
+        }
+        Sort.Order order = direction.equalsIgnoreCase("asc") ? Sort.Order.asc(sort) : Sort.Order.desc(sort);
+        Sort ordering = sort.equals("id") ? Sort.of(order) : Sort.of(order, Sort.Order.asc("id"));
+        return Pageable.from(page, size, ordering);
+    }
+
+    /**
+     * Projects a database page into owner card data without presentation state or nested associations.
+     *
+     * @param owners the requested database page
+     * @return the owner items and total count needed by the frontend
+     */
+    private Map<String, Object> ownerPageData(Page<Owner> owners) {
+        return Map.of("owners", owners.getContent().stream().map(owner -> new OwnerListItem(
+                owner.id(), owner.firstName(), owner.lastName(), owner.city(), owner.address(),
+                owner.telephone(), owner.getPets().stream().map(Pet::name).toList())).toList(),
+                "totalSize", owners.getTotalSize());
     }
 
     /**
@@ -194,7 +243,7 @@ public class OwnerController {
      * @param e the validation exception
      * @return a form model containing submitted values and field errors
      */
-    @io.micronaut.http.annotation.Error(exception = ConstraintViolationException.class)
+    @Error(exception = ConstraintViolationException.class)
     @View("owners/createOrUpdateOwnerForm")
     public Map<String, Object> onCreateOwnerValidationError(HttpRequest<?> request,
                                                             ConstraintViolationException e) {
@@ -249,6 +298,7 @@ public class OwnerController {
      * @param ownerId the owner ID
      * @param form    the updated owner form data
      * @return redirect to owner details on success
+     * @throws NotFoundEntityException if the owner does not exist
      */
     @Post(value = "/{ownerId}/edit", consumes = MediaType.APPLICATION_FORM_URLENCODED)
     public HttpResponse<?> processUpdateOwnerForm(@PathVariable Integer ownerId, @Valid @Body OwnerForm form)
