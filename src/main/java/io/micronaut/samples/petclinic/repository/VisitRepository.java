@@ -40,12 +40,14 @@ public interface VisitRepository extends CrudRepository<Visit, Integer> {
     Collection<Visit> findByPetId(Integer petId);
 
     /**
-     * Finds reminder candidates with their pet loaded in an inclusive calendar date window.
+     * Finds visits whose dates fall between the supplied bounds, inclusive.
+     *
+     * <p>Fetches each visit's pet, pet type, and owner for reminder processing.
      *
      * @param from the first date to include
      * @param to the last date to include
      * @param sort the result ordering
-     * @return reminder candidates
+     * @return matching visits in the requested order, or an empty list if none match
      */
     @Join(value = "pet", type = LEFT_FETCH)
     @Join(value = "pet.type", type = LEFT_FETCH)

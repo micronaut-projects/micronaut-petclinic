@@ -210,11 +210,17 @@ public class ClinicService {
     }
 
     /**
-     * Finds reminder candidates from the supplied date through the lookahead date, inclusive.
+     * Finds visits eligible for a reminder within an inclusive calendar date window.
+     *
+     * <p>The window starts at {@code today} and ends at
+     * {@code today.plusDays(lookaheadDays)}. The caller supplies the reference date
+     * and lookahead so the query can use the reminder job's configuration.
      *
      * @param today the first calendar date to include
      * @param lookaheadDays the number of days to look ahead; zero includes only today
-     * @return visits in the reminder window, ordered by date and identifier
+     * @return matching visits with pet, pet type, and owner data loaded, ordered
+     *         by ascending date and identifier; an empty list if none match
+     * @throws IllegalArgumentException if {@code lookaheadDays} is negative
      */
     public List<Visit> findUpcomingVisits(LocalDate today, int lookaheadDays) {
         if (lookaheadDays < 0) {

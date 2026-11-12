@@ -10,7 +10,19 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 
-/** Logs upcoming visit reminder candidates for the scheduled reminder demonstration. */
+/**
+ * Periodically logs upcoming visits as reminder candidates.
+ *
+ * <p>The {@code petclinic.visit-reminder.enabled} property controls whether this
+ * bean is created. Reminders are enabled by default and disabled in the default
+ * test configuration. The {@code petclinic.visit-reminder.schedule} property
+ * supplies the cron expression, and {@code petclinic.visit-reminder.lookahead-days}
+ * sets the number of calendar days to look ahead.
+ *
+ * <p>Each run includes today through the lookahead date, using the server's local
+ * time zone. Candidates are logged on every run without sending email or recording
+ * delivery state.
+ */
 @Singleton
 @Requires(property = "petclinic.visit-reminder.enabled", value = "true", defaultValue = "true")
 public class VisitReminderJob {
@@ -21,10 +33,12 @@ public class VisitReminderJob {
     private final int lookaheadDays;
 
     /**
-     * Creates the reminder job.
+     * Creates a reminder job with the configured calendar date window.
      *
      * @param clinicService service used to find upcoming visits
-     * @param lookaheadDays the calendar days to look ahead
+     * @param lookaheadDays the nonnegative number of calendar days after today to
+     *                      include; zero includes only today's visits
+     * @throws IllegalArgumentException if {@code lookaheadDays} is negative
      */
     public VisitReminderJob(ClinicService clinicService,
                             @Value("${petclinic.visit-reminder.lookahead-days}") int lookaheadDays) {
@@ -35,7 +49,13 @@ public class VisitReminderJob {
         this.lookaheadDays = lookaheadDays;
     }
 
-    /** Logs each candidate; delivery and deduplication can be connected in Ticket 28. */
+    /**
+     * Queries the current reminder window and logs its candidate count and each
+     * visit's identifier, pet details, and date.
+     *
+     * <p>Invoked by Micronaut according to the configured cron expression. Visits
+     * remain eligible on subsequent runs while their dates fall within the window.
+     */
     @Scheduled(cron = "${petclinic.visit-reminder.schedule}")
     void remindUpcomingVisits() {
         var visits = clinicService.findUpcomingVisits(LocalDate.now(), lookaheadDays);
