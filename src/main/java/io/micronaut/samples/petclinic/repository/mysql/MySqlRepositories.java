@@ -135,8 +135,13 @@ public final class MySqlRepositories {
         Optional<Appointment> findByIdForUpdate(Integer appointmentId);
 
         @Override
-        @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE STATUS = 'AVAILABLE' ORDER BY DISPLAY_ORDER, ID", nativeQuery = true)
-        List<Appointment> findAvailableAppointments();
+        @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE STATUS = 'AVAILABLE' AND SCENARIO = :scenario ORDER BY DISPLAY_ORDER, ID", nativeQuery = true)
+        List<Appointment> findAvailableAppointments(Appointment.Scenario scenario);
+
+        @NonNull
+        @Override
+        @Query(value = "SELECT a.* FROM APPOINTMENTS a WHERE a.ID = :appointmentId AND a.SCENARIO = :scenario FOR UPDATE", nativeQuery = true)
+        Optional<Appointment> findByIdAndScenarioForUpdate(Integer appointmentId, Appointment.Scenario scenario);
 
     }
 
