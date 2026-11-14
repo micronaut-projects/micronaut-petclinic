@@ -1,3 +1,7 @@
+@import io.micronaut.samples.petclinic.dto.VetForm
+
+@param VetForm vet
+@param java.util.Map<String, String> validationErrors
 @param io.micronaut.samples.petclinic.system.I18nViewModelProcessor.Msg msg
 @param io.micronaut.http.HttpRequest<?> request
 @param java.util.Locale locale
@@ -14,6 +18,7 @@
             <p>${msg.text("vet.formHelp")}</p>
         </div>
     </div>
+
     <main class="container flex-grow-1 py-4">
         @if(saved)
             <div class="alert alert-success" role="status">${msg.text("vet.saved")}</div>

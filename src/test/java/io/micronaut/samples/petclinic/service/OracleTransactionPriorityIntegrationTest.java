@@ -11,6 +11,7 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -24,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest(transactional = false)
 @Requires(env = "oracle")
+@EnabledIfSystemProperty(named = "micronaut.environments", matches = ".*oracle.*")
 @Property(name = "petclinic.transaction-priority.reservation-seconds", value = "5")
 class OracleTransactionPriorityIntegrationTest {
 

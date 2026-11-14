@@ -17,6 +17,7 @@ import io.micronaut.http.annotation.Put;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.annotation.Status;
 import io.micronaut.http.server.exceptions.NotFoundException;
+import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.samples.petclinic.dto.SpecialityDto;
 import io.micronaut.samples.petclinic.dto.VetDto;
 import io.micronaut.samples.petclinic.dto.VetForm;
@@ -32,11 +33,15 @@ import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
+import io.micronaut.views.ModelAndView;
 import io.micronaut.views.View;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
+import jakarta.validation.ConstraintViolation;
 
+import java.net.URI;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -108,6 +113,23 @@ public class VetController {
     @View("vets/createOrUpdateVetForm")
     public Map<String, Object> newVetForm() {
         return vetFormModel(new VetDto(), true, false);
+    }
+
+    /**
+     * Creates a veterinarian from the authenticated HTML form.
+     *
+     * @param form submitted veterinarian details
+     * @return redirect to the veterinarian list
+     * @throws IllegalRequestArgumentException if a speciality reference is invalid
+     * @throws NotFoundEntityException if a referenced entity is missing
+     */
+    @Secured("ROLE_ADMIN")
+    @Post(value = "/new", consumes = MediaType.APPLICATION_FORM_URLENCODED)
+    public HttpResponse<?> processCreationForm(@Valid @Body VetForm form)
+            throws IllegalRequestArgumentException, NotFoundEntityException {
+        vetService.create(form);
+        URI uri = UriBuilder.of("/vets").build();
+        return HttpResponse.redirect(uri);
     }
 
     /**
@@ -321,7 +343,28 @@ public class VetController {
      * @return HTTP 400 with a JSON message
      */
     @Error(exception = ConstraintViolationException.class)
-    public HttpResponse<Map<String, String>> validationError(ConstraintViolationException error) {
+    public Object validationError(HttpRequest<?> request, ConstraintViolationException error) {
+        if ("/vets/new".equals(request.getPath())) {
+            VetForm form = request.getBody(VetForm.class).orElseGet(VetForm::new);
+            Map<String, String> errors = new LinkedHashMap<>();
+            for (ConstraintViolation<?> violation : error.getConstraintViolations()) {
+                String field = violation.getPropertyPath() == null ? "" : violation.getPropertyPath().toString();
+                int lastDot = field.lastIndexOf('.');
+                if (lastDot >= 0 && lastDot < field.length() - 1) {
+                    field = field.substring(lastDot + 1);
+                }
+                errors.put(field, violation.getMessage());
+            }
+
+            Map<String, Object> model = new LinkedHashMap<>(vetFormModel(
+                    new VetDto(null, form.firstName(), form.lastName(),
+                            form.specialityIds().stream().map(id -> new SpecialityDto(id, null)).collect(Collectors.toSet()), null),
+                    true,
+                    false));
+            model.put("vet", form);
+            model.put("validationErrors", errors);
+            return new ModelAndView<>("vets/createOrUpdateVetForm", model);
+        }
         return HttpResponse.badRequest(Map.of("message", "Invalid request."));
     }
 }

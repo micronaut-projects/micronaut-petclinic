@@ -116,7 +116,7 @@ public record Vet(
     }
 
     /**
-     * Creates a new vet without an id or specialities.
+     * Creates a new vet without an id or specialities or user.
      *
      * @param firstName the vet's first name
      * @param lastName the vet's last name

@@ -12,7 +12,7 @@ import java.sql.SQLException;
 
 /** Initializes the MySQL ETag function before repositories use the datasource. */
 @Singleton
-@Requires(property = "datasources.default.dialect", value = "mysql")
+@Requires(property = "datasources.default.dialect", value = "MYSQL")
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class MySqlEtagInitializer implements BeanCreatedEventListener<DataSource> {
 

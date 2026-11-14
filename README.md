@@ -16,6 +16,7 @@ This Micronaut PetClinic app allows you to:
 - Register pets for owners
 - Schedule veterinary visits
 - View veterinarians and their specialities
+- Sign in with session-based authentication
 - Switch between English, Spanish, and German
 
 
@@ -245,8 +246,11 @@ src/main/java/
       ├── service/         # Business logic
       ├── dto/             # Request, response, and form objects
       ├── controller/      # HTTP endpoints and view models
-      └── system/          # Startup data, localization, and database initialization
-
+      ├── system/          # Startup data, localization, and database initialization
+      ├── security/        # Micronaut Security authentication provider
+      ├── utils/           # Password encoding helpers
+      └── controller/      # HTTP controllers
+      
 src/main/resources/
   ├── views/              # JTE templates
   ├── static/             # JavaScript, CSS, and images
@@ -284,10 +288,12 @@ export MICRONAUT_ENVIRONMENTS=postgres # for PostgreSQL
 
 - **Micronaut 5.x** - Framework
 - **Java 25** - Programming language
+- **Micronaut Security** - Session login and authorization
 - **Micronaut Data JDBC** - Database access
 - **JTE** - HTML template engine
 - **HikariCP** - JDBC connection pooling
 - **Caffeine** - Caching
+- **Spring Security Crypto** - BCrypt password hashing
 - **Bootstrap 5** - CSS framework
 
 ---
@@ -320,7 +326,8 @@ Docker must be running for `verify`; Micronaut Test Resources provisions the dis
 ./gradlew test jacocoTestReport
 ```
 
-The former Maven database test profiles are no longer used.
+`OracleTransactionPriorityIntegrationTest` and `OracleTransactionPriorityControllerTest` require `MICRONAUT_ENVIRONMENTS=oracle`; the default `CREATE_DROP` setting drops and recreates application tables in the `petclinic` schema.
+Use a disposable database, or preserve an already-seeded schema with `DATASOURCES_DEFAULT_SCHEMA_GENERATE=NONE PETCLINIC_SAMPLE_DATA_ENABLED=false`.
 
 Oracle-specific tests run only with the `oracle` environment active; the dedicated
 Gradle task and Maven `verify` execution select it automatically. The profile's
@@ -329,6 +336,9 @@ schema. Use disposable databases. Setting
 `DATASOURCES_DEFAULT_SCHEMA_GENERATE=NONE PETCLINIC_SAMPLE_DATA_ENABLED=false`
 disables schema recreation and sample loading, but tests still write data and the
 loyalty rollback tests temporarily alter check constraints.
+
+Authentication coverage includes login success and failure, session access to protected pages, anonymous 401 handling,
+registration, duplicate user rejection, password encoding, and role assignment.
 
 ---
 

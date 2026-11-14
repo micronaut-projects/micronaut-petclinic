@@ -18,6 +18,7 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -34,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /** End-to-end booking requests through the embedded HTTP server and a real Oracle database. */
 @MicronautTest(transactional = false)
 @Requires(env = "oracle")
+@EnabledIfSystemProperty(named = "micronaut.environments", matches = ".*oracle.*")
 @Property(name = "petclinic.transaction-priority.reservation-seconds", value = "5")
 @Property(name = "micronaut.http.client.exception-on-error-status", value = "false")
 @Property(name = "micronaut.http.client.read-timeout", value = "40s")

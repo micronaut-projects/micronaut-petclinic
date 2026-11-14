@@ -1,44 +1,48 @@
 package io.micronaut.samples.petclinic.controller;
 
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpHeaders;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.HttpClient;
-import io.micronaut.http.client.annotation.Client;
-import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
+import java.util.Map;
+
+import static io.micronaut.samples.petclinic.controller.ControllerTestSupport.createNoRedirectClient;
+import static io.micronaut.samples.petclinic.controller.ControllerTestSupport.exchange;
+import static io.micronaut.samples.petclinic.controller.ControllerTestSupport.login;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest
 class VisitControllerTest {
 
     @Inject
-    @Client("/")
-    HttpClient client;
+    EmbeddedServer server;
 
     @Test
     void missingPetOnVisitSubmissionReturnsJsonEntityNotFound() {
-        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
-                client.toBlocking().exchange(
-                        HttpRequest.POST("/owners/2147483647/pets/2147483647/visits/new", """
-                                        {
-                                          "date": "2025-01-01",
-                                          "description": "Routine checkup",
-                                          "durationMinutes": 30,
-                                          "followUpPeriodMonths": 6
-                                        }
-                                        """)
-                                .contentType(MediaType.APPLICATION_JSON_TYPE)
-                                .accept(MediaType.APPLICATION_JSON_TYPE),
-                        String.class));
+        try (HttpClient client = createNoRedirectClient(server)) {
+            String cookie = login(client, "admin@example.com", "password123");
+            HttpResponse<String> response = exchange(client,
+                    HttpRequest.POST("/owners/2147483647/pets/2147483647/visits/new", Map.of(
+                                    "date", LocalDate.now().plusDays(1).toString(),
+                                    "description", "Routine checkup",
+                                    "durationMinutes", 30,
+                                    "followUpPeriodMonths", 6))
+                            .contentType(MediaType.APPLICATION_JSON_TYPE)
+                            .accept(MediaType.APPLICATION_JSON_TYPE)
+                            .header(HttpHeaders.COOKIE, cookie));
 
-        assertThat((CharSequence) exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(exception.getResponse().getContentType()).contains(MediaType.APPLICATION_JSON_TYPE);
-        assertThat(exception.getResponse().getBody(String.class).orElseThrow())
-                .contains("\"message\":\"Entity not found.\"");
+            assertThat((CharSequence) response.status()).isEqualTo(HttpStatus.NOT_FOUND);
+            assertThat(response.getContentType()).contains(MediaType.APPLICATION_JSON_TYPE);
+            assertThat(response.getBody(String.class).orElseThrow())
+                    .contains("\"message\":\"Entity not found.\"");
+        }
     }
 }
