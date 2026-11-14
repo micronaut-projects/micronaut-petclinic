@@ -6,6 +6,7 @@
 @import java.time.format.DateTimeFormatter
 @import java.time.format.FormatStyle
 
+@param String catFact = null
 @param Owner owner
 @param OwnerLoyaltySummary loyalty
 @param io.micronaut.samples.petclinic.system.I18nViewModelProcessor.Msg msg
@@ -50,6 +51,12 @@
                     </a>
                 </li>
             </ul>
+        @endif
+
+        @if(catFact != null)
+            <aside class="alert alert-info" id="cat-fact">
+                <strong>${msg.text("pet.catFact")}</strong> ${catFact}
+            </aside>
         @endif
 
         <div id="owner-details-panel" class="row g-4">

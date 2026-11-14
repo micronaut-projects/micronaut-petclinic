@@ -17,6 +17,9 @@ import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.mapper.FormMapper;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.samples.petclinic.service.ClinicService;
+import io.micronaut.samples.petclinic.service.CatFactService;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.samples.petclinic.service.OwnerLoyaltyService;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
@@ -40,6 +43,7 @@ import java.util.Map;
 public class OwnerController {
 
     private final ClinicService clinicService;
+    private final CatFactService catFactService;
     private final FormMapper formMapper;
     private final OwnerLoyaltyService ownerLoyaltyService;
 
@@ -49,10 +53,12 @@ public class OwnerController {
      * @param clinicService the facade used for owner operations
      * @param formMapper the mapper used to convert owner forms
      * @param ownerLoyaltyService profile-specific loyalty account and summary operations
+     * @param catFactService optional cat facts
      */
     public OwnerController(ClinicService clinicService, FormMapper formMapper,
-                           OwnerLoyaltyService ownerLoyaltyService) {
+                           OwnerLoyaltyService ownerLoyaltyService, CatFactService catFactService) {
         this.clinicService = clinicService;
+        this.catFactService = catFactService;
         this.formMapper = formMapper;
         this.ownerLoyaltyService = ownerLoyaltyService;
     }
@@ -137,6 +143,7 @@ public class OwnerController {
      */
     @Get("/{ownerId}")
     @View("owners/ownerDetails")
+    @ExecuteOn(TaskExecutors.BLOCKING)
     public Map<String, Object> showOwner(@PathVariable Integer ownerId) {
         Owner owner;
         try {
@@ -154,6 +161,9 @@ public class OwnerController {
         }
         Map<String, Object> model = new HashMap<>();
         model.put("owner", owner);
+        boolean hasCat = owner.getPets().stream()
+                .anyMatch(pet -> pet.type() != null && "cat".equalsIgnoreCase(pet.type().name()));
+        model.put("catFact", hasCat ? catFactService.findFact().orElse(null) : null);
         model.put("loyalty", loyalty);
         return model;
     }

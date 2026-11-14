@@ -210,6 +210,27 @@ MICRONAUT_ENVIRONMENTS=h2 ./build/native/nativeCompile/micronaut-petclinic
 3. Fill in the form and submit
 4. Search owners by last name using the search form
 
+#### Cat facts (declarative HTTP client)
+
+`CatFactClient` uses Micronaut `@Client` to fetch a fact from the free
+[Cat Facts API](https://catfact.ninja/) for owners with cats. No API key is needed.
+Failures hide the fact without interrupting clinic workflows.
+
+Configuration in `application.yml`:
+
+- `CAT_FACTS_ENABLED`: defaults to `true`; `false` selects a fixed offline fact.
+- `CAT_FACTS_URL`: defaults to `https://catfact.ninja`.
+- `CAT_FACTS_CONNECT_TIMEOUT` / `CAT_FACTS_READ_TIMEOUT`: default to `1s` / `2s`.
+
+To use a local mock serving `GET /fact` as JSON (`{"fact":"A cat fact."}`):
+
+```bash
+CAT_FACTS_URL=http://localhost:8099 ./gradlew run
+# Maven: use the same variable with ./mvnw mn:run
+```
+
+Tests use offline beans or a local mock server, with no external network dependency.
+
 ### Adding Pets
 
 1. Find an owner

@@ -1,4 +1,10 @@
 micronaut:
+  http:
+    services:
+      cat-facts:
+        url: ${CAT_FACTS_URL:`https://catfact.ninja`}
+        connect-timeout: ${CAT_FACTS_CONNECT_TIMEOUT:1s}
+        read-timeout: ${CAT_FACTS_READ_TIMEOUT:2s}
   application:
     name: micronaut-petclinic
   server:
@@ -24,6 +30,8 @@ micronaut:
 
 # Sample data configuration
 petclinic:
+  cat-facts:
+    enabled: ${CAT_FACTS_ENABLED:true}
   sample-data:
     enabled: true
 
