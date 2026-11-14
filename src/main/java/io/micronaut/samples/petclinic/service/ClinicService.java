@@ -7,18 +7,13 @@ import io.micronaut.data.model.geo.Polygon;
 import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
 import io.micronaut.samples.petclinic.model.Clinic;
 import io.micronaut.samples.petclinic.model.Owner;
-import io.micronaut.samples.petclinic.model.Pet;
-import io.micronaut.samples.petclinic.model.PetType;
 import io.micronaut.samples.petclinic.model.Visit;
 import io.micronaut.samples.petclinic.dto.VisitSearchCriteria;
 import io.micronaut.samples.petclinic.repository.ClinicRepository;
 import io.micronaut.samples.petclinic.repository.OwnerRepository;
-import io.micronaut.samples.petclinic.repository.PetRepository;
-import io.micronaut.samples.petclinic.repository.PetTypeRepository;
 import io.micronaut.samples.petclinic.repository.VisitRepository;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
-import org.jspecify.annotations.NonNull;
 
 import java.time.Duration;
 import java.time.Period;
@@ -31,8 +26,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Service class providing business logic for the Pet Clinic application.
- * Acts as a facade over the repository layer.
+ * Business operations for owners, visits, and clinic locations.
+ * Pet operations are provided by {@link PetService}.
  */
 @Singleton
 public class ClinicService {
@@ -40,8 +35,6 @@ public class ClinicService {
     private static final double GEOMETRY_EPSILON = 0.0000000001;
 
     private final OwnerRepository ownerRepository;
-    private final PetRepository petRepository;
-    private final PetTypeRepository petTypeRepository;
     private final VisitRepository visitRepository;
     private final ClinicRepository clinicRepository;
     private final OwnerLoyaltyService ownerLoyaltyService;
@@ -50,21 +43,15 @@ public class ClinicService {
      * Creates the service facade with its repository and loyalty dependencies.
      *
      * @param ownerRepository repository for owners
-     * @param petRepository repository for pets
-     * @param petTypeRepository repository for pet types
      * @param visitRepository repository for visits
      * @param clinicRepository repository for clinic locations
      * @param ownerLoyaltyService profile-specific owner and visit loyalty hooks
      */
     public ClinicService(OwnerRepository ownerRepository,
-                         PetRepository petRepository,
-                         PetTypeRepository petTypeRepository,
                          VisitRepository visitRepository,
                          ClinicRepository clinicRepository,
                          OwnerLoyaltyService ownerLoyaltyService) {
         this.ownerRepository = ownerRepository;
-        this.petRepository = petRepository;
-        this.petTypeRepository = petTypeRepository;
         this.visitRepository = visitRepository;
         this.clinicRepository = clinicRepository;
         this.ownerLoyaltyService = ownerLoyaltyService;
@@ -124,68 +111,6 @@ public class ClinicService {
     public void deleteOwner(Owner owner) {
         ownerLoyaltyService.deleteOwnerData(owner);
         ownerRepository.delete(owner);
-    }
-
-    // ========== Pet Operations ==========
-
-    /**
-     * Find a pet by ID.
-     * @param id the pet ID
-     * @return the persisted pet
-     * @throws NotFoundEntityException if the pet does not exist
-     */
-    public @NonNull Pet findPetById(Integer id) throws NotFoundEntityException {
-        return petRepository.findById(id).orElseThrow(NotFoundEntityException::new);
-    }
-
-    /**
-     * Find all pets.
-     * @return list of all pets
-     */
-    public List<Pet> findAllPets() {
-        return petRepository.findAll();
-    }
-
-    /**
-     * Save a pet (create or update).
-     * @param pet the pet to save
-     * @return the persisted pet returned by the repository
-     */
-    @Transactional
-    public Pet savePet(Pet pet) {
-        if (pet.isNew()) {
-            return petRepository.save(pet);
-        } else {
-            return petRepository.update(pet);
-        }
-    }
-
-    /**
-     * Delete a pet by ID.
-     * @param id the pet ID
-     */
-    @Transactional
-    public void deletePet(Integer id) {
-        petRepository.deleteById(id);
-    }
-
-    // ========== Pet Type Operations ==========
-
-    /**
-     * Find all pet types.
-     * @return list of all pet types
-     */
-    public List<PetType> findPetTypes() {
-        return petTypeRepository.findAllOrderByName();
-    }
-
-    /**
-     * Find a pet type by ID.
-     * @param id the pet type ID
-     * @return the pet type, if found
-     */
-    public Optional<PetType> findPetTypeById(Integer id) {
-        return petTypeRepository.findById(id);
     }
 
     // ========== Visit Operations ==========

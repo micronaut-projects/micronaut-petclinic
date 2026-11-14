@@ -1,6 +1,9 @@
 micronaut:
   server:
     port: -1
+    multipart:
+      enabled: true
+      max-file-size: 1024
   application:
     name: micronaut-petclinic-test
   views:
@@ -17,6 +20,9 @@ test-resources:
 
 # Enable sample data for tests
 petclinic:
+  photos:
+    storage-dir: ./build/test-pet-photos
+    max-size-bytes: 1024
   sample-data:
     enabled: true
 

@@ -63,3 +63,10 @@ rebel.xml
 # Env files
 .env
 .env.local
+
+# Local pet photo uploads
+/var/pet-photos/
+/.editorconfig
+/scripts/test-local.sh
+/.micronaut/test-resources/test-resources-settings/test-resources.properties
+/.micronaut/test-resources/test-resources-port.txt

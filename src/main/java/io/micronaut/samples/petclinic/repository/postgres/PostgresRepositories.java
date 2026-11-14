@@ -45,6 +45,14 @@ public final class PostgresRepositories {
     @JdbcRepository(dialect = Dialect.POSTGRES)
     public interface PostgresPetRepository extends PetRepository {
         /**
+         * {@inheritDoc}
+         * Uses PostgreSQL quoting for the table and lowercase generated identifier column.
+         */
+        @Override
+        @Query(value = "SELECT \"id\" FROM \"PETS\" WHERE \"id\" = :id FOR UPDATE", nativeQuery = true)
+        Optional<Integer> lockById(Integer id);
+
+        /**
          * Finds pets for an owner using PostgreSQL SQL.
          *
          * @param ownerId the owner id

@@ -158,19 +158,24 @@
                                     <div class="row align-items-center">
                                         <div class="col-md-4">
                                             <div class="d-flex align-items-center">
-                                                <div class="pet-icon me-3 ${
-                                                    ((pet.getType() != null && pet.getType().name() != null) ? pet.getType().name().trim().toLowerCase(Locale.ROOT) : "dog")
-                                                }">
-                                                    <i class="fas ${
-                                                        switch (((pet.getType() != null && pet.getType().name() != null) ? pet.getType().name().trim().toLowerCase(Locale.ROOT) : "")) {
-                                                            case "cat" -> "fa-cat";
-                                                            case "bird" -> "fa-dove";
-                                                            case "hamster" -> "fa-hippo";
-                                                            case "snake" -> "fa-worm";
-                                                            default -> "fa-dog";
-                                                        }
-                                                    }"></i>
-                                                </div>
+                                                @if(pet.photoFilename() != null)
+                                                    <img src="/owners/${owner.id()}/pets/${pet.id()}/photo" alt="${pet.name()}"
+                                                         class="pet-photo-avatar me-3">
+                                                @else
+                                                    <div class="pet-icon flex-shrink-0 me-3 ${
+                                                        ((pet.getType() != null && pet.getType().name() != null) ? pet.getType().name().trim().toLowerCase(Locale.ROOT) : "dog")
+                                                    }">
+                                                        <i class="fas ${
+                                                            switch (((pet.getType() != null && pet.getType().name() != null) ? pet.getType().name().trim().toLowerCase(Locale.ROOT) : "")) {
+                                                                case "cat" -> "fa-cat";
+                                                                case "bird" -> "fa-dove";
+                                                                case "hamster" -> "fa-hippo";
+                                                                case "snake" -> "fa-worm";
+                                                                default -> "fa-dog";
+                                                            }
+                                                        }"></i>
+                                                    </div>
+                                                @endif
                                                 <div>
                                                     <h6 class="mb-0" data-pet-name>${pet.name()}</h6>
                                                     <small class="text-muted">${pet.getType() != null ? pet.getType().name() : msg.text("visit.unknown")}</small>

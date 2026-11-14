@@ -1,13 +1,15 @@
 package io.micronaut.samples.petclinic.repository;
 
-import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Join;
-import static io.micronaut.data.annotation.Join.Type.LEFT_FETCH;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.samples.petclinic.model.Pet;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+
+import static io.micronaut.data.annotation.Join.Type.LEFT_FETCH;
 
 /**
  * Repository for {@link Pet} entities.
@@ -16,22 +18,31 @@ import java.util.Optional;
  */
 public interface PetRepository extends CrudRepository<Pet, Integer> {
     /**
+     * Locks the pet row until the caller's transaction completes.
+     *
+     * @param id the pet identifier
+     * @return the locked identifier, or an empty result if the pet does not exist
+     */
+    @Query("SELECT ID FROM PETS WHERE ID = :id FOR UPDATE")
+    Optional<Integer> lockById(Integer id);
+
+    /**
+     * Reloads the pet and its associations after acquiring its row lock.
+     * Must be called within a transaction so the lock remains held during the subsequent save.
+     *
+     * @param id the pet identifier
+     * @return the locked pet, or an empty result if it does not exist
+     */
+    default Optional<Pet> findByIdForUpdate(Integer id) {
+        return lockById(id).flatMap(lockedId -> findById(lockedId));
+    }
+
+    /**
      * Find all pets.
      * @return collection of pets.
      */
     @Join(value = "type", type = LEFT_FETCH)
     List<Pet> findAll();
-
-    /**
-     * Find a pet by ID, eagerly fetching visits.
-     * Visits are loaded explicitly via {@link VisitRepository}.
-     *
-     * @param id the pet ID
-     * @return the pet with visits loaded
-     */
-    default Optional<Pet> findByIdWithVisits(Integer id) {
-        return findById(id);
-    }
 
     /**
      * Finds a pet by id with owner, type, and visits loaded.
@@ -43,6 +54,30 @@ public interface PetRepository extends CrudRepository<Pet, Integer> {
     @Join(value = "type", type = LEFT_FETCH)
     @Join(value = "visits", type = LEFT_FETCH)
     Optional<Pet> findById(Integer id);
+
+    /**
+     * Finds a pet belonging to the required owner, with type and visits loaded.
+     *
+     * @param petId the pet identifier
+     * @param ownerId the identifier of the required owner
+     * @return the pet, or an empty result if the pet does not belong to the owner
+     */
+    @Join(value = "owner", type = LEFT_FETCH)
+    @Join(value = "type", type = LEFT_FETCH)
+    @Join(value = "visits", type = LEFT_FETCH)
+    Optional<Pet> findByIdAndOwnerId(Integer petId, Integer ownerId);
+
+    /**
+     * Finds and locks a pet belonging to the required owner within the caller's transaction.
+     *
+     * @param id the pet identifier
+     * @param ownerId the required owner identifier
+     * @return the locked pet, if found
+     */
+    @Join(value = "owner", type = LEFT_FETCH)
+    @Join(value = "type", type = LEFT_FETCH)
+    @Join(value = "visits", type = LEFT_FETCH)
+    Optional<Pet> findByIdAndOwnerIdForUpdate(Integer id, Integer ownerId);
 
     /**
      * Find all pets for a specific owner.
