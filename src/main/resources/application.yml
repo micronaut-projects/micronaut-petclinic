@@ -26,6 +26,11 @@ micronaut:
 petclinic:
   sample-data:
     enabled: true
+  visit-reminder:
+    enabled: true
+    # Daily at 08:00 in the server's local time zone.
+    schedule: "0 0 8 * * *"
+    lookahead-days: 7
 
 # Logging configuration
 logger:

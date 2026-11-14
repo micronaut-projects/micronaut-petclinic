@@ -348,6 +348,20 @@ See [migration-guide.md](migration-guide.md) for detailed comparisons and exampl
 
 ## Features
 
+### Scheduled visit reminders
+
+`VisitReminderJob` uses Micronaut `@Scheduled` to log reminder candidates. It is
+enabled locally by default, runs daily at 08:00 (server time), and includes visits
+from today through seven days ahead. Configure `petclinic.visit-reminder.enabled`,
+`schedule` (six-field cron), and `lookahead-days` in `application.yml`.
+Tests disable it by default. Email delivery is deferred to Ticket 28.
+
+For a local demo, add an upcoming visit and check the logs every 30 seconds:
+
+```bash
+PETCLINIC_VISIT_REMINDER_ENABLED=true PETCLINIC_VISIT_REMINDER_SCHEDULE='*/30 * * * * *' ./gradlew run
+```
+
 ### Geospatial Clinic Search
 
 The application also includes a Micronaut Data geospatial example. It stores sample clinic branches as WGS 84 `Point` values (SRID 4326) and exposes three derived repository methods through `ClinicRepository`: `findByLocationNear`, `findByLocationGeoWithin`, and `findByLocationGeoIntersects`. Micronaut Data translates those derived methods to the spatial functions/operators of the active dialect. For example, `Near` is compiled to Oracle `SDO_WITHIN_DISTANCE` when the Oracle profile is active.

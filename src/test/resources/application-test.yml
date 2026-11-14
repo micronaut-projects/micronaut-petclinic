@@ -19,6 +19,8 @@ test-resources:
 petclinic:
   sample-data:
     enabled: true
+  visit-reminder:
+    enabled: false
 
 endpoints:
   info:
