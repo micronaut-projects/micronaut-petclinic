@@ -105,7 +105,11 @@ dependencies {
     implementation(libs.micronaut.jdbc.hikari)
     implementation(libs.micronaut.validation)
     implementation(libs.jakarta.validation.api)
+    implementation(libs.micronaut.cache.core)
     implementation(libs.micronaut.cache.caffeine)
+    implementation(libs.micronaut.cache.oracle)
+    implementation(libs.flyway.core)
+    implementation(libs.flyway.database.oracle)
     implementation(libs.micronaut.sourcegen.annotations)
     implementation(libs.micronaut.managment)
 

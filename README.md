@@ -18,7 +18,6 @@ This Micronaut PetClinic app allows you to:
 - View veterinarians and their specialities
 - Switch between English, Spanish, and German
 
-
 ---
 
 ## Requirements
@@ -42,7 +41,7 @@ cd micronaut-petclinic
 ./gradlew run
 ```
 
-Open http://localhost:8080
+Open <http://localhost:8080>
 
 ---
 
@@ -231,6 +230,7 @@ Click "VETERINARIANS" in the navigation to see all vets and their specialities.
 ### Changing Language
 
 Use the language selector in the top-right corner to switch between:
+
 - English (default)
 - Spanish (Español)
 - German (Deutsch)
@@ -266,6 +266,7 @@ src/main/resources/
 - `application-postgres.yml` - PostgreSQL settings
 
 To use a specific database locally:
+
 ```bash
 export MICRONAUT_ENVIRONMENTS=oracle   # for Oracle
 export MICRONAUT_ENVIRONMENTS=mysql    # for MySQL
@@ -330,6 +331,9 @@ schema. Use disposable databases. Setting
 disables schema recreation and sample loading, but tests still write data and the
 loyalty rollback tests temporarily alter check constraints.
 
+`OracleTransactionPriorityIntegrationTest` and `OracleTransactionPriorityControllerTest` require `MICRONAUT_ENVIRONMENTS=oracle`; the default `CREATE_DROP` setting drops and recreates application tables in the `petclinic` schema.
+Use a disposable database, or preserve an already-seeded schema with `DATASOURCES_DEFAULT_SCHEMA_GENERATE=NONE PETCLINIC_SAMPLE_DATA_ENABLED=false`.
+
 ---
 
 ## Migrating from Spring Boot
@@ -352,7 +356,7 @@ See [migration-guide.md](migration-guide.md) for detailed comparisons and exampl
 
 The application also includes a Micronaut Data geospatial example. It stores sample clinic branches as WGS 84 `Point` values (SRID 4326) and exposes three derived repository methods through `ClinicRepository`: `findByLocationNear`, `findByLocationGeoWithin`, and `findByLocationGeoIntersects`. Micronaut Data translates those derived methods to the spatial functions/operators of the active dialect. For example, `Near` is compiled to Oracle `SDO_WITHIN_DISTANCE` when the Oracle profile is active.
 
-Open http://localhost:8080/clinics to try the clinic search page.
+Open <http://localhost:8080/clinics> to try the clinic search page.
 
 Use the manual form or the map tab to search clinic locations. Use `nearby` for radius searches around a single point, `within` for clinics inside a bounding-box or drawn polygon, and `intersects` for clinics whose location intersects an open `LineString`. Using a line for `intersects` makes the example distinct from `within`, which uses a filled `Polygon`.
 
@@ -369,13 +373,54 @@ curl -X POST http://localhost:8080/clinics/intersects \
   -H "Content-Type: application/json" \
   -d '{"coordinates":[{"latitude":43.0753,"longitude":-89.5186},{"latitude":43.1020,"longitude":-89.3545},{"latitude":43.1836,"longitude":-89.2137}]}'
 ```
----
+
+### Micronaut Cache showcase
+
+`ClinicService.findOwnerById()` caches owners with their pets and visits in `owner-details`,
+keyed by owner ID. The `oracle` environment uses Oracle Database; other environments use
+Caffeine. Both limit the cache to 100 entries, with 60-second write expiry and 30-second access expiry.
+
+Controller writes use `@CacheInvalidate(value = "owner-details", parameters = "ownerId")`
+to evict the affected owner's entry. Vets stay uncached to keep ETags current. Pet-type
+caching is deferred to keep this example focused on owner details.
+
+Start the Oracle profile:
+
+```bash
+MICRONAUT_ENVIRONMENTS=oracle ./gradlew run
+```
+
+In another terminal, request the same owner twice, replacing `1` with an existing ID:
+
+```bash
+curl http://localhost:8080/owners/1
+curl http://localhost:8080/owners/1
+```
+
+Connect as `petclinic` to inspect entries, statistics, and cleanup:
+
+```sql
+SELECT COUNT(*) AS ENTRY_COUNT
+FROM PETCLINIC_CACHE_ENTRY WHERE CACHE_NAME = 'owner-details';
+
+SELECT HIT_COUNT, MISS_COUNT, PUT_COUNT, INVALIDATE_COUNT, UPDATED_AT
+FROM PETCLINIC_CACHE_STATS
+WHERE CACHE_NAME = 'owner-details';
+
+SELECT JOB_NAME, STATE, NEXT_RUN_DATE
+FROM USER_SCHEDULER_JOBS
+WHERE JOB_NAME = 'PETCLINIC_CACHE_CLEANUP_OWNER_DETAILS';
+```
+
+Hits query Oracle's cache tables while avoiding the owner, pet, and visit queries.
+Statistics update asynchronously; cleanup runs every 10 seconds. Entries survive application
+restarts when reusing the same database.
 
 ### Oracle semantic chunk retrieval
 
 The Oracle profile also includes a retrieval-only vector search example based on Micronaut Data's [vector type support](https://github.com/micronaut-projects/micronaut-data/pull/3637). It seeds a small pet-care knowledge base, stores each chunk as a `FloatVector` in an Oracle `VECTOR(384, FLOAT32)` column, and uses the derived vector-search repository method with cosine distance.
 
-Start the Oracle profile and open http://localhost:8080/knowledge. The demo uses vectors precomputed once with the all-MiniLM-L6-v2 model and checked into `src/main/resources/knowledge/pet-care-embeddings.tsv`; the runtime has no embedding model, ONNX Runtime, native tokenizer, LLM, or external API key. It returns ranked chunks with their source, topic, species, and distance. The HTTP API is:
+Start the Oracle profile and open <http://localhost:8080/knowledge>. The demo uses vectors precomputed once with the all-MiniLM-L6-v2 model and checked into `src/main/resources/knowledge/pet-care-embeddings.tsv`; the runtime has no embedding model, ONNX Runtime, native tokenizer, LLM, or external API key. It returns ranked chunks with their source, topic, species, and distance. The HTTP API is:
 
 ```bash
 curl -X POST http://localhost:8080/knowledge/search \
@@ -414,7 +459,7 @@ same prerequisite on external MySQL servers before starting the app.
 
 ### Oracle transaction priority
 
-With the Oracle profile running, open http://localhost:8080/oracle/transaction-priority.
+With the Oracle profile running, open <http://localhost:8080/oracle/transaction-priority>.
 Sample data provides two appointments, without calendar or time-slot management.
 The page lists all available appointments in display order.
 
@@ -523,7 +568,7 @@ The schema remains available; run the discovery commands above.
 ### Oracle JSON duality showcase
 
 In the `oracle` environment, open an owner and select the **Owner Care Record** tab
-(for example, http://localhost:8080/owners/1?tab=care-record to open it
+(for example, <http://localhost:8080/owners/1?tab=care-record> to open it
 directly). The owner document API is available at `/owners/{ownerId}/care-record`.
 View that owner, their pets, and visit history together as one JSON document.
 Edit existing owner, pet, or visit details and save; the changes also appear in Petclinic's
@@ -562,7 +607,7 @@ for concurrency, rollback, schema, and localization coverage.
 
 The application also demonstrates Micronaut Data's `@Upsert` feature.
 
-Each clinic has its own service catalog at `/clinics/{clinicId}/services`. From the clinic search results, click **Services**, or open the first sample clinic directly at http://localhost:8080/clinics/1/services.
+Each clinic has its own service catalog at `/clinics/{clinicId}/services`. From the clinic search results, click **Services**, or open the first sample clinic directly at <http://localhost:8080/clinics/1/services>.
 
 The sample-data loader seeds a curated catalog for every clinic, with offerings tailored to its neighborhood and patient profile. For example, Downtown Madison starts with `WELLNESS_CHECK`, `SENIOR_PET_SCREENING`, `SAME_DAY_SICK_VISIT`, and `DENTAL_SPARKLE`, while Capitol Square starts with `RABIES_EXPRESS`, `APARTMENT_PET_BEHAVIOR`, and `PUPPY_SOCIAL_START`.
 
@@ -584,7 +629,7 @@ curl -X POST http://localhost:8080/clinics/1/services \
   -d '{"serviceCode":"WELLNESS_CHECK","name":"Extended wellness check","description":"Includes screening","price":65.00,"durationMinutes":45}'
 ```
 
-The implementation is explicit: `ClinicServiceOffering` has a generated id and a many-to-one `Clinic` relationship; `Clinic` exposes the inverse one-to-many `serviceOfferings` collection. `ClinicServiceOfferingRepository.upsert` declares `@Upsert(conflictsOn = {"clinic", "serviceCode"})`, so the generated clinic id and clinic-local service code identify the row to update. The entity also declares the clinic/code uniqueness constraint. The H2, PostgreSQL, MySQL, and Oracle repository adapters exercise the dialect-specific SQL generated by Micronaut Data.
+The implementation is explicit: `ClinicServiceOffering` has a generated id and a many-to-one `Clinic` relationship; `Clinic` exposes the inverse one-to-many `serviceOfferings` collection. `ClinicServiceOfferingRepository.upsert` declares `@Upsert(conflictsOn = {"clinic", "serviceCode"})`, so the generated clinic id and clinic-local service code identify the row to update. The entity also declares the clinic/code uniqueness constraint. The H2, PostgreSQL, MySQL, and Oracle repository adapters exercise the dialect-specific SQL generated by Micronaut Data
 ---
 
 ## Troubleshooting
@@ -638,10 +683,10 @@ export MICRONAUT_SERVER_PORT=8081
 ### Database connection errors
 
 Check your `application-{database}.yml` file has the correct:
+
 - URL
 - Username
 - Password
-
 
 ---
 

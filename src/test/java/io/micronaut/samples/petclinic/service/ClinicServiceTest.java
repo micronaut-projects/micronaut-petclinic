@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -103,6 +102,8 @@ class ClinicServiceTest {
     void shouldFindPetById() throws NotFoundEntityException {
         Pet leo = clinicServiceFixtures.requiredPet("George", "Franklin", "Leo");
         Pet found = clinicService.findPetById(leo.id());
+        assertThat(found).isNotNull();
+        assertThat(found.name()).isEqualTo("Leo");
         assertThat(found.name()).isEqualTo("Leo");
     }
 

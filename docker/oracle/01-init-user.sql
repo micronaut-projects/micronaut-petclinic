@@ -67,6 +67,24 @@ END;
 -- Micronaut Data generates Oracle JSON Relational Duality Views from @JsonView.
 -- Apply the privilege even when the petclinic user already exists.
 GRANT CREATE VIEW TO petclinic;
+GRANT CREATE PROCEDURE TO petclinic;
+GRANT CREATE JOB TO petclinic;
+GRANT EXECUTE ON SYS.DBMS_SCHEDULER TO petclinic;
+
+-- Micronaut Test Resources connects with its generated TEST account instead of
+-- the application user. Grant the same cache migration privileges there when
+-- that account is present in the disposable Oracle database.
+DECLARE
+  v_test_user_exists NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO v_test_user_exists FROM all_users WHERE username = 'TEST';
+  IF v_test_user_exists > 0 THEN
+    EXECUTE IMMEDIATE 'GRANT CREATE PROCEDURE TO TEST';
+    EXECUTE IMMEDIATE 'GRANT CREATE JOB TO TEST';
+    EXECUTE IMMEDIATE 'GRANT EXECUTE ON SYS.DBMS_SCHEDULER TO TEST';
+  END IF;
+END;
+/
 
 ALTER USER petclinic DEFAULT TABLESPACE PETCLINIC_DATA;
 ALTER USER petclinic QUOTA UNLIMITED ON PETCLINIC_DATA;
