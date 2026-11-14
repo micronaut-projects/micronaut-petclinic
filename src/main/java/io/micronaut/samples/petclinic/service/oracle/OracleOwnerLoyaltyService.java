@@ -10,11 +10,14 @@ import io.micronaut.samples.petclinic.oracle.model.OwnerLoyaltyAccount;
 import io.micronaut.samples.petclinic.oracle.model.OwnerRewardVoucher;
 import io.micronaut.samples.petclinic.repository.oracle.OwnerLoyaltyAccountRepository;
 import io.micronaut.samples.petclinic.repository.oracle.OwnerRewardVoucherRepository;
+import io.micronaut.samples.petclinic.service.InsufficientLoyaltyPointsException;
 import io.micronaut.samples.petclinic.service.OwnerLoyaltyService;
+import io.micronaut.transaction.exceptions.TransactionSystemException;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
 import org.jspecify.annotations.NullMarked;
 
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.Collection;
 
 /**
@@ -105,10 +108,31 @@ public class OracleOwnerLoyaltyService implements OwnerLoyaltyService {
                         .stream().map(OracleOwnerLoyaltyService::toView).toList());
     }
 
+    /**
+     * Redeems a reward and maps insufficient points reported during the reservation or its commit.
+     * @param account the committed account funding the reward
+     * @return the committed voucher and subsequently read balance
+     * @throws IllegalRequestArgumentException if the configured reward cost is not positive
+     * @throws NotFoundEntityException if the account disappears before the debit or balance lookup
+     * @throws InsufficientLoyaltyPointsException if the nonnegative points constraint rejects the reward
+     * @throws TransactionSystemException if the independent transaction fails for another reason
+     */
     @Override
     public LoyaltyRedemptionResponse redeem(OwnerLoyaltyAccount account)
             throws IllegalRequestArgumentException, NotFoundEntityException {
-        OwnerRewardVoucher voucher = redemptionService.redeem(account, REWARD_COST);
+        OwnerRewardVoucher voucher;
+        try {
+            voucher = redemptionService.redeem(account, REWARD_COST);
+        } catch (TransactionSystemException exception) {
+            // A racing reservation can violate the points check at commit, after the inner method returns.
+            if (exception.getCause() instanceof SQLIntegrityConstraintViolationException violation
+                    && violation.getErrorCode() == 2290
+                    && violation.getMessage() != null
+                    && violation.getMessage().contains("CK_OWNER_LOYALTY_ACCOUNT_POINTS_GE_0")) {
+                throw new InsufficientLoyaltyPointsException();
+            }
+            throw exception;
+        }
         // The transaction proxy has committed the reservation before this balance is read.
         long points = ownerLoyaltyAccountRepository.findPointsById(account.id())
                 .orElseThrow(NotFoundEntityException::new);

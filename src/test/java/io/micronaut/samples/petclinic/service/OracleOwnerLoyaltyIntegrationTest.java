@@ -28,10 +28,12 @@ import io.micronaut.samples.petclinic.repository.VisitRepository;
 import io.micronaut.samples.petclinic.repository.oracle.OwnerLoyaltyAccountRepository;
 import io.micronaut.samples.petclinic.repository.oracle.OwnerRewardVoucherRepository;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.micronaut.transaction.exceptions.TransactionSystemException;
 import jakarta.inject.Inject;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
@@ -350,7 +352,7 @@ class OracleOwnerLoyaltyIntegrationTest {
         assertThat(ownerLoyaltyService.summary(ownerLoyaltyAccount).recentVouchers()).isEmpty();
     }
 
-    @Test
+    @RepeatedTest(200)
     @Order(13)
     void simultaneousRedemptionsCannotOverspendOneReward() throws Exception {
         assertConcurrentRedemptions(100L, 1);
@@ -704,6 +706,27 @@ class OracleOwnerLoyaltyIntegrationTest {
 
         assertThat(visitRepository.findByPetId(pet.id())).isEmpty();
         assertThat(accountRepository.findByOwner(owner)).isEmpty();
+    }
+
+    @Test
+    @Order(31)
+    void voucherCommitFailureRemainsATransactionFailure() throws Exception {
+        Owner owner = createOwner();
+        OwnerLoyaltyAccount account = findOwnerLoyaltyAccount(owner);
+        incrementPoints(account, 200L);
+        testDatabase.execute("ALTER TABLE OWNER_REWARD_VOUCHERS ADD CONSTRAINT TEST_LOYALTY_VOUCHER_COMMIT_FAIL "
+                + "CHECK (OWNER_LOYALTY_ACCOUNT_ID <> " + account.id() + " OR REWARD_CODE <> 'PET_CARE_REWARD') "
+                + "DEFERRABLE INITIALLY DEFERRED");
+
+        try {
+            assertThatThrownBy(() -> ownerLoyaltyService.redeem(account))
+                    .isInstanceOf(TransactionSystemException.class)
+                    .hasStackTraceContaining("TEST_LOYALTY_VOUCHER_COMMIT_FAIL");
+            assertThat(accountRepository.findByOwner(owner).orElseThrow().points()).isEqualTo(200L);
+            assertThat(vouchers(owner)).isEmpty();
+        } finally {
+            testDatabase.execute("ALTER TABLE OWNER_REWARD_VOUCHERS DROP CONSTRAINT TEST_LOYALTY_VOUCHER_COMMIT_FAIL");
+        }
     }
 
     private List<OwnerRewardVoucher> vouchers(Owner owner) {
