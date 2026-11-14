@@ -5,6 +5,8 @@ import static io.micronaut.data.annotation.Join.Type.LEFT_FETCH;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.samples.petclinic.model.Owner;
 import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +17,23 @@ import java.util.Optional;
  * Dialect-specific {@code @JdbcRepository} beans extend this interface.
  */
 public interface OwnerRepository extends CrudRepository<Owner, Integer> {
+
+    /**
+     * Pages owner rows without fetching collections, so pets cannot change page boundaries.
+     *
+     * @param pageable the page index, size, and ordering
+     * @return the owner page and total matching count, without fetched pet collections
+     */
+    Page<Owner> findAll(Pageable pageable);
+
+    /**
+     * Pages owners matching a case-insensitive partial last name without collection joins.
+     *
+     * @param lastName the last-name fragment to match
+     * @param pageable the page index, size, and ordering
+     * @return the matching owner page and total count, without fetched pet collections
+     */
+    Page<Owner> findByLastNameContainsIgnoreCase(String lastName, Pageable pageable);
 
     /**
      * Find owners by last name, using a case-insensitive LIKE search.
