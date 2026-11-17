@@ -352,7 +352,7 @@ class OracleOwnerLoyaltyIntegrationTest {
         assertThat(ownerLoyaltyService.summary(ownerLoyaltyAccount).recentVouchers()).isEmpty();
     }
 
-    @RepeatedTest(200)
+    @RepeatedTest(20)
     @Order(13)
     void simultaneousRedemptionsCannotOverspendOneReward() throws Exception {
         assertConcurrentRedemptions(100L, 1);

@@ -125,6 +125,7 @@ public class OracleOwnerLoyaltyService implements OwnerLoyaltyService {
             voucher = redemptionService.redeem(account, REWARD_COST);
         } catch (TransactionSystemException exception) {
             // A racing reservation can violate the points check at commit, after the inner method returns.
+            // Micronaut Data derives this constraint name from @PositiveOrZero on the account points field.
             if (exception.getCause() instanceof SQLIntegrityConstraintViolationException violation
                     && violation.getErrorCode() == 2290
                     && violation.getMessage() != null
