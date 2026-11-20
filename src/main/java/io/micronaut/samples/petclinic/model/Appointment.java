@@ -12,9 +12,9 @@ import jakarta.validation.constraints.NotNull;
 import static io.micronaut.samples.petclinic.model.Appointment.Status.AVAILABLE;
 
 /**
- * A small appointment resource used by the Oracle transaction-priority showcase.
+ * A small appointment resource used by the Oracle transaction showcases.
  *
- * <p>The showcase uses two ordered appointments instead of managing dates,
+ * <p>Each showcase uses two ordered appointments instead of managing dates,
  * calendars or visit durations. Availability is determined by status and choices
  * are ordered by display order. A production scheduler can extend this model;
  * the long-lived booking transactions remain demo-only.</p>
@@ -23,6 +23,7 @@ import static io.micronaut.samples.petclinic.model.Appointment.Status.AVAILABLE;
  * @param label the human-readable appointment label
  * @param displayOrder the order used to choose the current and fallback appointments
  * @param status the current booking state
+ * @param scenario the showcase owning this appointment
  */
 @MappedEntity("APPOINTMENTS")
 @Serdeable
@@ -42,9 +43,22 @@ public record Appointment(
 
         @MappedProperty("STATUS")
         @NotNull
-        Status status
+        Status status,
+
+        @MappedProperty("SCENARIO")
+        @NotNull
+        Scenario scenario
 ) implements BaseEntity, AppointmentWither {
 
+    /** Identifies which Oracle transaction showcase owns the appointment. */
+    public enum Scenario {
+        /** Appointment used by the transaction-priority example. */
+        PRIORITY,
+        /** Appointment used by the sessionless-transaction example. */
+        SESSIONLESS
+    }
+
+    /** Booking state persisted for an appointment. */
     public enum Status {
         /** Appointment is available for a new booking. */
         AVAILABLE,
@@ -57,7 +71,11 @@ public record Appointment(
         /** A regular booking finished before an emergency could displace it. */
         BOOKED_FOR_REGULAR,
         /** A higher-priority emergency booking has claimed the appointment. */
-        BOOKED_FOR_EMERGENCY
+        BOOKED_FOR_EMERGENCY,
+        /** Uncommitted hold retained by a suspended sessionless transaction. */
+        HELD_FOR_CONFIRMATION,
+        /** A resumed sessionless transaction confirmed the appointment. */
+        BOOKED_AFTER_CONFIRMATION
     }
 
     /**
@@ -75,5 +93,28 @@ public record Appointment(
      */
     public Appointment(String label, Integer displayOrder) {
         this(null, label, displayOrder, AVAILABLE);
+    }
+
+    /**
+     * Creates an appointment in the priority showcase.
+     *
+     * @param id database identifier
+     * @param label human-readable appointment label
+     * @param displayOrder position in the showcase
+     * @param status current booking status
+     */
+    public Appointment(Integer id, String label, Integer displayOrder, Status status) {
+        this(id, label, displayOrder, status, Scenario.PRIORITY);
+    }
+
+    /**
+     * Creates an available appointment for the selected showcase.
+     *
+     * @param label human-readable appointment label
+     * @param displayOrder position in the showcase
+     * @param scenario showcase that owns the appointment
+     */
+    public Appointment(String label, Integer displayOrder, Scenario scenario) {
+        this(null, label, displayOrder, AVAILABLE, scenario);
     }
 }

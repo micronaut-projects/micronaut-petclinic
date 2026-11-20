@@ -4,6 +4,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.samples.petclinic.exception.NotFoundEntityException;
+import io.micronaut.samples.petclinic.oracle.OracleErrorCode;
 import io.micronaut.samples.petclinic.oracle.model.OwnerCareView;
 import io.micronaut.samples.petclinic.repository.OwnerCareViewRepository;
 import jakarta.inject.Singleton;
@@ -19,21 +20,6 @@ import java.sql.SQLException;
 @Singleton
 @Requires(env = "oracle")
 public class OwnerCareViewService {
-
-    /** Oracle error for attempting to insert into a duality-view table without an INSERT annotation. */
-    private static final int ORA_CANNOT_INSERT_INTO_DUALITY_VIEW = 40937;
-
-    /** Oracle error for attempting to delete from a duality-view table without a DELETE annotation. */
-    private static final int ORA_CANNOT_DELETE_FROM_DUALITY_VIEW = 40938;
-
-    /** Oracle error for attempting to update a duality-view table without an UPDATE annotation. */
-    private static final int ORA_CANNOT_UPDATE_DUALITY_VIEW_TABLE = 40939;
-
-    /** Oracle error for attempting to update a duality-view column without an UPDATE annotation. */
-    private static final int ORA_CANNOT_UPDATE_DUALITY_VIEW_COLUMN = 40940;
-
-    /** Oracle error for updating a duality-view column with no UPDATE annotation or a NOUPDATE annotation. */
-    private static final int ORA_DUALITY_VIEW_COLUMN_NOT_UPDATABLE = 42689;
 
     private static final Logger log = LoggerFactory.getLogger(OwnerCareViewService.class);
     private final OwnerCareViewRepository repository;
@@ -90,13 +76,14 @@ public class OwnerCareViewService {
     }
 
     private static boolean isDisallowedDualityOperation(int errorCode) {
-        // Oracle reports missing duality-view INSERT/DELETE/UPDATE annotations with these codes.
-        return switch (errorCode) {
-            case ORA_CANNOT_INSERT_INTO_DUALITY_VIEW,
-                 ORA_CANNOT_DELETE_FROM_DUALITY_VIEW,
-                 ORA_CANNOT_UPDATE_DUALITY_VIEW_TABLE,
-                 ORA_CANNOT_UPDATE_DUALITY_VIEW_COLUMN,
-                 ORA_DUALITY_VIEW_COLUMN_NOT_UPDATABLE -> true;
+        OracleErrorCode code = OracleErrorCode.fromCode(errorCode);
+        if (code == null) return false;
+        return switch (code) {
+            case ORA_40937_DUALITY_VIEW_INSERT_NOT_ALLOWED,
+                 ORA_40938_DUALITY_VIEW_DELETE_NOT_ALLOWED,
+                 ORA_40939_DUALITY_VIEW_UPDATE_NOT_ALLOWED,
+                 ORA_40940_DUALITY_VIEW_COLUMN_UPDATE_NOT_ALLOWED,
+                 ORA_42689_DUALITY_VIEW_COLUMN_NOT_UPDATABLE -> true;
             default -> false;
         };
     }

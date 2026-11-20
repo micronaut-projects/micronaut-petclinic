@@ -16,6 +16,8 @@ import io.micronaut.samples.petclinic.exception.PreconditionRequiredException;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.views.View;
+import io.micronaut.web.router.exceptions.UnsatisfiedRouteException;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,6 +91,28 @@ public class ErrorController {
      */
     @Error(exception = ConversionErrorException.class, global = true)
     public HttpResponse<Map<String, String>> invalidValue(ConversionErrorException error) {
+        return HttpResponse.badRequest(Map.of("message", "Invalid request value."));
+    }
+
+    /**
+     * Reports missing or invalid controller arguments.
+     *
+     * @param error the route argument failure
+     * @return HTTP 400 with a safe request error message
+     */
+    @Error(exception = UnsatisfiedRouteException.class, global = true)
+    public HttpResponse<Map<String, String>> invalidRouteArgument(UnsatisfiedRouteException error) {
+        return HttpResponse.badRequest(Map.of("message", "Invalid request value."));
+    }
+
+    /**
+     * Reports bean-validation failures from any controller.
+     *
+     * @param error the validation failure
+     * @return HTTP 400 with a safe request error message
+     */
+    @Error(exception = ConstraintViolationException.class, global = true)
+    public HttpResponse<Map<String, String>> constraintViolation(ConstraintViolationException error) {
         return HttpResponse.badRequest(Map.of("message", "Invalid request value."));
     }
 

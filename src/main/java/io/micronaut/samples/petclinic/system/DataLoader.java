@@ -372,10 +372,12 @@ public class DataLoader implements ApplicationEventListener<StartupEvent> {
     }
 
     /**
-     * Seeds the two appointment resources used by the Oracle transaction-priority showcase.
+     * Seeds separate appointment resources for the Oracle transaction showcases.
      */
     private void loadAppointments() {
         appointmentRepository.save(new Appointment("Next available appointment", 1));
         appointmentRepository.save(new Appointment("Following available appointment", 2));
+        appointmentRepository.save(new Appointment("Next appointment to confirm", 1, Appointment.Scenario.SESSIONLESS));
+        appointmentRepository.save(new Appointment("Following appointment to confirm", 2, Appointment.Scenario.SESSIONLESS));
     }
 }

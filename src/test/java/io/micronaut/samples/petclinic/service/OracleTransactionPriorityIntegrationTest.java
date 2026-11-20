@@ -47,7 +47,7 @@ class OracleTransactionPriorityIntegrationTest {
     }
 
     @Test
-    void regularBookingCommitsWithoutAnEmergency() {
+    void regularBookingCommitsWithoutAnEmergency() throws Exception {
         assertThat(service.getReservationSeconds()).isEqualTo(5);
         service.bookRegular(originalAppointment.id());
         assertThat(appointments.findById(originalAppointment.id()).orElseThrow().status()).isEqualTo(BOOKED_FOR_REGULAR);
@@ -58,7 +58,10 @@ class OracleTransactionPriorityIntegrationTest {
         assertThat(service.getReservationSeconds()).isEqualTo(5); // Exceeds Oracle's 3-second HIGH wait target.
         // Closing the executor waits for LOW before @AfterEach restores the appointment.
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            var regular = executor.submit(() -> service.bookRegular(originalAppointment.id()));
+            var regular = executor.submit(() -> {
+                service.bookRegular(originalAppointment.id());
+                return null;
+            });
             awaitRegularLock(appointmentLocks, originalAppointment.id());
             service.bookEmergency(originalAppointment.id());
             var failure = assertThrows(ExecutionException.class, () -> regular.get(30, TimeUnit.SECONDS));

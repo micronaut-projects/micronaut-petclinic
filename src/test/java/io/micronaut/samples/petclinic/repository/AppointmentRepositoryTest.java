@@ -53,4 +53,26 @@ class AppointmentRepositoryTest {
         assertThat(appointments.findById(booked.id())).contains(booked);
         assertThat(appointments.findAvailableAppointments()).extracting(Appointment::id).doesNotContain(booked.id());
     }
+
+    @Test
+    void scenariosSeparateAvailabilityAndResetCandidates() {
+        var priority = appointments.save(new Appointment("Priority fixture", 99));
+        var sessionless = appointments.save(new Appointment("Sessionless fixture", 99, Appointment.Scenario.SESSIONLESS));
+        var confirmed = appointments.save(new Appointment("Confirmed fixture", 100, Appointment.Scenario.SESSIONLESS)
+                .withStatus(Appointment.Status.BOOKED_AFTER_CONFIRMATION));
+
+        assertThat(appointments.findAvailableAppointments()).contains(priority).doesNotContain(sessionless, confirmed);
+        assertThat(appointments.findAvailableAppointments(Appointment.Scenario.SESSIONLESS))
+                .contains(sessionless).doesNotContain(priority, confirmed);
+        assertThat(appointments.findByIdAndScenario(sessionless.id(), Appointment.Scenario.SESSIONLESS)).contains(sessionless);
+        assertThat(appointments.findByIdAndScenario(sessionless.id(), Appointment.Scenario.PRIORITY)).isEmpty();
+        assertThat(appointments.findByIdAndScenarioForUpdate(sessionless.id(), Appointment.Scenario.SESSIONLESS)).contains(sessionless);
+        assertThat(appointments.findByIdAndScenarioForUpdate(sessionless.id(), Appointment.Scenario.PRIORITY)).isEmpty();
+        assertThat(appointments.findByScenarioOrderByDisplayOrderAscAndIdAsc(Appointment.Scenario.SESSIONLESS))
+                .contains(sessionless, confirmed).doesNotContain(priority)
+                .extracting(Appointment::displayOrder).isSorted();
+        assertThat(appointments.findByScenarioAndStatusOrderByDisplayOrderAscAndIdAsc(
+                Appointment.Scenario.SESSIONLESS, Appointment.Status.BOOKED_AFTER_CONFIRMATION)).contains(confirmed)
+                .doesNotContain(priority, sessionless);
+    }
 }

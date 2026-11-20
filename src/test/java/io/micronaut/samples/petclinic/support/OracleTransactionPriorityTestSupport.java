@@ -1,6 +1,7 @@
 package io.micronaut.samples.petclinic.support;
 
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.samples.petclinic.oracle.OracleErrorCode;
 import io.micronaut.samples.petclinic.repository.OracleAppointmentLockRepository;
 
 import java.sql.SQLException;
@@ -21,7 +22,8 @@ public final class OracleTransactionPriorityTestSupport {
                 assertThat(locks.lockNowait(appointmentId)).isEqualTo(appointmentId);
             } catch (DataAccessException error) {
                 for (Throwable cause = error; cause != null; cause = cause.getCause()) {
-                    if (cause instanceof SQLException sql && sql.getErrorCode() == 54) return; // LOW holds the lock.
+                    if (cause instanceof SQLException sql
+                            && sql.getErrorCode() == OracleErrorCode.ORA_00054_RESOURCE_BUSY.code()) return;
                 }
                 throw error;
             }
