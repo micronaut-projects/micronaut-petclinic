@@ -139,6 +139,29 @@ class ClinicServiceTest {
     }
 
     @Test
+    void shouldFindVisitsWithinInclusiveReminderWindow() {
+        Pet leo = clinicServiceFixtures.requiredPet("George", "Franklin", "Leo");
+        LocalDate today = LocalDate.of(2035, 6, 10);
+        Visit past = clinicService.saveVisit(new Visit(today.minusDays(1), "Past visit", leo));
+        Visit first = clinicService.saveVisit(new Visit(today, "Today's visit", leo));
+        Visit last = clinicService.saveVisit(new Visit(today.plusDays(3), "Window boundary", leo));
+        Visit later = clinicService.saveVisit(new Visit(today.plusDays(4), "Later visit", leo));
+
+        assertThat(clinicService.findUpcomingVisits(today, 3))
+                .containsSubsequence(first, last)
+                .doesNotContain(past, later);
+        assertThat(clinicService.findUpcomingVisits(today, 0))
+                .contains(first)
+                .doesNotContain(past, last, later);
+    }
+
+    @Test
+    void shouldRejectNegativeReminderLookahead() {
+        assertThrows(IllegalArgumentException.class,
+                () -> clinicService.findUpcomingVisits(LocalDate.of(2035, 6, 10), -1));
+    }
+
+    @Test
     void shouldSearchVisitsByDurationAndFollowUpPeriod() {
         List<Visit> visits = clinicService.searchVisits(new VisitSearchCriteria(
                 LocalDate.of(1900, 1, 1),

@@ -21,6 +21,7 @@ import jakarta.transaction.Transactional;
 import org.jspecify.annotations.NonNull;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -206,6 +207,27 @@ public class ClinicService {
      */
     public Collection<Visit> findVisitsByPetId(Integer petId) {
         return visitRepository.findByPetId(petId);
+    }
+
+    /**
+     * Finds visits eligible for a reminder within an inclusive calendar date window.
+     *
+     * <p>The window starts at {@code today} and ends at
+     * {@code today.plusDays(lookaheadDays)}. The caller supplies the reference date
+     * and lookahead so the query can use the reminder job's configuration.
+     *
+     * @param today the first calendar date to include
+     * @param lookaheadDays the number of days to look ahead; zero includes only today
+     * @return matching visits with pet, pet type, and owner data loaded, ordered
+     *         by ascending date and identifier; an empty list if none match
+     * @throws IllegalArgumentException if {@code lookaheadDays} is negative
+     */
+    public List<Visit> findUpcomingVisits(LocalDate today, int lookaheadDays) {
+        if (lookaheadDays < 0) {
+            throw new IllegalArgumentException("Reminder lookahead days must not be negative");
+        }
+        return visitRepository.findByDateBetween(today, today.plusDays(lookaheadDays),
+                Sort.of(Sort.Order.asc("date"), Sort.Order.asc("id")));
     }
 
     /**
