@@ -1,28 +1,5 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended",
-    ":dependencyDashboard",
-    ":semanticCommits"
-  ],
-  "addLabels": [
-  "type: dependency-upgrade"
-  ],
-  "rangeStrategy": "auto",
-  "packageRules": [
-    {
-      "matchManagers": ["maven", "gradle"],
-      "matchUpdateTypes": ["patch", "minor"],
-      "groupName": "Java deps (non-major)"
-    },
-    {
-      "matchManagers": ["maven", "gradle"],
-      "matchUpdateTypes": ["major"],
-      "groupName": "Java deps (major)"
-    },
-    {
-      "matchManagers": ["gradle-wrapper"],
-      "groupName": "Gradle wrapper"
-    }
+    "local>micronaut-projects/micronaut-project-template//.github/renovate-global"
   ]
 }
